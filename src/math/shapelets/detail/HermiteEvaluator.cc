@@ -25,7 +25,12 @@
 #include "lsst/afw/math/shapelets/detail/HermiteEvaluator.h"
 
 namespace shapelets = lsst::afw::math::shapelets;
+<<<<<<< HEAD
 namespace nd = lsst::ndarray;
+=======
+namespace nd = ndarray;
+namespace afwGeom = lsst::afw::geom;
+>>>>>>> a7ce1e7... moved ndarray out of lsst namespace and header directories
 
 namespace {
 
