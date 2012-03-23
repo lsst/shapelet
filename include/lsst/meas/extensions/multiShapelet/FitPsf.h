@@ -23,6 +23,10 @@
 #ifndef MULTISHAPELET_FitPsf_h_INCLUDED
 #define MULTISHAPELET_FitPsf_h_INCLUDED
 
+#include "lsst/ndarray.h"
+
+#include "lsst/afw/math/shapelets.h"
+#include "lsst/afw/detection/Psf.h"
 #include "lsst/meas/algorithms/Algorithm.h"
 
 namespace lsst { namespace meas { namespace extensions { namespace multiShapelet {
@@ -42,7 +46,7 @@ public:
         PTR(daf::base::PropertyList) const & metadata = PTR(daf::base::PropertyList)()
     ) const;
     
-    PsfFitControl() : algorithms::AlgorithmControl("multishapelet.psf", 2.0), innerOrder1(0), outerOrder(0)
+    FitPsfControl() : algorithms::AlgorithmControl("multishapelet.psf", 2.0), innerOrder(0), outerOrder(0)
         {}
 
 private:
@@ -52,16 +56,57 @@ private:
     ) const;
 };
 
+/**
+ *  @brief A Multi-Shapelet model for a local PSF.
+ *
+ *  This is an extension of an elliptical double-Gaussian, where each Gaussian is replaced
+ *  with a Gauss-Hermite expansion of arbitrary order (when both orders are zero, it is
+ *  exactly a double-Gaussian).  The inner and outer components have the same basis
+ *  ellipticity, but the ratio of their radii is not fixed.
+ *
+ *  See lsst::afw::math::shapelets for the precise definitions of the basis functions.
+ */
+struct FitPsfModel {
+
+    ndarray::Array<float,1,1> inner; ///< shapelet coefficients of inner expansion
+    ndarray::Array<float,1,1> outer; ///< shapelet coefficients of outer expansion
+    afw::geom::ellipses::Quadrupole ellipse; ///< ellipse corresponding to inner expansion
+    float ratio; ///< radius of outer expansion divided by radius of inner expansion
+    bool failed;  ///< set to true if the measurement failed
+
+    /// @brief Construct an uninitialized model with arrays corresponding to the given order.
+    FitPsfModel(int innerOrder, int outerOrder);
+
+    /// @brief Construct by extracting saved values from a SourceRecord.
+    FitPsfModel(std::string const & name, afw::table::SourceRecord const & source);
+
+    /**
+     *  @brief Return a MultiShapeletFunction representation of the model.
+     *
+     *  The elements will be [inner, outer].
+     */
+    afw::math::shapelets::MultiShapeletFunction asMultiShapelet(
+        afw::geom::Point2D const & center = afw::geom::Point2D()
+    ) const;
+
+    template <typename PixelT>
+    void evaluate(ndarray::Array<PixelT,2,1> const & array, afw::geom::Point2D const & center) const;
+
+    template <typename PixelT>
+    void evaluate(afw::image::Image<PixelT> & image, afw::geom::Point2D const & center) const {
+        evaluate(
+            image.getArray(),
+            afw::geom::Point2D(center.getX() - image.getX0(), center.getY() - image.getY0())
+        );
+    }
+
+};
+
 class FitPsfAlgorithm : public algorithms::Algorithm {
 public:
 
-    /// @brief Custom tuple class that represents the results of a fit.
-    struct Result {
-        ndarray::Array<double,1,1> inner; ///< shapelet coefficients of inner expansion
-        ndarray::Array<double,1,1> outer; ///< shapelet coefficients of outer expansion
-        afw::geom::ellipses::Quadrupole ellipse; ///< radius and ellipticity of inner expansion
-        double ratio; ///< radius of inner expansion divided by radius of outer expansion
-    };
+    /// @brief Construct an algorithm instance and register its fields with a Schema.
+    FitPsfAlgorithm(FitPsfControl const & ctrl, afw::table::Schema & schema);
 
     /// @brief Return the control object
     FitPsfControl const & getControl() const {
@@ -81,7 +126,7 @@ public:
      *                            (i.e. xy0 is used).
      */
     template <typename PixelT>
-    static Result apply(
+    static FitPsfModel apply(
         int const innerOrder,
         int const outerOrder,
         afw::image::Image<PixelT> const & image,
@@ -99,13 +144,13 @@ public:
      *  @param[in] psf            PSF object
      *  @param[in] center         Point at which to evaluate the PSF.
      */
-    static Result apply(
+    static FitPsfModel apply(
         int const innerOrder,
         int const outerOrder,
         afw::detection::Psf const & psf,
         afw::geom::Point2D const & center
     ) {
-        return apply(innerOrder, outerOrder, *psf->computeImage(center), center);
+        return apply(innerOrder, outerOrder, *psf.computeImage(center), center);
     }
 
 private:
@@ -118,11 +163,17 @@ private:
     ) const;
 
     LSST_MEAS_ALGORITHM_PRIVATE_INTERFACE(FitPsfAlgorithm);
+
+    afw::table::Key< afw::table::Array<float> > _innerKey;
+    afw::table::Key< afw::table::Array<float> > _outerKey;
+    afw::table::Key< afw::table::Moments<float> > _ellipseKey;
+    afw::table::Key< float > _ratioKey;
+    afw::table::Key< afw::table::Flag > _flagKey;
 };
 
 inline PTR(FitPsfAlgorithm) FitPsfControl::makeAlgorithm(
     afw::table::Schema & schema,
-    PTR(daf::base::PropertyList) const & metadata = PTR(daf::base::PropertyList)()
+    PTR(daf::base::PropertyList) const & metadata
 ) const {
     return boost::static_pointer_cast<FitPsfAlgorithm>(_makeAlgorithm(schema, metadata));
 }
