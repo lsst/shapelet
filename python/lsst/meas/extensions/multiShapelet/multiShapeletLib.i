@@ -9,10 +9,11 @@ Measurement algorithms using galaxy models built from multi-scale shapelets.
 %module(package="lsst.daf.base", docstring=meas_extensions_multiShapelet_DOCSTRING) multiShapeletLib
 
 %{
+#include "lsst/pex/logging.h"
 #include "lsst/meas/algorithms.h"
 %}
 
 %include "lsst/p_lsstSwig.i"
 
 %lsst_exceptions()
-%import "lsst/meas/algorithmsLib.i"
+%import "lsst/meas/algorithms/algorithmsLib.i"
