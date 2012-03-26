@@ -24,17 +24,11 @@
 
 #include "lsst/afw/math/shapelets/detail/HermiteEvaluator.h"
 
-namespace shapelets = lsst::afw::math::shapelets;
-<<<<<<< HEAD
-namespace nd = lsst::ndarray;
-=======
-namespace nd = ndarray;
-namespace afwGeom = lsst::afw::geom;
->>>>>>> a7ce1e7... moved ndarray out of lsst namespace and header directories
+namespace lsst { namespace afw { namespace math { namespace shapelets { namespace detail {
 
 namespace {
 
-static double const NORMALIZATION = std::pow(M_PI, -0.25);
+static double const NORMALIZATION = std::pow(geom::PI, -0.25);
 
 /**
  *  @brief An iterator-like object to help in traversing "packed" shapelet or Hermite polynomial
@@ -120,18 +114,18 @@ private:
     double _previous;
 };
 
-void fillEvaluation1d(nd::Array<shapelets::Pixel,1,1> const & result, double x) {
+void fillEvaluation1d(ndarray::Array<Pixel,1,1> const & result, double x) {
     HermiteRecurrenceRelation r(x, NORMALIZATION * std::exp(-0.5*x*x));
-    nd::Array<shapelets::Pixel,1,1>::Iterator const end = result.end();
-    for (nd::Array<shapelets::Pixel,1,1>::Iterator i = result.begin(); i != end; ++i, ++r) {
+    ndarray::Array<Pixel,1,1>::Iterator const end = result.end();
+    for (ndarray::Array<Pixel,1,1>::Iterator i = result.begin(); i != end; ++i, ++r) {
         *i = r();
     }
 }
 
-void fillIntegration1d(nd::Array<shapelets::Pixel,1,1> const & result, int moment) {
+void fillIntegration1d(ndarray::Array<Pixel,1,1> const & result, int moment) {
     int const order = result.getSize<0>() - 1;
     result.deep() = 0.0;
-    result[0] = std::pow(4.0*M_PI, 0.25);
+    result[0] = std::pow(4.0*geom::PI, 0.25);
     for (int n = 2; n <= order; n += 2) {
         result[n] = std::sqrt((n - 1.0) / n) * result[n-2];
     }
@@ -189,14 +183,14 @@ Eigen::MatrixXd computeInnerProductMatrix1d(int rowOrder, int colOrder, double a
 
 } // anonymous    
 
-void shapelets::detail::HermiteEvaluator::weaveFill(ndarray::Array<Pixel,1> const & target) const {
+void HermiteEvaluator::weaveFill(ndarray::Array<Pixel,1> const & target) const {
     int const order = getOrder();
     for (PackedIndex i; i.getOrder() <= order; ++i) {
         target[i.getIndex()] = _xWorkspace[i.getX()] * _yWorkspace[i.getY()];
     }
 }
 
-double shapelets::detail::HermiteEvaluator::weaveSum(ndarray::Array<Pixel const,1> const & target) const {
+double HermiteEvaluator::weaveSum(ndarray::Array<Pixel const,1> const & target) const {
     double r = 0.0;
     int const order = getOrder();
     for (PackedIndex i; i.getOrder() <= order; ++i) {
@@ -205,7 +199,7 @@ double shapelets::detail::HermiteEvaluator::weaveSum(ndarray::Array<Pixel const,
     return r;
 }
 
-void shapelets::detail::HermiteEvaluator::fillEvaluation(
+void HermiteEvaluator::fillEvaluation(
     ndarray::Array<Pixel,1> const & target, double x, double y
 ) const {
     fillEvaluation1d(_xWorkspace, x);
@@ -213,7 +207,7 @@ void shapelets::detail::HermiteEvaluator::fillEvaluation(
     weaveFill(target);
 }
 
-void shapelets::detail::HermiteEvaluator::fillIntegration(
+void HermiteEvaluator::fillIntegration(
     ndarray::Array<Pixel,1> const & target, int xMoment, int yMoment
 ) const {
     fillIntegration1d(_xWorkspace, xMoment);
@@ -221,7 +215,7 @@ void shapelets::detail::HermiteEvaluator::fillIntegration(
     return weaveFill(target);
 }
 
-double shapelets::detail::HermiteEvaluator::sumEvaluation(
+double HermiteEvaluator::sumEvaluation(
     ndarray::Array<Pixel const,1> const & target, double x, double y
 ) const {
     fillEvaluation1d(_xWorkspace, x);
@@ -229,7 +223,7 @@ double shapelets::detail::HermiteEvaluator::sumEvaluation(
     return weaveSum(target);
 }
 
-double shapelets::detail::HermiteEvaluator::sumIntegration(
+double HermiteEvaluator::sumIntegration(
     ndarray::Array<Pixel const,1> const & target, int xMoment, int yMoment
 ) const {
     fillIntegration1d(_xWorkspace, xMoment);
@@ -237,12 +231,12 @@ double shapelets::detail::HermiteEvaluator::sumIntegration(
     return weaveSum(target);
 }
 
-shapelets::detail::HermiteEvaluator::HermiteEvaluator(int order) :
+HermiteEvaluator::HermiteEvaluator(int order) :
     _xWorkspace(ndarray::allocate(order + 1)),
     _yWorkspace(ndarray::allocate(order + 1))
 {}
 
-Eigen::MatrixXd shapelets::detail::HermiteEvaluator::computeInnerProductMatrix(
+Eigen::MatrixXd HermiteEvaluator::computeInnerProductMatrix(
     int rowOrder, int colOrder, double a, double b
 ) {
     Eigen::MatrixXd result = Eigen::MatrixXd::Zero(computeSize(rowOrder), computeSize(colOrder));
@@ -254,3 +248,5 @@ Eigen::MatrixXd shapelets::detail::HermiteEvaluator::computeInnerProductMatrix(
     }
     return result;
 }
+
+}}}}} // namespace lsst::afw::math::shapelets::detail
