@@ -22,9 +22,10 @@
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
-#include "lsst/afw/math/shapelets/detail/HermiteEvaluator.h"
+#include "lsst/afw/math/shapelets/HermiteEvaluator.h"
+#include "lsst/afw/geom/Angle.h"
 
-namespace lsst { namespace afw { namespace math { namespace shapelets { namespace detail {
+namespace lsst { namespace afw { namespace math { namespace shapelets {
 
 namespace {
 
@@ -249,4 +250,4 @@ Eigen::MatrixXd HermiteEvaluator::computeInnerProductMatrix(
     return result;
 }
 
-}}}}} // namespace lsst::afw::math::shapelets::detail
+}}}} // namespace lsst::afw::math::shapelets
