@@ -169,6 +169,17 @@ void FitPsfAlgorithm::_apply(
     source.set(_flagKey, model.failed);
 }
 
+template <typename PixelT>
+FitPsfModel FitPsfAlgorithm::apply(
+    int const innerOrder,
+    int const outerOrder,
+    afw::image::Image<PixelT> const & image,
+    afw::geom::Point2D const & center
+) {
+    // TODO
+}
+
+
 LSST_MEAS_ALGORITHM_PRIVATE_IMPLEMENTATION(FitPsfAlgorithm);
 
 }}}} // namespace lsst::meas::extensions::multiShapelet
