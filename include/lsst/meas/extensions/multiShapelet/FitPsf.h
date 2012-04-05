@@ -23,7 +23,7 @@
 #ifndef MULTISHAPELET_FitPsf_h_INCLUDED
 #define MULTISHAPELET_FitPsf_h_INCLUDED
 
-#include "lsst/ndarray.h"
+#include "ndarray.h"
 
 #include "lsst/afw/math/shapelets.h"
 #include "lsst/afw/detection/Psf.h"
