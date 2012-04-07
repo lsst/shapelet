@@ -63,6 +63,7 @@ public:
     MethodEnum method;
     int state;
     int count;
+    int rank;
     ndarray::EigenView<double,1,1> x;
     ndarray::EigenView<double,1,1> xNew;
     ndarray::EigenView<double,1,1> f;
@@ -76,6 +77,8 @@ public:
     Eigen::MatrixXd B; // Hessian for BFGS method (Jarvis uses 'H')
     Eigen::VectorXd g;
     Eigen::VectorXd gNew;
+    Eigen::LDLT<Eigen::MatrixXd,Eigen::Lower> ldlt;
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigh;
     double normInfF;
     double normInfG;
     double Q;
@@ -89,7 +92,7 @@ HybridOptimizer::Impl::Impl(
     PTR(Objective) const & objective,
     ndarray::Array<double const,1,1> const & parameters,
     Control const & control
-) : obj(objective), ctrl(control), method(LM), state(WORKING), count(0),
+) : obj(objective), ctrl(control), method(LM), state(WORKING), count(0), rank(objective->getParameterSize()),
     x(ndarray::copy(parameters)), xNew(ndarray::copy(parameters)),
     f(ndarray::allocate(objective->getFunctionSize())),
     fNew(ndarray::allocate(objective->getFunctionSize())),
@@ -98,19 +101,20 @@ HybridOptimizer::Impl::Impl(
     h(Eigen::VectorXd::Zero(objective->getParameterSize())),
     y(Eigen::VectorXd::Zero(objective->getParameterSize())),
     v(Eigen::VectorXd::Zero(objective->getParameterSize())),
-    A(Eigen::VectorXd::Zero(objective->getParameterSize(), objective->getParameterSize())),
-    B(Eigen::VectorXd::Identity(objective->getParameterSize(), objective->getParameterSize())),
+    A(Eigen::MatrixXd::Zero(objective->getParameterSize(), objective->getParameterSize())),
+    B(Eigen::MatrixXd::Identity(objective->getParameterSize(), objective->getParameterSize())),
     g(Eigen::VectorXd::Zero(objective->getFunctionSize())),
     gNew(Eigen::VectorXd::Zero(objective->getFunctionSize())),
+    ldlt(0), eigh(0),
     normInfF(0.0), normInfG(0.0), Q(0.0), QNew(0.0), mu(0.0), nu(2.0), delta(ctrl.delta0)
 {
     fNew.setZero();
-    obj->computeFunction(x.shallow(), f.shallow());
+    obj->computeFunction(xNew.shallow(), fNew.shallow());
+    f = fNew;
     normInfF = f.lpNorm<Eigen::Infinity>();
     Q = 0.5 * f.squaredNorm();
     JNew.setZero(); 
-    obj->computeDerivative(x.shallow(), fNew.shallow(), JNew.shallow());
-    f = fNew;
+    obj->computeDerivative(xNew.shallow(), fNew.shallow(), JNew.shallow());
     J = JNew;
     A.selfadjointView<Eigen::Lower>().rankUpdate(J.adjoint());
     g = J.adjoint() * f;
@@ -228,6 +232,22 @@ void HybridOptimizer::Impl::step() {
     }
 }
 
+void HybridOptimizer::Impl::solve(Eigen::MatrixXd const & m) {
+    if (ctrl.useCholesky) {
+        ldlt.compute(m);
+        h = ldlt.solve(-g);
+    } else {
+        rank = obj->getParameterSize();
+        eigh.compute(m);
+        double threshold = eigh.eigenvalues()[rank-1] * std::numeric_limits<double>::epsilon();
+        int i = 0;
+        for (; i < rank && eigh.eigenvalues()[i] < threshold; ++i);
+        rank -= i;
+        h = eigh.eigenvectors().rightCols(rank) *
+            eigh.eigenvalues().tail(rank).array().inverse().matrix().asDiagonal() * 
+            eigh.eigenvectors().rightCols(rank).adjoint() * (-g);
+    }
+}
 
 int HybridOptimizer::step() {
     _impl->step();

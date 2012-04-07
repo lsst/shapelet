@@ -24,5 +24,6 @@
 #define MULTISHAPELET_multiShapelet_h_INCLUDED
 
 #include "lsst/meas/extensions/multiShapelet/GaussianModelBuilder.h"
+#include "lsst/meas/extensions/multiShapelet/HybridOptimizer.h"
 
 #endif // !MULTISHAPELET_multiShapelet_h_INCLUDED
