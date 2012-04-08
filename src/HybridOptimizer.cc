@@ -29,7 +29,7 @@
 #include "lsst/meas/extensions/multiShapelet/HybridOptimizer.h"
 
 namespace lsst { namespace meas { namespace extensions { namespace multiShapelet {
-//
+
 // Throughout this file, I have used the variable names from the original implementation
 // and/or the formulae in that document, rather than names that adhere to the LSST naming
 // conventions (which are follwed in the header file).  No amount of longer, more
@@ -70,6 +70,8 @@ public:
     ndarray::EigenView<double,1,1> fNew;
     ndarray::EigenView<double,2,-2> J;
     ndarray::EigenView<double,2,-2> JNew;
+    ndarray::EigenView<double,1,1> priorGradient;
+    ndarray::EigenView<double,2,-2> priorHessian;
     Eigen::VectorXd h;
     Eigen::VectorXd y;
     Eigen::VectorXd v;
@@ -79,6 +81,7 @@ public:
     Eigen::VectorXd gNew;
     Eigen::LDLT<Eigen::MatrixXd,Eigen::Lower> ldlt;
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigh;
+    double priorValue;
     double normInfF;
     double normInfG;
     double Q;
@@ -98,6 +101,8 @@ HybridOptimizer::Impl::Impl(
     fNew(ndarray::allocate(objective->getFunctionSize())),
     J(ndarray::allocate(objective->getFunctionSize(), objective->getParameterSize())),
     JNew(ndarray::allocate(objective->getFunctionSize(), objective->getParameterSize())),
+    priorGradient(ndarray::allocate(objective->getParameterSize())),
+    priorHessian(ndarray::allocate(objective->getParameterSize(), objective->getParameterSize())),
     h(Eigen::VectorXd::Zero(objective->getParameterSize())),
     y(Eigen::VectorXd::Zero(objective->getParameterSize())),
     v(Eigen::VectorXd::Zero(objective->getParameterSize())),
@@ -106,7 +111,7 @@ HybridOptimizer::Impl::Impl(
     g(Eigen::VectorXd::Zero(objective->getFunctionSize())),
     gNew(Eigen::VectorXd::Zero(objective->getFunctionSize())),
     ldlt(0), eigh(0),
-    normInfF(0.0), normInfG(0.0), Q(0.0), QNew(0.0), mu(0.0), nu(2.0), delta(ctrl.delta0)
+    priorValue(0.0), normInfF(0.0), normInfG(0.0), Q(0.0), QNew(0.0), mu(0.0), nu(2.0), delta(ctrl.delta0)
 {
     fNew.setZero();
     obj->computeFunction(xNew.shallow(), fNew.shallow());
@@ -121,6 +126,11 @@ HybridOptimizer::Impl::Impl(
     normInfG = g.lpNorm<Eigen::Infinity>();
     mu = ctrl.tau * A.diagonal().lpNorm<Eigen::Infinity>();
     A.diagonal().array() += mu;
+    if (obj->computePrior(xNew.shallow(), priorValue, priorGradient.shallow(), priorHessian.shallow())) {
+        Q += priorValue;
+        g += priorGradient;
+        A.triangularView<Eigen::Lower>() += priorHessian;
+    }
 }
 
 void HybridOptimizer::Impl::step() {
@@ -147,9 +157,15 @@ void HybridOptimizer::Impl::step() {
     QNew = 0.5 * fNew.squaredNorm();
     JNew.setZero();
     obj->computeDerivative(xNew.shallow(), fNew.shallow(), JNew.shallow());
+
+    bool hasPrior = obj->computePrior(
+        xNew.shallow(), priorValue, priorGradient.shallow(), priorHessian.shallow()
+    );
+    if (hasPrior) QNew += priorValue;
     double normInfGNew = 0.0;
     if (method == BFGS || QNew < Q) {
         gNew = JNew.adjoint() * fNew;
+        if (hasPrior) gNew += priorGradient;
         normInfGNew = gNew.lpNorm<Eigen::Infinity>();
     }
 
@@ -171,9 +187,7 @@ void HybridOptimizer::Impl::step() {
     } else { // method == LM
         if (QNew < Q) {
             isBetter = true;
-            // replace g with g - mu*h, because we don't need it anymore
-            g -= mu * h;
-            double rho = (Q - QNew) / (-0.5 * h.dot(g));
+            double rho = (Q - QNew) / (-0.5 * h.dot(g - mu * h));
             mu *= std::max(1.0 / 3.0, 1.0 - std::pow(2.0 * rho - 1.0, 3));
             nu = 2.0;
             if (std::min(normInfGNew, Q - QNew) < 0.02 * QNew) {
@@ -184,6 +198,7 @@ void HybridOptimizer::Impl::step() {
             if (count != 3) {
                 A.setZero();
                 A.selfadjointView<Eigen::Lower>().rankUpdate(JNew.adjoint());
+                if (hasPrior) A.triangularView<Eigen::Lower>() += priorHessian;
                 A.diagonal().array() += mu;
             }
         } else {
@@ -194,7 +209,8 @@ void HybridOptimizer::Impl::step() {
         }
     }
 
-    y = JNew.adjoint() * (JNew * h) + (JNew - J).adjoint() * fNew;
+    y = JNew.adjoint() * (JNew * h) + gNew - g;
+    if (hasPrior) y += priorHessian.selfadjointView<Eigen::Lower>() * h;
     double hy = h.dot(y);
     if (hy > 0.0) {
         v = B.selfadjointView<Eigen::Lower>() * h;

@@ -46,6 +46,13 @@ public:
         ndarray::Array<double,2,-2> const & derivative
     ) = 0;
 
+    virtual bool computePrior(
+        ndarray::Array<double const,1,1> const & parameters, 
+        double & value,
+        ndarray::Array<double,1,1> const & gradient, 
+        ndarray::Array<double,2,-2> const & hessian 
+    ) { return false; }
+
     virtual ~Objective() {}
 
     int getFunctionSize() const { return _functionSize; }
