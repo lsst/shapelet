@@ -55,12 +55,28 @@ GaussianModelBuilder::GaussianModelBuilder(afw::geom::Box2I const & region) :
     }
 }
 
-void GaussianModelBuilder::update(afw::geom::ellipses::Ellipse const & ellipse) {
-    if (!_ellipse) {
-        _ellipse = boost::make_shared<afw::geom::ellipses::Ellipse>(ellipse);
-    } else {
-        *_ellipse = ellipse;
+GaussianModelBuilder::GaussianModelBuilder(GaussianModelBuilder const & other) :
+    _ellipse(other._ellipse), _model(other._model), _xy(other._xy), _xyt(other._xyt)
+{
+    if (_ellipse) _ellipse = boost::make_shared<afw::geom::ellipses::Ellipse>(*_ellipse);
+    if (!_model.isEmpty()) _model = ndarray::copy(_model);
+}
+
+GaussianModelBuilder & GaussianModelBuilder::operator=(GaussianModelBuilder const & other) {
+    if (&other != this) {
+        _ellipse = other._ellipse;
+        _model = other._model;
+        _xy = other._xy;
+        _xyt = other._xyt;
+        if (_ellipse) _ellipse = boost::make_shared<afw::geom::ellipses::Ellipse>(*_ellipse);
+        if (!_model.isEmpty()) _model = ndarray::copy(_model);
     }
+    return *this;
+}
+
+void GaussianModelBuilder::update(PTR(afw::geom::ellipses::Ellipse) const & ellipse) {
+    _ellipse = ellipse;
+    assert(_ellipse);
     if (_model.isEmpty()) {
         _model = ndarray::allocate(_xy.rows());
     }
@@ -70,6 +86,10 @@ void GaussianModelBuilder::update(afw::geom::ellipses::Ellipse const & ellipse) 
     _xyt.transpose() =  m * _xy.transpose();
     _xyt.transpose().colwise() += t;
     _model.asEigen<Eigen::ArrayXpr>() = std::exp(-0.5 * _xyt.rowwise().squaredNorm().array());
+}
+
+void GaussianModelBuilder::update(afw::geom::ellipses::Ellipse const & ellipse) {
+    update(boost::make_shared<afw::geom::ellipses::Ellipse>(ellipse));
 }
 
 void GaussianModelBuilder::computeDerivative(ndarray::Array<double,2,-1> const & output) const {

@@ -36,7 +36,14 @@ public:
 
     explicit GaussianModelBuilder(afw::geom::Box2I const & region);
     
+    GaussianModelBuilder(GaussianModelBuilder const & other);
+
+    GaussianModelBuilder & operator=(GaussianModelBuilder const & other);
+
     void update(afw::geom::ellipses::Ellipse const & ellipse);
+
+    // Ellipse is not copied, and must not be modified between calls to update() and computeDerivative().
+    void update(PTR(afw::geom::ellipses::Ellipse) const & ellipse);
     
     ndarray::Array<double const,1,1> getModel() const { return _model; }
 
@@ -49,7 +56,7 @@ public:
     void computeDerivative(
         ndarray::Array<double,2,-1> const & output,
         Eigen::Matrix<double,5,Eigen::Dynamic> const & jacobian,
-        bool add = false 
+        bool add = false
     ) const;
 
     void setOutput(ndarray::Array<double,1,1> const & array);
