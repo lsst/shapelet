@@ -38,6 +38,12 @@ public:
 
     LSST_CONTROL_FIELD(innerOrder, int, "Shapelet order of inner expansion (0 == Gaussian)");
     LSST_CONTROL_FIELD(outerOrder, int, "Shapelet order of outer expansion (0 == Gaussian)");
+    LSST_CONTROL_FIELD(radiusRatio, double, "outer radius divided by inner radius (fixed)");
+    LSST_CONTROL_FIELD(amplitudeRatio, double, 
+                       "outer Gaussian amplitude divided by inner Gaussian amplitude;"
+                       " held fixed in double-Gaussian ellipse fit, then allowed to vary"
+                       " when shapelets coefficients are fit and ellipses are held fixed."
+    );
 
     PTR(FitPsfControl) clone() const { return boost::static_pointer_cast<FitPsfControl>(_clone()); }
 
@@ -46,7 +52,9 @@ public:
         PTR(daf::base::PropertyList) const & metadata = PTR(daf::base::PropertyList)()
     ) const;
     
-    FitPsfControl() : algorithms::AlgorithmControl("multishapelet.psf", 2.0), innerOrder(0), outerOrder(0)
+    FitPsfControl() : 
+        algorithms::AlgorithmControl("multishapelet.psf", 2.0), 
+        innerOrder(0), outerOrder(0), radiusRatio(2.0), amplitudeRatio(0.1)
         {}
 
 private:
@@ -71,14 +79,14 @@ struct FitPsfModel {
     ndarray::Array<float,1,1> inner; ///< shapelet coefficients of inner expansion
     ndarray::Array<float,1,1> outer; ///< shapelet coefficients of outer expansion
     afw::geom::ellipses::Quadrupole ellipse; ///< ellipse corresponding to inner expansion
-    float ratio; ///< radius of outer expansion divided by radius of inner expansion
+    double radiusRatio; ///< radius of outer expansion divided by radius of inner expansion (fixed)
     bool failed;  ///< set to true if the measurement failed
 
     /// @brief Construct an uninitialized model with arrays corresponding to the given order.
-    FitPsfModel(int innerOrder, int outerOrder);
+    explicit FitPsfModel(FitPsfControl const & ctrl);
 
     /// @brief Construct by extracting saved values from a SourceRecord.
-    FitPsfModel(std::string const & name, afw::table::SourceRecord const & source);
+    FitPsfModel(FitPsfControl const & ctrl, afw::table::SourceRecord const & source);
 
     /**
      *  @brief Return a MultiShapeletFunction representation of the model.
@@ -119,16 +127,14 @@ public:
      *  This overload accepts the configuration options (inner and outer order) as separate
      *  values, and hence does not require a control object or an Algorithm instance.
      *
-     *  @param[in] innerOrder     Shapelet order of the inner expansion (0 == Gaussian)
-     *  @param[in] outerOrder     Shapelet order of the outer expansion (0 == Gaussian)
+     *  @param[in] ctrl           Details of the model to fit.
      *  @param[in] image          Postage-stamp image of the PSF.
      *  @param[in] center         Center of the PSF in the image's PARENT coordinate system
      *                            (i.e. xy0 is used).
      */
     template <typename PixelT>
     static FitPsfModel apply(
-        int const innerOrder,
-        int const outerOrder,
+        FitPsfControl const & ctrl,
         afw::image::Image<PixelT> const & image,
         afw::geom::Point2D const & center
     );
@@ -139,18 +145,16 @@ public:
      *  This overload accepts the configuration options (inner and outer order) as separate
      *  values, and hence does not require a control object or an Algorithm instance.
      *
-     *  @param[in] innerOrder     Shapelet order of the inner expansion (0 == Gaussian)
-     *  @param[in] outerOrder     Shapelet order of the outer expansion (0 == Gaussian)
+     *  @param[in] ctrl           Details of the model to fit.
      *  @param[in] psf            PSF object
      *  @param[in] center         Point at which to evaluate the PSF.
      */
     static FitPsfModel apply(
-        int const innerOrder,
-        int const outerOrder,
+        FitPsfControl const & ctrl,
         afw::detection::Psf const & psf,
         afw::geom::Point2D const & center
     ) {
-        return apply(innerOrder, outerOrder, *psf.computeImage(center), center);
+        return apply(ctrl, *psf.computeImage(center), center);
     }
 
 private:
@@ -167,7 +171,6 @@ private:
     afw::table::Key< afw::table::Array<float> > _innerKey;
     afw::table::Key< afw::table::Array<float> > _outerKey;
     afw::table::Key< afw::table::Moments<float> > _ellipseKey;
-    afw::table::Key< float > _ratioKey;
     afw::table::Key< afw::table::Flag > _flagKey;
 };
 

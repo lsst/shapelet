@@ -64,22 +64,28 @@ void fillMultiShapeletImage(
 
 } // anonymous
 
-FitPsfModel::FitPsfModel(int innerOrder, int outerOrder) :
-    inner(ndarray::allocate(afw::math::shapelets::computeSize(innerOrder))),
-    outer(ndarray::allocate(afw::math::shapelets::computeSize(outerOrder))),
+FitPsfModel::FitPsfModel(FitPsfControl const & ctrl) :
+    inner(ndarray::allocate(afw::math::shapelets::computeSize(ctrl.innerOrder))),
+    outer(ndarray::allocate(afw::math::shapelets::computeSize(ctrl.outerOrder))),
     ellipse(),
-    ratio(2)
+    radiusRatio(ctrl.radiusRatio),
+    failed(false)
 {
     inner.deep() = 0.0;
     outer.deep() = 0.0;
 }
 
-FitPsfModel::FitPsfModel(std::string const & name, afw::table::SourceRecord const & source) {
-    afw::table::SubSchema s = source.getSchema()[name];
-    inner = ndarray::copy(source.get(s.find< afw::table::Array<float> >("inner").key));
-    outer = ndarray::copy(source.get(s.find< afw::table::Array<float> >("outer").key));
+FitPsfModel::FitPsfModel(FitPsfControl const & ctrl, afw::table::SourceRecord const & source) :
+    inner(ndarray::allocate(afw::math::shapelets::computeSize(ctrl.innerOrder))),
+    outer(ndarray::allocate(afw::math::shapelets::computeSize(ctrl.outerOrder))),
+    ellipse(),
+    radiusRatio(ctrl.radiusRatio),
+    failed(false)
+{
+    afw::table::SubSchema s = source.getSchema()[ctrl.name];
+    inner.deep() = source.get(s.find< afw::table::Array<float> >("inner").key);
+    outer.deep() = source.get(s.find< afw::table::Array<float> >("outer").key);
     ellipse = source.get(s.find< afw::table::Moments<float> >("ellipse").key);
-    ratio = source.get(s.find<float>("ratio").key);
     failed = source.get(s.find<afw::table::Flag>("flags").key);
 }
   
@@ -102,7 +108,7 @@ afw::math::shapelets::MultiShapeletFunction FitPsfModel::asMultiShapelet(
             sInner
         )
     );
-    fullEllipse.scale(ratio);
+    fullEllipse.scale(radiusRatio);
     elements.push_back(
         afw::math::shapelets::ShapeletFunction(
             computeOrder(outer.getSize<0>()),
@@ -138,10 +144,6 @@ FitPsfAlgorithm::FitPsfAlgorithm(FitPsfControl const & ctrl, afw::table::Schema 
                     ctrl.name + ".ellipse",
                     "Ellipse corresponding to the inner expansion"
                 )),
-    _ratioKey(schema.addField<float>(
-                  ctrl.name + ".ratio", 
-                  "radius of outer component divided by radius of inner component"
-              )),
     _flagKey(schema.addField<afw::table::Flag>(
                  ctrl.name + ".flags",
                  "set if the multi-shapelet PSF fit was unsuccessful"
@@ -161,18 +163,16 @@ void FitPsfAlgorithm::_apply(
         );
     }
     source.set(_flagKey, true);
-    FitPsfModel model = apply(getControl().innerOrder, getControl().outerOrder, *exposure.getPsf(), center);
+    FitPsfModel model = apply(getControl(), *exposure.getPsf(), center);
     source[_innerKey] = model.inner;
     source[_outerKey] = model.outer;
     source.set(_ellipseKey, model.ellipse);
-    source.set(_ratioKey, model.ratio);    
     source.set(_flagKey, model.failed);
 }
 
 template <typename PixelT>
 FitPsfModel FitPsfAlgorithm::apply(
-    int const innerOrder,
-    int const outerOrder,
+    FitPsfControl const & ctrl,
     afw::image::Image<PixelT> const & image,
     afw::geom::Point2D const & center
 ) {
