@@ -48,6 +48,10 @@ protected:
         double amplitude;
         PTR(afw::geom::ellipses::Ellipse) ellipse;
         Eigen::Matrix<double,5,Eigen::Dynamic> jacobian;
+
+        explicit Component(int parameterSize) : amplitude(0.0), ellipse(), jacobian(5, parameterSize) {
+            jacobian.setZero();
+        }
     };
 
     typedef std::vector<Component> ComponentList;

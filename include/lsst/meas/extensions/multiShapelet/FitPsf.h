@@ -33,6 +33,8 @@ namespace lsst { namespace meas { namespace extensions { namespace multiShapelet
 
 class FitPsfAlgorithm;
 
+class Objective;
+
 class FitPsfControl : public algorithms::AlgorithmControl {
 public:
 
@@ -121,6 +123,13 @@ public:
         return static_cast<FitPsfControl const &>(algorithms::Algorithm::getControl());
     }
 
+    /// @brief Return an Objective that can be used to fit an elliptical double-Gaussian to the image.
+    static PTR(Objective) makeObjective(
+        FitPsfControl const & ctrl,
+        afw::image::Image<double> const & image,
+        afw::geom::Point2D const & center
+    );
+
     /**
      *  @brief Fit to a local PSF or kernel image.
      *
@@ -132,10 +141,9 @@ public:
      *  @param[in] center         Center of the PSF in the image's PARENT coordinate system
      *                            (i.e. xy0 is used).
      */
-    template <typename PixelT>
     static FitPsfModel apply(
         FitPsfControl const & ctrl,
-        afw::image::Image<PixelT> const & image,
+        afw::image::Image<double> const & image,
         afw::geom::Point2D const & center
     );
 

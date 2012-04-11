@@ -22,6 +22,7 @@
  */
 
 #include "lsst/meas/extensions/multiShapelet/FitPsf.h"
+#include "lsst/meas/extensions/multiShapelet/GaussianObjective.h"
 
 namespace lsst { namespace meas { namespace extensions { namespace multiShapelet {
 
@@ -29,8 +30,8 @@ namespace {
 
 int computeOrder(int size2d) {
     // Could just use f.p. square roots here, but we only care about small numbers
-    // and I don't think about how to be robust against round-off error issues.
-    for (int o=0, s=1; s < size2d; s += (++o + 1)) {
+    // and I don't want to think about how to be robust against round-off error issues.
+    for (int o=0, s=1; s <= size2d; s += (++o + 1)) {
         if (s == size2d) return o;
     }
     throw LSST_EXCEPT(
@@ -44,6 +45,8 @@ void fillMultiShapeletImage(
     ndarray::Array<PixelT,2,1> const & array, 
     afw::math::shapelets::MultiShapeletFunction const & msf
 ) {
+    // TODO: could use afw::math::shapelets::ModelBuilder here; probably faster
+    // (low priority because this function is mostly intended for testing purposes).
     afw::math::shapelets::MultiShapeletFunctionEvaluator ev(msf);
     afw::geom::Point2D point;
     for (
@@ -61,6 +64,73 @@ void fillMultiShapeletImage(
         point.setY(0.0);
     }
 }
+
+/*
+ *  Objective function for fitting an elliptical double Gaussian to a PSF image.
+ *
+ *  Parameters are [inner amplitude, e1, e2, log(inner radius)]; the outer quantities
+ *  are fixed by the control fields.  The ellipticities are ConformalShear and the
+ *  radius parameter is the log of the trace radius, so there are no restrictions on
+ *  the range of the parameters.
+ */
+class FitPsfObjective : public GaussianObjective {
+public:
+
+    virtual void computeDerivative(
+        ndarray::Array<double const,1,1> const & parameters, 
+        ndarray::Array<double const,1,1> const & function,
+        ndarray::Array<double,2,-2> const & derivative
+    ) {
+        GaussianObjective::computeDerivative(parameters, function, derivative);
+        derivative.asEigen().col(0) = function.asEigen() / parameters[0];
+    }
+
+    explicit FitPsfObjective(
+        FitPsfControl const & ctrl, 
+        afw::image::Image<afw::math::Kernel::Pixel> const & image,
+        afw::geom::Point2D const & center
+    ) : 
+        GaussianObjective(
+            2, 4, image.getBBox(afw::image::PARENT), 
+            ndarray::flatten<1>(ndarray::copy(image.getArray()))
+        ),
+        _ctrl(ctrl), _scaling(afw::geom::LinearTransform::makeScaling(ctrl.radiusRatio)), _center(center)
+        {}
+
+protected:
+
+    virtual void readParameters(
+        ndarray::Array<double const,1,1> const & parameters, 
+        ComponentList::iterator iter, ComponentList::iterator const end
+    ) {
+        typedef afw::geom::ellipses::Separable<
+            afw::geom::ellipses::ConformalShear,
+            afw::geom::ellipses::LogTraceRadius
+        > EllipseCore;
+        Component & inner = *iter++;
+        Component & outer = *iter++;
+        assert(iter == end);
+        if (!inner.ellipse) {
+            inner.ellipse = boost::make_shared<afw::geom::ellipses::Ellipse>(EllipseCore(), _center);
+            inner.jacobian.block<3,3>(0, 1).setIdentity();
+        }
+        if (!outer.ellipse) {
+            outer.ellipse = boost::make_shared<afw::geom::ellipses::Ellipse>(EllipseCore(), _center);
+        }
+        EllipseCore & outerCore = static_cast<EllipseCore &>(outer.ellipse->getCore());
+        EllipseCore & innerCore = static_cast<EllipseCore &>(inner.ellipse->getCore());
+        inner.amplitude = parameters[0];
+        outer.amplitude = _ctrl.amplitudeRatio * parameters[0];
+        innerCore.readParameters(parameters.getData() + 1);
+        outerCore = innerCore.transform(_scaling);
+        outer.jacobian.block<3,3>(0, 1) = innerCore.transform(_scaling).d();
+    }
+
+private:
+    FitPsfControl _ctrl;
+    afw::geom::LinearTransform _scaling;
+    afw::geom::Point2D _center;
+};
 
 } // anonymous
 
@@ -150,6 +220,15 @@ FitPsfAlgorithm::FitPsfAlgorithm(FitPsfControl const & ctrl, afw::table::Schema 
              ))
 {}
 
+PTR(Objective) FitPsfAlgorithm::makeObjective(
+    FitPsfControl const & ctrl,
+    afw::image::Image<double> const & image,
+    afw::geom::Point2D const & center
+) {
+    return boost::make_shared<FitPsfObjective>(ctrl, image, center);
+}
+
+
 template <typename PixelT>
 void FitPsfAlgorithm::_apply(
     afw::table::SourceRecord & source,
@@ -170,15 +249,24 @@ void FitPsfAlgorithm::_apply(
     source.set(_flagKey, model.failed);
 }
 
-template <typename PixelT>
 FitPsfModel FitPsfAlgorithm::apply(
     FitPsfControl const & ctrl,
-    afw::image::Image<PixelT> const & image,
+    afw::image::Image<double> const & image,
     afw::geom::Point2D const & center
 ) {
     // TODO
 }
 
+PTR(algorithms::AlgorithmControl) FitPsfControl::_clone() const {
+    return boost::make_shared<FitPsfControl>(*this);
+}
+
+PTR(algorithms::Algorithm) FitPsfControl::_makeAlgorithm(
+    afw::table::Schema & schema,
+    PTR(daf::base::PropertyList) const & metadata
+) const {
+    return boost::make_shared<FitPsfAlgorithm>(*this, boost::ref(schema));
+}
 
 LSST_MEAS_ALGORITHM_PRIVATE_IMPLEMENTATION(FitPsfAlgorithm);
 

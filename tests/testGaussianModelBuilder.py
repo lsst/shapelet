@@ -26,7 +26,7 @@
 Tests for GaussianModelBuilder
 
 Run with:
-   ./shapelets.py
+   ./testGaussianModelBuilder.py
 or
    python
    >>> import testGaussianModelBuilder; testGaussianModelBuilder.run()

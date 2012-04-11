@@ -23,13 +23,13 @@
 #
 
 """
-Tests for HybridOptimizer
+Tests for FitPsf
 
 Run with:
-   ./testHybridOptimizer.py
+   ./testFitPsf.py
 or
    python
-   >>> import testHybridOptimizer; testHybridOptimizer.run()
+   >>> import testFitPsf; testFitPsf.run()
 """
 
 import unittest
@@ -42,40 +42,43 @@ import lsst.afw.geom.ellipses as ellipses
 import lsst.afw.image
 import lsst.afw.detection
 import lsst.meas.extensions.multiShapelet as ms
-import testLib
 
 numpy.random.seed(5)
 numpy.set_printoptions(linewidth=120)
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-class HybridOptimizerTestCase(unittest.TestCase):
+class FitPsfTestCase(unittest.TestCase):
 
     def assertClose(self, a, b, rtol=1E-5, atol=1E-8):
         self.assert_(numpy.allclose(a, b, rtol=rtol, atol=atol), "\n%s\n!=\n%s" % (a, b))
 
-    def testRosenbrock(self):
-        ctrl = ms.HybridOptimizerControl()
-        ctrl.fTol = 1E-10
-        ctrl.gTol = 1E-10
-        ctrl.minStep = 1E-14
-        ctrl.maxIter = 200
-        ctrl.tau = 1E-3
-        initial = numpy.array([-1.2, 1.0], dtype=float)
-        for lambda_ in (0.0, 1E-5, 1.0, 1E2, 1E4):
-            obj = testLib.RosenbrockObjective(lambda_)
-            opt = ms.HybridOptimizer(obj, initial, ctrl)
-            for k in range(ctrl.maxIter):
-                state = opt.step()
-                if state:
-                    break
-            final = opt.getParameters()
-            dx = ((final - numpy.array([1.0, 1.0], dtype=float))**2).sum()**0.5
-            if lambda_ <= 1.0:
-                self.assert_(state & ms.HybridOptimizer.SUCCESS)
-            if state & ms.HybridOptimizer.SUCCESS_FTOL:
-                self.assert_(numpy.abs(numpy.max(opt.getFunction())) <= ctrl.fTol)
-            self.assert_(dx <= 1E-4)
+    def testObjective(self):
+        eps = 1E-6
+        ctrl = ms.FitPsfControl()
+        image = lsst.afw.image.ImageD(5, 5)
+        nParameters = 4
+        nData = image.getBBox().getArea()
+        nTests = 10
+        obj = ms.FitPsfAlgorithm.makeObjective(ctrl, image, geom.Point2D(2.0, 2.0))
+        parameters = numpy.random.rand(nTests, nParameters) * 0.1
+        parameters[:,3] += 1.0  # we want log(radius) ~ 1.0
+        for i in range(nTests):
+            f0 = numpy.zeros(nData, dtype=float)
+            obj.computeFunction(parameters[i,:], f0)
+            d0 = numpy.zeros((nParameters, nData), dtype=float).transpose()
+            d1 = numpy.zeros((nParameters, nData), dtype=float).transpose()
+            obj.computeDerivative(parameters[i,:], f0, d0)
+            for j in range(nParameters):
+                parameters[i,j] += eps
+                f1a = numpy.zeros(nData, dtype=float)
+                obj.computeFunction(parameters[i,:], f1a)
+                parameters[i,j] -= 2.0*eps
+                f1b = numpy.zeros(nData, dtype=float)
+                obj.computeFunction(parameters[i,:], f1b)
+                d1[:,j] = (f1a - f1b) / (2.0 * eps)
+                parameters[i,j] += eps
+            self.assertClose(d0, d1, rtol=1E-12, atol=1E-10)
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -85,7 +88,7 @@ def suite():
     utilsTests.init()
 
     suites = []
-    suites += unittest.makeSuite(HybridOptimizerTestCase)
+    suites += unittest.makeSuite(FitPsfTestCase)
     suites += unittest.makeSuite(utilsTests.MemoryTestCase)
     return unittest.TestSuite(suites)
 
