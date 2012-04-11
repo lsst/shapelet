@@ -28,6 +28,7 @@
 #include "lsst/afw/math/shapelets.h"
 #include "lsst/afw/detection/Psf.h"
 #include "lsst/meas/algorithms/Algorithm.h"
+#include "lsst/meas/extensions/multiShapelet/HybridOptimizer.h"
 
 namespace lsst { namespace meas { namespace extensions { namespace multiShapelet {
 
@@ -46,6 +47,7 @@ public:
                        " held fixed in double-Gaussian ellipse fit, then allowed to vary"
                        " when shapelets coefficients are fit and ellipses are held fixed."
     );
+    LSST_CONTROL_FIELD(initialRadius, double, "Initial radius of inner component in pixels");
 
     PTR(FitPsfControl) clone() const { return boost::static_pointer_cast<FitPsfControl>(_clone()); }
 
@@ -56,8 +58,8 @@ public:
     
     FitPsfControl() : 
         algorithms::AlgorithmControl("multishapelet.psf", 2.0), 
-        innerOrder(0), outerOrder(0), radiusRatio(2.0), amplitudeRatio(0.1)
-        {}
+        innerOrder(0), outerOrder(0), radiusRatio(2.0), amplitudeRatio(0.1), initialRadius(2.0)
+    {}
 
 private:
     virtual PTR(algorithms::AlgorithmControl) _clone() const;
@@ -84,8 +86,16 @@ struct FitPsfModel {
     double radiusRatio; ///< radius of outer expansion divided by radius of inner expansion (fixed)
     bool failed;  ///< set to true if the measurement failed
 
-    /// @brief Construct an uninitialized model with arrays corresponding to the given order.
-    explicit FitPsfModel(FitPsfControl const & ctrl);
+    /**
+     *  @brief Construct a model from a double-Gaussian optimization parameter vector.
+     *
+     *  This is used internally by FitPsfAlgorithm to construct the model after fitting
+     *  an elliptical double-Gaussian, and the 4-element parameter vector should correspond
+     *  to the parameters used by FitPsfAlgorithm::makeObjective and
+     *  FitPsfAlgorithm::makeOptimizer.  By using those functions and this constructor,
+     *  we can inspect the optimizer at each step in Python.
+     */
+    FitPsfModel(FitPsfControl const & ctrl, ndarray::Array<double const,1,1> const & parameters);
 
     /// @brief Construct by extracting saved values from a SourceRecord.
     FitPsfModel(FitPsfControl const & ctrl, afw::table::SourceRecord const & source);
@@ -115,6 +125,9 @@ struct FitPsfModel {
 class FitPsfAlgorithm : public algorithms::Algorithm {
 public:
 
+    typedef FitPsfControl Control;
+    typedef FitPsfModel Model;
+
     /// @brief Construct an algorithm instance and register its fields with a Schema.
     FitPsfAlgorithm(FitPsfControl const & ctrl, afw::table::Schema & schema);
 
@@ -123,8 +136,25 @@ public:
         return static_cast<FitPsfControl const &>(algorithms::Algorithm::getControl());
     }
 
-    /// @brief Return an Objective that can be used to fit an elliptical double-Gaussian to the image.
+    /**
+     *  @brief Return an Objective that can be used to fit an elliptical double-Gaussian to the image.
+     *
+     *  This is provided primarily for testing and debugging purposes.
+     */
     static PTR(Objective) makeObjective(
+        FitPsfControl const & ctrl,
+        afw::image::Image<double> const & image,
+        afw::geom::Point2D const & center
+    );
+
+    /**
+     *  @brief Return an optimizer that can be used to fit an elliptical double-Gaussian to the image.
+     *
+     *  This is provided primarily for testing and debugging purposes; the user can create an optimizer,
+     *  step through it, and use the FitPsfModel constructor that takes a parameter vector to
+     *  visualize its progress.
+     */
+    static HybridOptimizer makeOptimizer(
         FitPsfControl const & ctrl,
         afw::image::Image<double> const & image,
         afw::geom::Point2D const & center

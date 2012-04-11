@@ -95,7 +95,7 @@ public:
  *  adding them to inspect each step in detail.
  */
 
-class HybridOptimizer : private boost::noncopyable {
+class HybridOptimizer {
 public:
 
     typedef HybridOptimizerControl Control;

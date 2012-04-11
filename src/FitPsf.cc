@@ -23,6 +23,8 @@
 
 #include "lsst/meas/extensions/multiShapelet/FitPsf.h"
 #include "lsst/meas/extensions/multiShapelet/GaussianObjective.h"
+#include "lsst/afw/math/shapelets/ModelBuilder.h"
+#include "lsst/afw/math/LeastSquares.h"
 
 namespace lsst { namespace meas { namespace extensions { namespace multiShapelet {
 
@@ -76,6 +78,11 @@ void fillMultiShapeletImage(
 class FitPsfObjective : public GaussianObjective {
 public:
 
+    typedef afw::geom::ellipses::Separable<
+        afw::geom::ellipses::ConformalShear,
+        afw::geom::ellipses::LogTraceRadius
+    > EllipseCore;
+
     virtual void computeDerivative(
         ndarray::Array<double const,1,1> const & parameters, 
         ndarray::Array<double const,1,1> const & function,
@@ -103,10 +110,6 @@ protected:
         ndarray::Array<double const,1,1> const & parameters, 
         ComponentList::iterator iter, ComponentList::iterator const end
     ) {
-        typedef afw::geom::ellipses::Separable<
-            afw::geom::ellipses::ConformalShear,
-            afw::geom::ellipses::LogTraceRadius
-        > EllipseCore;
         Component & inner = *iter++;
         Component & outer = *iter++;
         assert(iter == end);
@@ -134,7 +137,7 @@ private:
 
 } // anonymous
 
-FitPsfModel::FitPsfModel(FitPsfControl const & ctrl) :
+FitPsfModel::FitPsfModel(FitPsfControl const & ctrl, ndarray::Array<double const,1,1> const & parameters) :
     inner(ndarray::allocate(afw::math::shapelets::computeSize(ctrl.innerOrder))),
     outer(ndarray::allocate(afw::math::shapelets::computeSize(ctrl.outerOrder))),
     ellipse(),
@@ -143,6 +146,9 @@ FitPsfModel::FitPsfModel(FitPsfControl const & ctrl) :
 {
     inner.deep() = 0.0;
     outer.deep() = 0.0;
+    ellipse = FitPsfObjective::EllipseCore(parameters[1], parameters[2], parameters[3]);
+    inner[0] = parameters[0];
+    outer[0] = parameters[0] * ctrl.amplitudeRatio;
 }
 
 FitPsfModel::FitPsfModel(FitPsfControl const & ctrl, afw::table::SourceRecord const & source) :
@@ -228,6 +234,22 @@ PTR(Objective) FitPsfAlgorithm::makeObjective(
     return boost::make_shared<FitPsfObjective>(ctrl, image, center);
 }
 
+HybridOptimizer FitPsfAlgorithm::makeOptimizer(
+    FitPsfControl const & ctrl,
+    afw::image::Image<double> const & image,
+    afw::geom::Point2D const & center
+) {
+    PTR(Objective) obj = makeObjective(ctrl, image, center);
+    HybridOptimizerControl optCtrl; // TODO: nest this in FitPsfControl
+    ndarray::Array<double,1,1> initial = ndarray::allocate(obj->getParameterSize());
+    // initialize inner amplitude parameter s.t. integral is one
+    initial[0] = 1.0 / (2.0 * afw::geom::PI * ctrl.initialRadius * ctrl.initialRadius 
+                        * (1.0 + ctrl.amplitudeRatio * ctrl.radiusRatio * ctrl.radiusRatio));
+    initial[1] = 0.0; // e1
+    initial[2] = 0.0; // e2
+    initial[3] = ctrl.initialRadius;
+    return HybridOptimizer(obj, initial, optCtrl);
+}
 
 template <typename PixelT>
 void FitPsfAlgorithm::_apply(
@@ -254,7 +276,32 @@ FitPsfModel FitPsfAlgorithm::apply(
     afw::image::Image<double> const & image,
     afw::geom::Point2D const & center
 ) {
-    // TODO
+    // First, we fit an elliptical double-Gaussian with fixed radius and amplitude ratios;
+    // the free parameters are the amplitude and ellipse core of the inner component.
+    // We intentionally separate these steps into public functions so we can reproduce
+    // the same results with a pure-Python implementation that lets us visualize what's
+    // going on.
+    HybridOptimizer opt = makeOptimizer(ctrl, image, center);
+    opt.run();
+    Model model(ctrl, opt.getParameters());
+    model.failed = !(opt.getState() & HybridOptimizer::SUCCESS);
+    // Now, we free up all the amplitudes (including higher-order shapelet terms), and do a linear-only fit.
+    afw::geom::Box2I bbox = image.getBBox(afw::image::PARENT);
+    int innerCoeffs = afw::math::shapelets::computeSize(ctrl.innerOrder);
+    int outerCoeffs = afw::math::shapelets::computeSize(ctrl.outerOrder);
+    ndarray::Array<double,2,-2> matrix = ndarray::allocate(bbox.getArea(), innerCoeffs + outerCoeffs);
+    afw::geom::ellipses::Ellipse innerEllipse(model.ellipse, center);
+    afw::geom::ellipses::Ellipse outerEllipse(model.ellipse, center);
+    outerEllipse.getCore().scale(ctrl.radiusRatio);
+    afw::math::shapelets::ModelBuilder innerShapelets(ctrl.innerOrder, innerEllipse, bbox);
+    afw::math::shapelets::ModelBuilder outerShapelets(ctrl.outerOrder, outerEllipse, bbox);
+    matrix[ndarray::view()(0, innerCoeffs)] = innerShapelets.getModel();
+    matrix[ndarray::view()(innerCoeffs, innerCoeffs + outerCoeffs)] = outerShapelets.getModel();
+    ndarray::Array<double,1,1> data = ndarray::flatten<1>(ndarray::copy(image.getArray()));
+    afw::math::LeastSquares lstsq = afw::math::LeastSquares::fromDesignMatrix(matrix, data);
+    model.inner.deep() = lstsq.getSolution()[ndarray::view(0, innerCoeffs)];
+    model.outer.deep() = lstsq.getSolution()[ndarray::view(innerCoeffs, innerCoeffs + outerCoeffs)];
+    return model;
 }
 
 PTR(algorithms::AlgorithmControl) FitPsfControl::_clone() const {
