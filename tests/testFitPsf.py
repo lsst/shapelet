@@ -60,12 +60,21 @@ class FitPsfTestCase(unittest.TestCase):
         nParameters = 4
         nData = image.getBBox().getArea()
         nTests = 10
-        obj = ms.FitPsfAlgorithm.makeObjective(ctrl, image, geom.Point2D(2.0, 2.0))
+        center = geom.Point2D(2.0, 2.0)
+        xGrid, yGrid = numpy.meshgrid(numpy.arange(-2, 3), numpy.arange(-2, 3))
+        #image.getArray()[:,:] = 1.0 * numpy.exp(-0.5*(xGrid**2 + yGrid**2))
+        #image.getArray()[:,:] += numpy.random.randn(5, 5) * 0.1
+        obj = ms.FitPsfAlgorithm.makeObjective(ctrl, image, center)
         parameters = numpy.random.rand(nTests, nParameters) * 0.1
         parameters[:,3] += 1.0  # we want log(radius) ~ 1.0
         for i in range(nTests):
             f0 = numpy.zeros(nData, dtype=float)
             obj.computeFunction(parameters[i,:], f0)
+            model = ms.FitPsfModel(ctrl, parameters[i,:])
+            mImage = lsst.afw.image.ImageD(5, 5)
+            model.evaluate(mImage, center)
+            f1 = (mImage.getArray() - image.getArray()).ravel()
+            self.assertClose(f0, f1)
             d0 = numpy.zeros((nParameters, nData), dtype=float).transpose()
             d1 = numpy.zeros((nParameters, nData), dtype=float).transpose()
             obj.computeDerivative(parameters[i,:], f0, d0)

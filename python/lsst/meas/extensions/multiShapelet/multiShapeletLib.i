@@ -53,3 +53,6 @@ Measurement algorithms using galaxy models built from multi-scale shapelets.
 %shared_ptr(lsst::meas::extensions::multiShapelet::FitPsfControl);
 %shared_ptr(lsst::meas::extensions::multiShapelet::FitPsfAlgorithm);
 %include "lsst/meas/extensions/multiShapelet/FitPsf.h"
+
+%template(evaluate) lsst::meas::extensions::multiShapelet::FitPsfModel::evaluate<float>;
+%template(evaluate) lsst::meas::extensions::multiShapelet::FitPsfModel::evaluate<double>;

@@ -63,7 +63,7 @@ void fillMultiShapeletImage(
         ) {
             *pixIter = ev(point);
         }
-        point.setY(0.0);
+        point.setX(0.0);
     }
 }
 
@@ -144,11 +144,12 @@ FitPsfModel::FitPsfModel(FitPsfControl const & ctrl, ndarray::Array<double const
     radiusRatio(ctrl.radiusRatio),
     failed(false)
 {
+    static double const NORMALIZATION = std::sqrt(afw::geom::PI);
     inner.deep() = 0.0;
     outer.deep() = 0.0;
     ellipse = FitPsfObjective::EllipseCore(parameters[1], parameters[2], parameters[3]);
-    inner[0] = parameters[0];
-    outer[0] = parameters[0] * ctrl.amplitudeRatio;
+    inner[0] = parameters[0] * NORMALIZATION;
+    outer[0] = parameters[0] * ctrl.amplitudeRatio * NORMALIZATION;
 }
 
 FitPsfModel::FitPsfModel(FitPsfControl const & ctrl, afw::table::SourceRecord const & source) :
@@ -241,13 +242,15 @@ HybridOptimizer FitPsfAlgorithm::makeOptimizer(
 ) {
     PTR(Objective) obj = makeObjective(ctrl, image, center);
     HybridOptimizerControl optCtrl; // TODO: nest this in FitPsfControl
+    optCtrl.useCholesky = false;
     ndarray::Array<double,1,1> initial = ndarray::allocate(obj->getParameterSize());
     // initialize inner amplitude parameter s.t. integral is one
-    initial[0] = 1.0 / (2.0 * afw::geom::PI * ctrl.initialRadius * ctrl.initialRadius 
+    double sum = image.getArray().asEigen<Eigen::ArrayXpr>().sum();
+    initial[0] = sum / (2.0 * afw::geom::PI * ctrl.initialRadius * ctrl.initialRadius 
                         * (1.0 + ctrl.amplitudeRatio * ctrl.radiusRatio * ctrl.radiusRatio));
-    initial[1] = 0.0; // e1
-    initial[2] = 0.0; // e2
-    initial[3] = ctrl.initialRadius;
+    afw::geom::ellipses::Axes axes(ctrl.initialRadius, ctrl.initialRadius, 0.0);
+    FitPsfObjective::EllipseCore core(axes);
+    core.writeParameters(&initial[1]);
     return HybridOptimizer(obj, initial, optCtrl);
 }
 
@@ -316,5 +319,12 @@ PTR(algorithms::Algorithm) FitPsfControl::_makeAlgorithm(
 }
 
 LSST_MEAS_ALGORITHM_PRIVATE_IMPLEMENTATION(FitPsfAlgorithm);
+
+template
+void FitPsfModel::evaluate(ndarray::Array<float,2,1> const & array, afw::geom::Point2D const & center) const;
+
+template
+void FitPsfModel::evaluate(ndarray::Array<double,2,1> const & array, afw::geom::Point2D const & center) const;
+
 
 }}}} // namespace lsst::meas::extensions::multiShapelet
