@@ -67,7 +67,7 @@ class HybridOptimizerTestCase(unittest.TestCase):
             opt = ms.HybridOptimizer(obj, initial, ctrl)
             for k in range(ctrl.maxIter):
                 state = opt.step()
-                if state:
+                if state & ms.HybridOptimizer.FINISHED:
                     break
             final = opt.getParameters()
             dx = ((final - numpy.array([1.0, 1.0], dtype=float))**2).sum()**0.5

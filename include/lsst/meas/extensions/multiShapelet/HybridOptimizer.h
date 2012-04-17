@@ -103,14 +103,15 @@ public:
     enum MethodEnum { LM=0, BFGS=1 };
 
     enum StateFlags {
-        WORKING          = 0x00, ///< No stopping condition met.
-        SUCCESS_FTOL     = 0x01, ///< Function values are below tolerance (i.e. perfect fit).
-        SUCCESS_GTOL     = 0x02, ///< Gradient values are below tolerance (at minimum).
-        SUCCESS          = SUCCESS_FTOL | SUCCESS_GTOL, ///< Any success condition.
-        FAILURE_MINSTEP  = 0x04, ///< Calculated step became too small.
-        FAILURE_MINTRUST = 0x08, ///< Trust region became too small.
-        FAILURE_MAXITER  = 0x10, ///< Too many iterations.
-        FAILURE          = FAILURE_MINSTEP | FAILURE_MINTRUST | FAILURE_MAXITER ///< Any failure condition.
+        STEP_ACCEPTED     = 0x01, ///< Last trial step was accepted.
+        SUCCESS_FTOL      = 0x04, ///< Function values are below tolerance (i.e. perfect fit).
+        SUCCESS_GTOL      = 0x08, ///< Gradient values are below tolerance (at minimum).
+        SUCCESS           = SUCCESS_FTOL | SUCCESS_GTOL, ///< Any success condition.
+        FAILURE_MINSTEP   = 0x10, ///< Calculated step became too small.
+        FAILURE_MINTRUST  = 0x20, ///< Trust region became too small.
+        FAILURE_MAXITER   = 0x40, ///< Too many iterations.
+        FAILURE           = FAILURE_MINSTEP | FAILURE_MINTRUST | FAILURE_MAXITER, ///< Any failure condition.
+        FINISHED          = SUCCESS | FAILURE  ///< Any success or failure condition.
     };
 
     /**
@@ -145,6 +146,9 @@ public:
     /// @brief Return the squared norm of the function vector.
     double getChiSq() const;
 
+    /// @brief Return the squared norm of the function vector for the trial parameters.
+    double getTrialChiSq() const;
+
     /**
      *  @brief Return the maximum absolute value (inf norm) of the function vector.
      *
@@ -167,7 +171,11 @@ public:
 
     ndarray::Array<double const,1,1> getParameters() const;
 
+    ndarray::Array<double const,1,1> getTrialParameters() const;
+
     ndarray::Array<double const,1,1> getFunction() const;
+
+    ndarray::Array<double const,1,1> getTrialFunction() const;
 
     Control const & getControl() const;
 

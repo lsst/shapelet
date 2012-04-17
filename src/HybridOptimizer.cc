@@ -95,7 +95,8 @@ HybridOptimizer::Impl::Impl(
     PTR(Objective) const & objective,
     ndarray::Array<double const,1,1> const & parameters,
     Control const & control
-) : obj(objective), ctrl(control), method(LM), state(WORKING), count(0), rank(objective->getParameterSize()),
+) : obj(objective), ctrl(control), method(LM), state(0), count(0),
+    rank(objective->getParameterSize()),
     x(ndarray::copy(parameters)), xNew(ndarray::copy(parameters)),
     f(ndarray::allocate(objective->getFunctionSize())),
     fNew(ndarray::allocate(objective->getFunctionSize())),
@@ -117,7 +118,7 @@ HybridOptimizer::Impl::Impl(
     obj->computeFunction(xNew.shallow(), fNew.shallow());
     f = fNew;
     normInfF = f.lpNorm<Eigen::Infinity>();
-    Q = 0.5 * f.squaredNorm();
+    QNew = Q = 0.5 * f.squaredNorm();
     JNew.setZero(); 
     obj->computeDerivative(xNew.shallow(), fNew.shallow(), JNew.shallow());
     J = JNew;
@@ -150,7 +151,7 @@ void HybridOptimizer::Impl::step() {
     double normH = h.norm();
     if (!checkStep(normH, FAILURE_MINSTEP)) return;
     if (method == BFGS && normH > delta) h *= delta / normH;
-    
+
     xNew = x + h;
     fNew.setZero();
     obj->computeFunction(xNew.shallow(), fNew.shallow());
@@ -245,6 +246,12 @@ void HybridOptimizer::Impl::step() {
             method = BFGS;
         }
     }
+
+    if (isBetter) {
+        state |= STEP_ACCEPTED;
+    } else {
+        state &= ~STEP_ACCEPTED;
+    }
 }
 
 void HybridOptimizer::Impl::solve(Eigen::MatrixXd const & m) {
@@ -276,7 +283,7 @@ int HybridOptimizer::getState() const {
 int HybridOptimizer::run() {
     for (int n = 0; n < _impl->ctrl.maxIter; ++n) {
         _impl->step();
-        if (_impl->state) return _impl->state;
+        if (_impl->state & FINISHED) return _impl->state;
     }
     _impl->state |= FAILURE_MAXITER;
     return _impl->state;
@@ -284,13 +291,16 @@ int HybridOptimizer::run() {
 
 HybridOptimizer::MethodEnum HybridOptimizer::getMethod() const { return _impl->method; }
 double HybridOptimizer::getChiSq() const { return 2.0 * _impl->Q; }
+double HybridOptimizer::getTrialChiSq() const { return 2.0 * _impl->QNew; }
 double HybridOptimizer::getFunctionInfNorm() const { return _impl->normInfF; }
 double HybridOptimizer::getGradientInfNorm() const { return _impl->normInfG; }
 double HybridOptimizer::getMu() const { return _impl->mu; }
 double HybridOptimizer::getDelta() const { return _impl->delta; }
 
 ndarray::Array<double const,1,1> HybridOptimizer::getParameters() const { return _impl->x.shallow(); }
+ndarray::Array<double const,1,1> HybridOptimizer::getTrialParameters() const { return _impl->xNew.shallow(); }
 ndarray::Array<double const,1,1> HybridOptimizer::getFunction() const { return _impl->f.shallow(); }
+ndarray::Array<double const,1,1> HybridOptimizer::getTrialFunction() const { return _impl->fNew.shallow(); }
 
 HybridOptimizerControl const & HybridOptimizer::getControl() const { return _impl->ctrl; }
 
