@@ -108,8 +108,8 @@ HybridOptimizer::Impl::Impl(
     v(Eigen::VectorXd::Zero(objective->getParameterSize())),
     A(Eigen::MatrixXd::Zero(objective->getParameterSize(), objective->getParameterSize())),
     B(Eigen::MatrixXd::Identity(objective->getParameterSize(), objective->getParameterSize())),
-    g(Eigen::VectorXd::Zero(objective->getFunctionSize())),
-    gNew(Eigen::VectorXd::Zero(objective->getFunctionSize())),
+    g(Eigen::VectorXd::Zero(objective->getParameterSize())),
+    gNew(Eigen::VectorXd::Zero(objective->getParameterSize())),
     ldlt(0), eigh(0),
     priorValue(0.0), normInfF(0.0), normInfG(0.0), Q(0.0), QNew(0.0), mu(0.0), nu(2.0), delta(ctrl.delta0)
 {
@@ -208,8 +208,7 @@ void HybridOptimizer::Impl::step() {
             shouldSwitchMethod = (nu >= 32.0);
         }
     }
-
-    y = JNew.adjoint() * (JNew * h) + gNew - g;
+    y = JNew.adjoint() * (JNew * h) + (gNew - g);
     if (hasPrior) y += priorHessian.selfadjointView<Eigen::Lower>() * h;
     double hy = h.dot(y);
     if (hy > 0.0) {
