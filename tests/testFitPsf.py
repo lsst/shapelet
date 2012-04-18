@@ -57,20 +57,21 @@ class FitPsfTestCase(unittest.TestCase):
         eps = 1E-6
         ctrl = ms.FitPsfControl()
         image = lsst.afw.image.ImageD(5, 5)
-        nParameters = 4
+        nParameters = 3
         nData = image.getBBox().getArea()
         nTests = 10
         center = geom.Point2D(2.0, 2.0)
         xGrid, yGrid = numpy.meshgrid(numpy.arange(-2, 3), numpy.arange(-2, 3))
-        #image.getArray()[:,:] = 1.0 * numpy.exp(-0.5*(xGrid**2 + yGrid**2))
-        #image.getArray()[:,:] += numpy.random.randn(5, 5) * 0.1
+        image.getArray()[:,:] = 1.0 * numpy.exp(-0.5*(xGrid**2 + yGrid**2))
+        image.getArray()[:,:] += numpy.random.randn(5, 5) * 0.1
         obj = ms.FitPsfAlgorithm.makeObjective(ctrl, image, center)
         parameters = numpy.random.rand(nTests, nParameters) * 0.1
-        parameters[:,3] += 1.0  # we want log(radius) ~ 1.0
+        parameters[:,0] += 4
+        parameters[:,1] += 3
         for i in range(nTests):
             f0 = numpy.zeros(nData, dtype=float)
             obj.computeFunction(parameters[i,:], f0)
-            model = ms.FitPsfModel(ctrl, parameters[i,:])
+            model = ms.FitPsfModel(ctrl, obj.getAmplitude(), parameters[i,:])
             mImage = lsst.afw.image.ImageD(5, 5)
             model.evaluate(mImage, center)
             f1 = (mImage.getArray() - image.getArray()).ravel()

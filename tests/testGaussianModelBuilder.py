@@ -71,12 +71,10 @@ class GaussianModelBuilderTestCase(unittest.TestCase):
         for i in range(len(parameters)):
             parameters[i] += eps
             ellipse = makeEllipse(parameters)
-            builder.update(ellipse)
-            derivative[:,i] = builder.getModel()
+            derivative[:,i] = builder.computeModel(ellipse)
             parameters[i] -= 2.0 * eps
             ellipse = makeEllipse(parameters)
-            builder.update(ellipse)
-            derivative[:,i] -= builder.getModel()
+            derivative[:,i] -= builder.computeModel(ellipse)
             derivative[:,i] /= 2.0 * eps
         return derivative
 
@@ -93,20 +91,17 @@ class GaussianModelBuilderTestCase(unittest.TestCase):
 
     def testModel1(self):
         builder = ms.GaussianModelBuilder(self.bbox)
-        builder.update(self.ellipse)
-        self.assertClose(builder.getModel(), self.model)
+        self.assertClose(builder.computeModel(self.ellipse), self.model)
 
     def testModel2(self):
         builder = ms.GaussianModelBuilder(self.region)
-        builder.update(self.ellipse)
-        self.assertClose(builder.getModel(), self.model)
+        self.assertClose(builder.computeModel(self.ellipse), self.model)
 
     def testDerivative1(self):
         """test derivative with no reparameterization"""
         builder = ms.GaussianModelBuilder(self.bbox)
-        builder.update(self.ellipse)
         a = numpy.zeros((5, builder.getSize()), dtype=float).transpose()
-        builder.computeDerivative(a)
+        builder.computeDerivative(a, self.ellipse)
         def makeAxesEllipse(p):
             return ellipses.Ellipse(ellipses.Axes(*p[0:3]), geom.Point2D(*p[3:5]))
         n = self.buildNumericalDerivative(builder, self.ellipse.getParameterVector(), makeAxesEllipse)
@@ -116,12 +111,11 @@ class GaussianModelBuilderTestCase(unittest.TestCase):
     def testDerivative2(self):
         """test derivative with trivial reparameterization (derivative wrt center point only)"""
         builder = ms.GaussianModelBuilder(self.bbox)
-        builder.update(self.ellipse)
         jac = numpy.zeros((5, 2), dtype=float)
         jac[3,0] = 1.0
         jac[4,1] = 1.0
         a = numpy.zeros((2, builder.getSize()), dtype=float).transpose()
-        builder.computeDerivative(a, jac)
+        builder.computeDerivative(a, self.ellipse, jac)
         def makePoint(p):
             return ellipses.Ellipse(self.ellipse.getCore(), geom.Point2D(*p))
         n = self.buildNumericalDerivative(builder, self.ellipse.getParameterVector()[3:5], makePoint)
@@ -131,12 +125,12 @@ class GaussianModelBuilderTestCase(unittest.TestCase):
     def testDerivative3(self):
         """test derivative with nontrivial reparameterization (derivative wrt different core)"""
         builder = ms.GaussianModelBuilder(self.bbox)
-        builder.update(self.ellipse)
+        builder.computeModel(self.ellipse)
         quad = ellipses.Quadrupole(self.ellipse.getCore())
         jac = numpy.zeros((5, 3), dtype=float)
         jac[:3,:] = self.ellipse.getCore().dAssign(quad)
         a = numpy.zeros((3, builder.getSize()),dtype=float).transpose()
-        builder.computeDerivative(a, jac)
+        builder.computeDerivative(a, self.ellipse, jac, False, True)
         def makeQuadrupole(p):
             return ellipses.Ellipse(ellipses.Quadrupole(*p), self.ellipse.getCenter())
         n = self.buildNumericalDerivative(builder, quad.getParameterVector(), makeQuadrupole)

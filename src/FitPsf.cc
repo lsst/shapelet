@@ -67,77 +67,13 @@ void fillMultiShapeletImage(
     }
 }
 
-/*
- *  Objective function for fitting an elliptical double Gaussian to a PSF image.
- *
- *  Parameters are [inner amplitude, e1, e2, log(inner radius)]; the outer quantities
- *  are fixed by the control fields.  The ellipticities are ConformalShear and the
- *  radius parameter is the log of the trace radius, so there are no restrictions on
- *  the range of the parameters.
- */
-class FitPsfObjective : public GaussianObjective {
-public:
-
-    typedef afw::geom::ellipses::Separable<
-        afw::geom::ellipses::ConformalShear,
-        afw::geom::ellipses::LogTraceRadius
-    > EllipseCore;
-
-    virtual void computeDerivative(
-        ndarray::Array<double const,1,1> const & parameters, 
-        ndarray::Array<double const,1,1> const & function,
-        ndarray::Array<double,2,-2> const & derivative
-    ) {
-        GaussianObjective::computeDerivative(parameters, function, derivative);
-        derivative.asEigen().col(0) = function.asEigen() / parameters[0];
-    }
-
-    explicit FitPsfObjective(
-        FitPsfControl const & ctrl, 
-        afw::image::Image<afw::math::Kernel::Pixel> const & image,
-        afw::geom::Point2D const & center
-    ) : 
-        GaussianObjective(
-            2, 4, image.getBBox(afw::image::PARENT), 
-            ndarray::flatten<1>(ndarray::copy(image.getArray()))
-        ),
-        _ctrl(ctrl), _scaling(afw::geom::LinearTransform::makeScaling(ctrl.radiusRatio)), _center(center)
-        {}
-
-protected:
-
-    virtual void readParameters(
-        ndarray::Array<double const,1,1> const & parameters, 
-        ComponentList::iterator iter, ComponentList::iterator const end
-    ) {
-        Component & inner = *iter++;
-        Component & outer = *iter++;
-        assert(iter == end);
-        if (!inner.ellipse) {
-            inner.ellipse = boost::make_shared<afw::geom::ellipses::Ellipse>(EllipseCore(), _center);
-            inner.jacobian.block<3,3>(0, 1).setIdentity();
-        }
-        if (!outer.ellipse) {
-            outer.ellipse = boost::make_shared<afw::geom::ellipses::Ellipse>(EllipseCore(), _center);
-        }
-        EllipseCore & outerCore = static_cast<EllipseCore &>(outer.ellipse->getCore());
-        EllipseCore & innerCore = static_cast<EllipseCore &>(inner.ellipse->getCore());
-        inner.amplitude = parameters[0];
-        outer.amplitude = _ctrl.amplitudeRatio * parameters[0];
-        innerCore.readParameters(parameters.getData() + 1);
-        outerCore = innerCore.transform(_scaling);
-        outer.jacobian.block<3,3>(0, 1) = innerCore.transform(_scaling).d();
-    }
-
-private:
-    FitPsfControl _ctrl;
-    afw::geom::LinearTransform _scaling;
-    afw::geom::Point2D _center;
-};
-
 } // anonymous
 
-FitPsfModel::FitPsfModel(FitPsfControl const & ctrl, ndarray::Array<double const,1,1> const & parameters) :
+FitPsfModel::FitPsfModel(
+    FitPsfControl const & ctrl,
+    double amplitude,
+    ndarray::Array<double const,1,1> const & parameters
+) :
     inner(ndarray::allocate(afw::math::shapelets::computeSize(ctrl.innerOrder))),
     outer(ndarray::allocate(afw::math::shapelets::computeSize(ctrl.outerOrder))),
     ellipse(),
@@ -147,9 +83,9 @@ FitPsfModel::FitPsfModel(FitPsfControl const & ctrl, ndarray::Array<double const
     static double const NORMALIZATION = std::sqrt(afw::geom::PI);
     inner.deep() = 0.0;
     outer.deep() = 0.0;
-    ellipse = FitPsfObjective::EllipseCore(parameters[1], parameters[2], parameters[3]);
-    inner[0] = parameters[0] * NORMALIZATION;
-    outer[0] = parameters[0] * ctrl.amplitudeRatio * NORMALIZATION;
+    ellipse = afw::geom::ellipses::Axes(parameters[0], parameters[1], parameters[2]);
+    inner[0] = amplitude * NORMALIZATION;
+    outer[0] = amplitude * ctrl.amplitudeRatio * NORMALIZATION;
 }
 
 FitPsfModel::FitPsfModel(FitPsfControl const & ctrl, afw::table::SourceRecord const & source) :
@@ -227,12 +163,18 @@ FitPsfAlgorithm::FitPsfAlgorithm(FitPsfControl const & ctrl, afw::table::Schema 
              ))
 {}
 
-PTR(Objective) FitPsfAlgorithm::makeObjective(
+PTR(GaussianObjective) FitPsfAlgorithm::makeObjective(
     FitPsfControl const & ctrl,
     afw::image::Image<double> const & image,
     afw::geom::Point2D const & center
 ) {
-    return boost::make_shared<FitPsfObjective>(ctrl, image, center);
+    GaussianObjective::ComponentList components;
+    components.push_back(GaussianObjective::Component(1.0, 1.0));
+    components.push_back(GaussianObjective::Component(ctrl.amplitudeRatio, ctrl.radiusRatio));
+    return boost::make_shared<GaussianObjective>(
+        components, center, image.getBBox(afw::image::PARENT),
+        ndarray::flatten<1>(ndarray::copy(image.getArray()))
+    );
 }
 
 HybridOptimizer FitPsfAlgorithm::makeOptimizer(
@@ -244,13 +186,8 @@ HybridOptimizer FitPsfAlgorithm::makeOptimizer(
     HybridOptimizerControl optCtrl; // TODO: nest this in FitPsfControl
     optCtrl.useCholesky = false;
     ndarray::Array<double,1,1> initial = ndarray::allocate(obj->getParameterSize());
-    // initialize inner amplitude parameter s.t. integral is one
-    double sum = image.getArray().asEigen<Eigen::ArrayXpr>().sum();
-    initial[0] = sum / (2.0 * afw::geom::PI * ctrl.initialRadius * ctrl.initialRadius 
-                        * (1.0 + ctrl.amplitudeRatio * ctrl.radiusRatio * ctrl.radiusRatio));
     afw::geom::ellipses::Axes axes(ctrl.initialRadius, ctrl.initialRadius, 0.0);
-    FitPsfObjective::EllipseCore core(axes);
-    core.writeParameters(&initial[1]);
+    axes.writeParameters(initial.getData());
     return HybridOptimizer(obj, initial, optCtrl);
 }
 
@@ -286,7 +223,12 @@ FitPsfModel FitPsfAlgorithm::apply(
     // going on.
     HybridOptimizer opt = makeOptimizer(ctrl, image, center);
     opt.run();
-    Model model(ctrl, opt.getParameters());
+
+    Model model(
+        ctrl, 
+        boost::static_pointer_cast<GaussianObjective const>(opt.getObjective())->getAmplitude(),
+        opt.getParameters()
+    );
     model.failed = !(opt.getState() & HybridOptimizer::SUCCESS);
     // Now, we free up all the amplitudes (including higher-order shapelet terms), and do a linear-only fit.
     afw::geom::Box2I bbox = image.getBBox(afw::image::PARENT);

@@ -40,24 +40,27 @@ public:
 
     GaussianModelBuilder & operator=(GaussianModelBuilder const & other);
 
-    void update(afw::geom::ellipses::Ellipse const & ellipse);
-
-    // Ellipse is not copied, and must not be modified between calls to update() and computeDerivative().
-    void update(PTR(afw::geom::ellipses::Ellipse) const & ellipse);
-    
-    ndarray::Array<double const,1,1> getModel() const { return _model; }
-
     int getSize() const { return _xy.rows(); }
 
-    void computeDerivative(
-        ndarray::Array<double,2,-1> const & output
-    ) const;
+    ndarray::Array<double const,1,1> computeModel(
+        afw::geom::ellipses::Ellipse const & ellipse
+    );
+
+    ndarray::Array<double const,1,1> getModel() const { return _model; }
 
     void computeDerivative(
         ndarray::Array<double,2,-1> const & output,
+        afw::geom::ellipses::Ellipse const & ellipse,
+        bool reuseModel = false
+    );
+
+    void computeDerivative(
+        ndarray::Array<double,2,-1> const & output,
+        afw::geom::ellipses::Ellipse const & ellipse,
         Eigen::Matrix<double,5,Eigen::Dynamic> const & jacobian,
-        bool add = false
-    ) const;
+        bool add = false,
+        bool reuseModel = false
+    );
 
     void setOutput(ndarray::Array<double,1,1> const & array);
 
@@ -65,11 +68,12 @@ private:
 
     void _computeDerivative(
         ndarray::Array<double,2,-1> const & output,
+        afw::geom::ellipses::Ellipse const & ellipse,
         Eigen::Matrix<double,6,Eigen::Dynamic> const & jacobian,
-        bool add
-    ) const;
+        bool add = false,
+        bool reuseModel = false
+    );
 
-    PTR(afw::geom::ellipses::Ellipse) _ellipse;
     ndarray::Array<double,1,1> _model;
     Eigen::Matrix<double,Eigen::Dynamic,2> _xy;
     Eigen::Matrix<double,Eigen::Dynamic,2> _xyt;

@@ -34,7 +34,7 @@ namespace lsst { namespace meas { namespace extensions { namespace multiShapelet
 
 class FitPsfAlgorithm;
 
-class Objective;
+class GaussianObjective;
 
 class FitPsfControl : public algorithms::AlgorithmControl {
 public:
@@ -95,7 +95,9 @@ struct FitPsfModel {
      *  FitPsfAlgorithm::makeOptimizer.  By using those functions and this constructor,
      *  we can inspect the optimizer at each step in Python.
      */
-    FitPsfModel(FitPsfControl const & ctrl, ndarray::Array<double const,1,1> const & parameters);
+    FitPsfModel(
+        FitPsfControl const & ctrl, double amplitude, ndarray::Array<double const,1,1> const & parameters
+    );
 
     /// @brief Construct by extracting saved values from a SourceRecord.
     FitPsfModel(FitPsfControl const & ctrl, afw::table::SourceRecord const & source);
@@ -141,7 +143,7 @@ public:
      *
      *  This is provided primarily for testing and debugging purposes.
      */
-    static PTR(Objective) makeObjective(
+    static PTR(GaussianObjective) makeObjective(
         FitPsfControl const & ctrl,
         afw::image::Image<double> const & image,
         afw::geom::Point2D const & center

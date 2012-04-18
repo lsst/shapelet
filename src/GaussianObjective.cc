@@ -29,17 +29,20 @@ void GaussianObjective::computeFunction(
     ndarray::Array<double const,1,1> const & parameters, 
     ndarray::Array<double,1,1> const & function
 ) {
-    readParameters(parameters, _components.begin(), _components.end());
-    ndarray::EigenView<double,1,1> f(function);
-    f.setZero();
+    _ellipse.getCore().readParameters(parameters.getData());
+    ndarray::EigenView<double,1,1> model(_model);
+    model.setZero();
     for (std::size_t n = 0; n < _builders.size(); ++n) {
-        _builders[n].update(_components[n].ellipse);
-        f += _components[n].amplitude * _builders[n].getModel().asEigen();
+        _ellipse.getCore().scale(_components[n].radius);
+        model += _components[n].amplitude * _builders[n].computeModel(_ellipse).asEigen();
+        _ellipse.getCore().scale(1.0 / _components[n].radius);
     }
-    f -= _data.asEigen();
     if (!_weights.isEmpty()) {
-        f.array() *= _weights.asEigen<Eigen::ArrayXpr>();
+        model.array() *= _weights.asEigen<Eigen::ArrayXpr>();
     }
+    _modelSquaredNorm = model.squaredNorm();
+    _amplitude = model.dot(_data.asEigen()) / _modelSquaredNorm;
+    function.asEigen() = _amplitude * model - _data.asEigen();
 }
 
 void GaussianObjective::computeDerivative(
@@ -48,41 +51,64 @@ void GaussianObjective::computeDerivative(
     ndarray::Array<double,2,-2> const & derivative
 ) {
     derivative.asEigen().setZero();
-    Eigen::Matrix<double,5,Eigen::Dynamic> tmp;
+    Eigen::Matrix<double,5,Eigen::Dynamic> jacobian(5, 3);
+    jacobian.setZero();
     for (std::size_t n = 0; n < _builders.size(); ++n) {
-        tmp = _components[n].jacobian * _components[n].amplitude;
-        _builders[n].computeDerivative(derivative, tmp, true);
+        afw::geom::LinearTransform scaling = afw::geom::LinearTransform::makeScaling(_components[n].radius);
+        jacobian.block<3,3>(0, 0) = _ellipse.getCore().transform(scaling).d() * _components[n].amplitude;
+        _ellipse.getCore().scale(_components[n].radius);
+        _builders[n].computeDerivative(derivative, _ellipse, jacobian, true, false);
+        _ellipse.getCore().scale(1.0 /_components[n].radius);
     }
     if (!_weights.isEmpty()) {
         derivative.asEigen<Eigen::ArrayXpr>() 
             *= (_weights.asEigen() * Eigen::RowVectorXd::Ones(parameters.getSize<0>())).array();
     }
+    // Right now, 'derivative' is the partial derivative w.r.t. the objective parameters
+    // with amplitude held fixed at 1.  However, the parameters also affect the amplitude, so we need
+    // to compute the partial derivative of that.
+    Eigen::VectorXd tmp = _data.asEigen() - 2.0 * _amplitude * _model.asEigen();
+    Eigen::VectorXd dAmplitude = (derivative.asEigen().adjoint() * tmp) / _modelSquaredNorm;
+    // Now we update 'derivative' so it becomes the complete derivative rather than the partial.
+    derivative.asEigen() *= _amplitude;
+    derivative.asEigen() += _model.asEigen() * dAmplitude.transpose();
 }
 
 GaussianObjective::GaussianObjective(
-    int nComponents, int parameterSize,
+    ComponentList const & components, afw::geom::Point2D const & center,
     afw::detection::Footprint const & region,
     ndarray::Array<double const,1,1> const & data,
     ndarray::Array<double const,1,1> const & weights
-) : Objective(region.getArea(), parameterSize),
-    _components(nComponents, Component(parameterSize)), _builders(nComponents, GaussianModelBuilder(region)), 
-    _data(data), _weights(weights)
+) : Objective(region.getArea(), 3), _amplitude(1.0), _modelSquaredNorm(1.0),
+    _ellipse(afw::geom::ellipses::Axes(), center),
+    _components(components), _builders(components.size(), GaussianModelBuilder(region)), 
+    _model(ndarray::allocate(region.getArea())), _data(data), _weights(weights)
 {
-    assert(getFunctionSize() == _data.getSize<0>());
-    assert(_weights.isEmpty() || getFunctionSize() == _weights.getSize<0>());
+    _initialize();
 }
 
 GaussianObjective::GaussianObjective(
-    int nComponents, int parameterSize,
+    ComponentList const & components, afw::geom::Point2D const & center,
     afw::geom::Box2I const & bbox,
     ndarray::Array<double const,1,1> const & data,
     ndarray::Array<double const,1,1> const & weights
-) : Objective(bbox.getArea(), parameterSize),
-    _components(nComponents, Component(parameterSize)), _builders(nComponents, GaussianModelBuilder(bbox)),
-    _data(data), _weights(weights)
+) : Objective(bbox.getArea(), 3), _amplitude(1.0), _modelSquaredNorm(1.0),
+    _ellipse(afw::geom::ellipses::Axes(), center),
+    _components(components), _builders(components.size(), GaussianModelBuilder(bbox)),
+    _model(ndarray::allocate(bbox.getArea())), _data(data), _weights(weights)
 {
+    _initialize();
+}
+
+void GaussianObjective::_initialize() {
     assert(getFunctionSize() == _data.getSize<0>());
     assert(_weights.isEmpty() || getFunctionSize() == _weights.getSize<0>());
+    if (!_weights.isEmpty()) {
+        ndarray::EigenView<double,1,1,Eigen::ArrayXpr> wd(ndarray::copy(_data));
+        wd *= _weights.asEigen<Eigen::ArrayXpr>();
+        _data = wd.shallow();
+    }
+    _model.deep() = 0.0;
 }
 
 }}}} // namespace lsst::meas::extensions::multiShapelet

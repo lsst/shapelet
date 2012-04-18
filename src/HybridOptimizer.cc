@@ -151,7 +151,7 @@ void HybridOptimizer::Impl::step() {
     double normH = h.norm();
     if (!checkStep(normH, FAILURE_MINSTEP)) return;
     if (method == BFGS && normH > delta) h *= delta / normH;
-
+    std::cerr << "Step:" << h.transpose() << "\n";
     xNew = x + h;
     fNew.setZero();
     obj->computeFunction(xNew.shallow(), fNew.shallow());
@@ -296,6 +296,8 @@ double HybridOptimizer::getFunctionInfNorm() const { return _impl->normInfF; }
 double HybridOptimizer::getGradientInfNorm() const { return _impl->normInfG; }
 double HybridOptimizer::getMu() const { return _impl->mu; }
 double HybridOptimizer::getDelta() const { return _impl->delta; }
+
+CONST_PTR(Objective) HybridOptimizer::getObjective() const { return _impl->obj; }
 
 ndarray::Array<double const,1,1> HybridOptimizer::getParameters() const { return _impl->x.shallow(); }
 ndarray::Array<double const,1,1> HybridOptimizer::getTrialParameters() const { return _impl->xNew.shallow(); }

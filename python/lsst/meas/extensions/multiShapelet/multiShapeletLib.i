@@ -50,6 +50,9 @@ Measurement algorithms using galaxy models built from multi-scale shapelets.
 %shared_ptr(lsst::meas::extensions::multiShapelet::Objective);
 %include "lsst/meas/extensions/multiShapelet/HybridOptimizer.h"
 
+%shared_ptr(lsst::meas::extensions::multiShapelet::GaussianObjective);
+%include "lsst/meas/extensions/multiShapelet/GaussianObjective.h"
+
 %shared_ptr(lsst::meas::extensions::multiShapelet::FitPsfControl);
 %shared_ptr(lsst::meas::extensions::multiShapelet::FitPsfAlgorithm);
 %include "lsst/meas/extensions/multiShapelet/FitPsf.h"

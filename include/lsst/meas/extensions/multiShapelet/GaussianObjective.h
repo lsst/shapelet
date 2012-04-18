@@ -42,45 +42,47 @@ public:
         ndarray::Array<double,2,-2> const & derivative
     );
 
-protected:
+    double getAmplitude() const { return _amplitude; }
+    
+#ifndef SWIG // Don't need to create this class from Python, just use it.
 
     struct Component {
         double amplitude;
-        PTR(afw::geom::ellipses::Ellipse) ellipse;
-        Eigen::Matrix<double,5,Eigen::Dynamic> jacobian;
+        double radius;
 
-        explicit Component(int parameterSize) : amplitude(0.0), ellipse(), jacobian(5, parameterSize) {
-            jacobian.setZero();
-        }
+        explicit Component(double amplitude_, double radius_) : amplitude(amplitude_), radius(radius_) {}
     };
 
     typedef std::vector<Component> ComponentList;
 
     GaussianObjective(
-        int nComponents, int parameterSize,
+        ComponentList const & components, afw::geom::Point2D const & center,
         afw::detection::Footprint const & region,
         ndarray::Array<double const,1,1> const & data,
         ndarray::Array<double const,1,1> const & weights = ndarray::Array<double,1,1>()
     );
 
     GaussianObjective(
-        int nComponents, int parameterSize,
+        ComponentList const & components, afw::geom::Point2D const & center,
         afw::geom::Box2I const & bbox,
         ndarray::Array<double const,1,1> const & data,
         ndarray::Array<double const,1,1> const & weights = ndarray::Array<double,1,1>()
     );
 
-    virtual void readParameters(
-        ndarray::Array<double const,1,1> const & parameters, 
-        ComponentList::iterator begin, ComponentList::iterator const end
-    ) = 0;
+#endif
 
 private:
 
     typedef std::vector<GaussianModelBuilder> BuilderList;
 
+    void _initialize();
+
+    double _amplitude;
+    double _modelSquaredNorm;
+    afw::geom::ellipses::Ellipse _ellipse;
     ComponentList _components;
     BuilderList _builders;
+    ndarray::Array<double,1,1> _model;
     ndarray::Array<double const,1,1> _data;
     ndarray::Array<double const,1,1> _weights;
 };

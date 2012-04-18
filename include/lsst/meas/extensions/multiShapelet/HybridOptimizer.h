@@ -169,6 +169,8 @@ public:
     /// @brief Return the BFGS trust region size.
     double getDelta() const;
 
+    CONST_PTR(Objective) getObjective() const;
+
     ndarray::Array<double const,1,1> getParameters() const;
 
     ndarray::Array<double const,1,1> getTrialParameters() const;

@@ -56,76 +56,61 @@ GaussianModelBuilder::GaussianModelBuilder(afw::geom::Box2I const & region) :
 }
 
 GaussianModelBuilder::GaussianModelBuilder(GaussianModelBuilder const & other) :
-    _ellipse(other._ellipse), _model(other._model), _xy(other._xy), _xyt(other._xyt)
-{
-    if (_ellipse) _ellipse = boost::make_shared<afw::geom::ellipses::Ellipse>(*_ellipse);
-    if (!_model.isEmpty()) _model = ndarray::copy(_model);
-}
+    _xy(other._xy), _xyt(other._xyt)
+{}
 
 GaussianModelBuilder & GaussianModelBuilder::operator=(GaussianModelBuilder const & other) {
     if (&other != this) {
-        _ellipse = other._ellipse;
-        _model = other._model;
         _xy = other._xy;
         _xyt = other._xyt;
-        if (_ellipse) _ellipse = boost::make_shared<afw::geom::ellipses::Ellipse>(*_ellipse);
-        if (!_model.isEmpty()) _model = ndarray::copy(_model);
     }
     return *this;
 }
 
-void GaussianModelBuilder::update(PTR(afw::geom::ellipses::Ellipse) const & ellipse) {
-    _ellipse = ellipse;
-    assert(_ellipse);
+ndarray::Array<double const,1,1> GaussianModelBuilder::computeModel(
+    afw::geom::ellipses::Ellipse const & ellipse
+) {
     if (_model.isEmpty()) {
         _model = ndarray::allocate(_xy.rows());
     }
-    afw::geom::AffineTransform transform = _ellipse->getGridTransform();
+    afw::geom::AffineTransform transform = ellipse.getGridTransform();
     Eigen::Matrix2d const m = transform.getLinear().getMatrix();
     Eigen::Vector2d const t = transform.getTranslation().asEigen();
     _xyt.transpose() =  m * _xy.transpose();
     _xyt.transpose().colwise() += t;
     _model.asEigen<Eigen::ArrayXpr>() = std::exp(-0.5 * _xyt.rowwise().squaredNorm().array());
-}
-
-void GaussianModelBuilder::update(afw::geom::ellipses::Ellipse const & ellipse) {
-    update(boost::make_shared<afw::geom::ellipses::Ellipse>(ellipse));
-}
-
-void GaussianModelBuilder::computeDerivative(ndarray::Array<double,2,-1> const & output) const {
-    if (!_ellipse) {
-        throw LSST_EXCEPT(
-            pex::exceptions::LogicErrorException,
-            "update() must be called before computeDerivative"
-        );
-    }
-    Eigen::Matrix<double,6,Eigen::Dynamic> gtJac(6, 5);
-    gtJac.block<6,5>(0,0) = _ellipse->getGridTransform().d();
-    _computeDerivative(output, gtJac, false);
+    return _model;
 }
 
 void GaussianModelBuilder::computeDerivative(
     ndarray::Array<double,2,-1> const & output,
+    afw::geom::ellipses::Ellipse const & ellipse,
+    bool reuseModel
+) {
+    Eigen::Matrix<double,6,Eigen::Dynamic> gtJac(6, 5);
+    gtJac.block<6,5>(0,0) = ellipse.getGridTransform().d();
+    _computeDerivative(output, ellipse, gtJac, false, reuseModel);
+}
+
+void GaussianModelBuilder::computeDerivative(
+    ndarray::Array<double,2,-1> const & output,
+    afw::geom::ellipses::Ellipse const & ellipse,
     Eigen::Matrix<double,5,Eigen::Dynamic> const & jacobian,
-    bool add
-) const {
-    if (!_ellipse) {
-        throw LSST_EXCEPT(
-            pex::exceptions::LogicErrorException,
-            "update() must be called before computeDerivative"
-        );
-    }
-    afw::geom::ellipses::Ellipse::GridTransform::DerivativeMatrix gtJac = _ellipse->getGridTransform().d();
+    bool add, bool reuseModel
+) {
+    afw::geom::ellipses::Ellipse::GridTransform::DerivativeMatrix gtJac = ellipse.getGridTransform().d();
     Eigen::Matrix<double,6,Eigen::Dynamic> finalJac = gtJac * jacobian;
-    _computeDerivative(output, finalJac, add);
+    _computeDerivative(output, ellipse, finalJac, add, reuseModel);
 }
 
 void GaussianModelBuilder::_computeDerivative(
     ndarray::Array<double,2,-1> const & output,
+    afw::geom::ellipses::Ellipse const & ellipse,
     Eigen::Matrix<double,6,Eigen::Dynamic> const & jacobian,
-    bool add
-) const {
+    bool add, bool reuseModel
+) {
     typedef afw::geom::AffineTransform AT;
+    if (!reuseModel) computeModel(ellipse);
     if (output.getSize<0>() != _xy.rows()) {
         throw LSST_EXCEPT(
             pex::exceptions::InvalidParameterException,
