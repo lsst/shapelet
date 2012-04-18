@@ -125,7 +125,6 @@ void GaussianModelBuilder::_computeDerivative(
     Eigen::Matrix<double,6,Eigen::Dynamic> const & jacobian,
     bool add
 ) const {
-    static double const eps = std::numeric_limits<double>::epsilon();
     typedef afw::geom::AffineTransform AT;
     if (output.getSize<0>() != _xy.rows()) {
         throw LSST_EXCEPT(
@@ -141,7 +140,6 @@ void GaussianModelBuilder::_computeDerivative(
              % output.getSize<1>() % jacobian.cols()).str()
         );
     }
-
     Eigen::ArrayXd dfdx = -_xyt.col(0).array() * _model.asEigen<Eigen::ArrayXpr>();
     Eigen::ArrayXd dfdy = -_xyt.col(1).array() * _model.asEigen<Eigen::ArrayXpr>();
     ndarray::EigenView<double,2,-1,Eigen::ArrayXpr> out(output);
@@ -152,6 +150,7 @@ void GaussianModelBuilder::_computeDerivative(
     // This way if the user wants, for example, the derivatives with respect
     // to the ellipticity, we don't waste time computing elements that are
     // only useful when computing the derivatives wrt the centroid.
+    double const eps = std::numeric_limits<double>::epsilon() * jacobian.lpNorm<Eigen::Infinity>();
     for (int n = 0; n < jacobian.cols(); ++n) {
         if (std::abs(jacobian(AT::XX, n)) > eps)
             out.col(n) += jacobian(AT::XX, n) * _xy.col(0).array() * dfdx;
