@@ -48,7 +48,7 @@ static inline void validateSize(int expected, int actual) {
 
 ShapeletFunction::ShapeletFunction() : 
     _order(0), _basisType(HERMITE),
-    _ellipse(EllipseCore(0.0, 0.0, 1.0), geom::Point2D()), 
+    _ellipse(EllipseCore(1.0, 1.0, 0.0), geom::Point2D()), 
     _coefficients(ndarray::allocate(1))
 {
     _coefficients[0] = 0.0;
@@ -65,7 +65,7 @@ ShapeletFunction::ShapeletFunction(
     int order, BasisTypeEnum basisType,
     ndarray::Array<Pixel,1,1> const & coefficients
 ) :
-    _order(order), _basisType(basisType), _ellipse(EllipseCore(0.0, 0.0, 1.0)),
+    _order(order), _basisType(basisType), _ellipse(EllipseCore(1.0, 1.0, 0.0)),
     _coefficients(ndarray::copy(coefficients))
 {
     validateSize(computeSize(order), _coefficients.getSize<0>());
@@ -75,7 +75,7 @@ ShapeletFunction::ShapeletFunction(
     int order, BasisTypeEnum basisType, double radius,
     geom::Point2D const & center
 ) :
-    _order(order), _basisType(basisType), _ellipse(EllipseCore(0.0, 0.0, radius), center),
+    _order(order), _basisType(basisType), _ellipse(EllipseCore(radius, radius, 0.0), center),
     _coefficients(ndarray::allocate(computeSize(_order)))
 {
     _coefficients.deep() = 0.0;
@@ -85,7 +85,7 @@ ShapeletFunction::ShapeletFunction(
     int order, BasisTypeEnum basisType, double radius, geom::Point2D const & center,
     ndarray::Array<Pixel,1,1> const & coefficients
 ) :
-    _order(order), _basisType(basisType), _ellipse(EllipseCore(0.0, 0.0, radius), center),
+    _order(order), _basisType(basisType), _ellipse(EllipseCore(radius, radius, 0.0), center),
     _coefficients(ndarray::copy(coefficients))
 {
     validateSize(computeSize(order), _coefficients.getSize<0>());
