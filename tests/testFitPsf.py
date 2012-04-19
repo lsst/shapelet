@@ -88,7 +88,7 @@ class FitPsfTestCase(unittest.TestCase):
                 obj.computeFunction(parameters[i,:], f1b)
                 d1[:,j] = (f1a - f1b) / (2.0 * eps)
                 parameters[i,j] += eps
-            self.assertClose(d0, d1, rtol=1E-12, atol=1E-10)
+            self.assertClose(d0, d1, rtol=1E-10, atol=1E-8)
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
