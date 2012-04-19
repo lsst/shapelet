@@ -49,22 +49,22 @@ void MultiShapeletFunction::transformInPlace(geom::AffineTransform const & trans
     }    
 }
 
-void MultiShapeletFunction::convolve(ShapeletFunction const & other) {
-    for (ElementList::iterator i = _elements.begin(); i != _elements.end(); ++i) {
-        i->convolve(other);
+MultiShapeletFunction MultiShapeletFunction::convolve(ShapeletFunction const & other) const {
+    ElementList newElements;
+    for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
+        newElements.push_back(i->convolve(other));
     }
+    return MultiShapeletFunction(newElements);
 }
 
-void MultiShapeletFunction::convolve(MultiShapeletFunction const & other) {
+MultiShapeletFunction MultiShapeletFunction::convolve(MultiShapeletFunction const & other) const {
     ElementList newElements;
     for (ElementList::const_iterator j = other.getElements().begin(); j != other.getElements().end(); ++j) {
-        for (ElementList::iterator i = _elements.begin(); i != _elements.end(); ++i) {
-            newElements.push_back(*i);
-            newElements.back().convolve(*j);
-            
+        for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
+            newElements.push_back(i->convolve(*j));
         }
     }
-    newElements.swap(_elements);
+    return MultiShapeletFunction(newElements);
 }
 
 void MultiShapeletFunctionEvaluator::update(MultiShapeletFunction const & function) {

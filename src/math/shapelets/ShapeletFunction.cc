@@ -160,16 +160,21 @@ void ShapeletFunctionEvaluator::_initialize(ShapeletFunction const & function) {
     }
 }
 
-void ShapeletFunction::convolve(ShapeletFunction const & other) {
-    HermiteConvolution convolution(other.getOrder(), *this);
-    ndarray::EigenView<Pixel const,2,2> matrix(convolution.evaluate(_ellipse));
+ShapeletFunction ShapeletFunction::convolve(ShapeletFunction const & other) const {
+    HermiteConvolution convolution(getOrder(), other);
+    geom::ellipses::Ellipse newEllipse(_ellipse);
+    ndarray::EigenView<Pixel const,2,2> matrix(convolution.evaluate(newEllipse));
     if (_basisType == LAGUERRE) {
         ConversionMatrix::convertCoefficientVector(_coefficients, LAGUERRE, HERMITE, getOrder());
     }
-    _coefficients.asEigen() = matrix * _coefficients.asEigen();
+    ShapeletFunction result(convolution.getRowOrder(), HERMITE);
+    result.setEllipse(newEllipse);
+    result.getCoefficients().asEigen() = matrix * _coefficients.asEigen();
     if (_basisType == LAGUERRE) {
         ConversionMatrix::convertCoefficientVector(_coefficients, HERMITE, LAGUERRE, getOrder());
+        result.changeBasisType(LAGUERRE);
     }
+    return result;
 }
 
 void ShapeletFunctionEvaluator::_computeRawMoments(

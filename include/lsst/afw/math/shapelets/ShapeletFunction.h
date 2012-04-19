@@ -82,8 +82,8 @@ public:
     /// @brief Return the coefficient vector (const).
     ndarray::Array<Pixel const,1,1> const getCoefficients() const { return _coefficients; }
 
-    /// @brief Convolve the shapelet function in-place.
-    void convolve(ShapeletFunction const & other);
+    /// @brief Convolve the shapelet function.
+    ShapeletFunction convolve(ShapeletFunction const & other) const;
 
     /// @brief Construct a helper object that can efficiently evaluate the function.
     Evaluator evaluate() const;
