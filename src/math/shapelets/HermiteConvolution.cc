@@ -273,8 +273,7 @@ HermiteConvolution::Impl::Impl(
                 - _monomialFwd(n-2, m) * std::sqrt((n - 1.0) / n);
         }
     }
-    // TODO
-    _monomialFwd.marked<Eigen::LowerTriangular>().solveTriangularInPlace(_monomialInv);
+    _monomialFwd.triangularView<Eigen::Lower>().solveInPlace(_monomialInv);
 }
 
 ndarray::Array<Pixel const,2,2> HermiteConvolution::Impl::evaluate(
@@ -344,8 +343,6 @@ ndarray::Array<Pixel const,2,2> HermiteConvolution::Impl::evaluate(
     result.setZero();
     for (int m = 0, mo = 0; m <= _rowOrder; mo += ++m) {
         for (int n = 0, no = 0; n <= _colOrder; no += ++n) {
-            Eigen::BlockReturnType< ndarray::EigenView<double,2,2> >::Type out_block 
-                = result.block(mo, no, m+1, n+1);
             int jo = bool(n % 2);
             for (int j = jo; j <= n; (jo += ++j) += ++j) {
                 if ((n - j) % 4) { // (n - j) % 4 is always 0 or 2
