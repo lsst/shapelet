@@ -27,9 +27,9 @@
 
 namespace lsst { namespace shapelet {
 
-namespace {
+double const NORMALIZATION = std::pow(afw::geom::PI, -0.25);
 
-static double const NORMALIZATION = std::pow(afw::geom::PI, -0.25);
+namespace {
 
 /**
  *  @brief An iterator-like construct for evaluating either normalized Hermite polynomials or

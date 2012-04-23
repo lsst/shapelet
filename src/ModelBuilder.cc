@@ -33,8 +33,6 @@ namespace lsst { namespace shapelet {
 
 namespace {
 
-static double const NORMALIZATION = std::pow(afw::geom::PI, -0.25);
-
 void fillHermite1d(Eigen::ArrayXXd & workspace, Eigen::ArrayXd const & coord) {
     if (workspace.cols() > 0)
         workspace.col(0) = NORMALIZATION * (-0.5 * coord.square()).exp();

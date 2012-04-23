@@ -39,6 +39,8 @@
 
 namespace lsst { namespace shapelet {
 
+extern double const NORMALIZATION;
+
 typedef double Pixel;
 
 typedef afw::geom::ellipses::Axes EllipseCore;

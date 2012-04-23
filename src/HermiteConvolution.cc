@@ -30,8 +30,6 @@ namespace lsst { namespace shapelet {
 
 namespace {
 
-static double const NORMALIZATION = std::pow(afw::geom::PI, -0.25);
-
 class TripleProductIntegral {
 public:
     
