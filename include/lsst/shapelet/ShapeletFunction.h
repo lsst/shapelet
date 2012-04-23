@@ -26,18 +26,15 @@
 #define LSST_AFW_MATH_SHAPELETS_SHAPELETFUNCTION_H
 
 #include "ndarray.h"
-#include "lsst/afw/math/shapelets/constants.h"
-#include "lsst/afw/math/shapelets/HermiteEvaluator.h"
-#include "lsst/afw/math/shapelets/ConversionMatrix.h"
+#include "lsst/shapelet/constants.h"
+#include "lsst/shapelet/HermiteEvaluator.h"
+#include "lsst/shapelet/ConversionMatrix.h"
 #include "lsst/afw/geom.h"
 #include "lsst/afw/geom/ellipses.h"
 
 #include <list>
 
-namespace lsst {
-namespace afw {
-namespace math {
-namespace shapelets {
+namespace lsst { namespace shapelet {
 
 class ShapeletFunctionEvaluator;
 
@@ -56,13 +53,13 @@ public:
     int getOrder() const { return _order; }
 
     /// @brief Get the ellipse (const).
-    lsst::afw::geom::ellipses::Ellipse const & getEllipse() const { return _ellipse; }
+    afw::geom::ellipses::Ellipse const & getEllipse() const { return _ellipse; }
 
     /// @brief Get the ellipse (non-const).
-    lsst::afw::geom::ellipses::Ellipse & getEllipse() { return _ellipse; }
+    afw::geom::ellipses::Ellipse & getEllipse() { return _ellipse; }
 
     /// @brief Set the ellipse.
-    void setEllipse(lsst::afw::geom::ellipses::Ellipse const & ellipse) { _ellipse = ellipse; }
+    void setEllipse(afw::geom::ellipses::Ellipse const & ellipse) { _ellipse = ellipse; }
     
     /// @brief Return the basis type (HERMITE or LAGUERRE).
     BasisTypeEnum getBasisType() const { return _basisType; }
@@ -89,12 +86,12 @@ public:
     Evaluator evaluate() const;
 
     /// @brief Shift the shapelet function by shifting the ellipse of each element.
-    void shiftInPlace(lsst::afw::geom::Extent2D const & offset) {
+    void shiftInPlace(afw::geom::Extent2D const & offset) {
         _ellipse.getCenter() += offset;
     }
 
     /// @brief Transform the shapelet function by transforming the ellipse of each elements.
-    void transformInPlace(lsst::afw::geom::AffineTransform const & transform) {
+    void transformInPlace(afw::geom::AffineTransform const & transform) {
         _ellipse.transform(transform).inPlace();
     }
 
@@ -104,28 +101,28 @@ public:
     /// @brief Construct a function with a unit-circle ellipse and a deep-copied coefficient vector.
     ShapeletFunction(
         int order, BasisTypeEnum basisType,
-        ndarray::Array<lsst::afw::math::shapelets::Pixel,1,1> const & coefficients
+        ndarray::Array<Pixel,1,1> const & coefficients
     );
 
     /// @brief Construct a function with a circular ellipse and set all coefficients to zero.
     ShapeletFunction(int order, BasisTypeEnum basisType, double radius,
-                     lsst::afw::geom::Point2D const & center);
+                     afw::geom::Point2D const & center);
 
     /// @brief Construct a function with a circular ellipse and a deep-copied coefficient vector.
     ShapeletFunction(
-        int order, BasisTypeEnum basisType, double radius, lsst::afw::geom::Point2D const & center,
-        ndarray::Array<lsst::afw::math::shapelets::Pixel,1,1> const & coefficients
+        int order, BasisTypeEnum basisType, double radius, afw::geom::Point2D const & center,
+        ndarray::Array<Pixel,1,1> const & coefficients
     );
 
     /// @brief Construct a function and set all coefficients to zero.
     ShapeletFunction(int order, BasisTypeEnum basisType,
-        lsst::afw::geom::ellipses::Ellipse const & ellipse);
+        afw::geom::ellipses::Ellipse const & ellipse);
 
     /// @brief Construct a function with a deep-copied coefficient vector.
     ShapeletFunction(
         int order, BasisTypeEnum basisType,
-        lsst::afw::geom::ellipses::Ellipse const & ellipse,
-        ndarray::Array<lsst::afw::math::shapelets::Pixel,1,1> const & coefficients
+        afw::geom::ellipses::Ellipse const & ellipse,
+        ndarray::Array<Pixel,1,1> const & coefficients
     );
 
     /// @brief Copy constructor (deep).
@@ -164,16 +161,16 @@ public:
 
     /// @brief Evaluate at the given point.
     Pixel operator()(double x, double y) const {
-        return this->operator()(geom::Point2D(x, y));
+        return this->operator()(afw::geom::Point2D(x, y));
     }
 
     /// @brief Evaluate at the given point.
-    Pixel operator()(lsst::afw::geom::Point2D const & point) const {
+    Pixel operator()(afw::geom::Point2D const & point) const {
         return _h.sumEvaluation(_coefficients, _transform(point));
     }
 
     /// @brief Evaluate at the given point.
-    Pixel operator()(lsst::afw::geom::Extent2D const & point) const {
+    Pixel operator()(afw::geom::Extent2D const & point) const {
         return _h.sumEvaluation(_coefficients, _transform(point));
     }
 
@@ -183,7 +180,7 @@ public:
     }
 
     /// @brief Return the unweighted dipole and quadrupole moments of the function as an ellipse.
-    lsst::afw::geom::ellipses::Ellipse computeMoments() const;
+    afw::geom::ellipses::Ellipse computeMoments() const;
 
     /// @brief Update the evaluator from the given function.
     void update(ShapeletFunction const & function);
@@ -200,7 +197,7 @@ private:
     void _computeRawMoments(double & q0, Eigen::Vector2d & q1, Eigen::Matrix2d & q2) const;
 
     ndarray::Array<Pixel const,1,1> _coefficients;
-    geom::AffineTransform _transform;
+    afw::geom::AffineTransform _transform;
     HermiteEvaluator _h;
 };
 
@@ -208,6 +205,6 @@ inline ShapeletFunctionEvaluator ShapeletFunction::evaluate() const {
     return ShapeletFunctionEvaluator(*this);
 }
 
-}}}}   // lsst::afw::math::shapelets
+}} // namespace lsst::shapelet
 
 #endif // !defined(LSST_AFW_MATH_SHAPELETS_SHAPELETFUNCTION_H)

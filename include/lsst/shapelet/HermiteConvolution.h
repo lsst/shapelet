@@ -26,11 +26,11 @@
 
 #include "ndarray.h"
 #include "lsst/afw/geom/ellipses.h"
-#include "lsst/afw/math/shapelets/constants.h"
+#include "lsst/shapelet/constants.h"
 
 #include <boost/scoped_ptr.hpp>
 
-namespace lsst { namespace afw { namespace math { namespace shapelets {
+namespace lsst { namespace shapelet {
 
 class ShapeletFunction;
 
@@ -53,7 +53,7 @@ public:
      *  The returned array is owned by the HermiteConvolution object and will be modified
      *  the next time evaluate() is called.
      */
-    ndarray::Array<Pixel const,2,2> evaluate(geom::ellipses::Ellipse & ellipse) const;
+    ndarray::Array<Pixel const,2,2> evaluate(afw::geom::ellipses::Ellipse & ellipse) const;
 
     /// @brief Return the order of the to-be-convolved shapelet basis.
     int getColOrder() const;
@@ -74,6 +74,6 @@ private:
 };
 
 
-}}}} // namespace lsst::afw::math::shapelets
+}} // namespace lsst::shapelet
 
 #endif // !LSST_AFW_MATH_SHAPELETS_HermiteConvolution

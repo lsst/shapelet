@@ -26,14 +26,14 @@
 #include "boost/make_shared.hpp"
 
 #include "lsst/pex/exceptions.h"
-#include "lsst/afw/math/shapelets/ModelBuilder.h"
+#include "lsst/shapelet/ModelBuilder.h"
 #include "ndarray/eigen.h"
 
-namespace lsst { namespace afw { namespace math { namespace shapelets {
+namespace lsst { namespace shapelet {
 
 namespace {
 
-static double const NORMALIZATION = std::pow(geom::PI, -0.25);
+static double const NORMALIZATION = std::pow(afw::geom::PI, -0.25);
 
 void fillHermite1d(Eigen::ArrayXXd & workspace, Eigen::ArrayXd const & coord) {
     if (workspace.cols() > 0)
@@ -61,8 +61,8 @@ void fillDerivative1d(
 
 ModelBuilder::ModelBuilder(
     int order,
-    geom::ellipses::Ellipse const & ellipse,
-    detection::Footprint const & region
+    afw::geom::ellipses::Ellipse const & ellipse,
+    afw::detection::Footprint const & region
 ) : _order(order), _ellipse(ellipse),
     _model(ndarray::allocate(region.getArea(), computeSize(order))),
     _x(region.getArea()), _y(region.getArea()),
@@ -71,7 +71,7 @@ ModelBuilder::ModelBuilder(
 {
     int n = 0;
     for (
-        detection::Footprint::SpanList::const_iterator i = region.getSpans().begin();
+        afw::detection::Footprint::SpanList::const_iterator i = region.getSpans().begin();
         i != region.getSpans().end();
         ++i
     ) {
@@ -85,7 +85,7 @@ ModelBuilder::ModelBuilder(
 
 ModelBuilder::ModelBuilder(
     int order,
-    geom::ellipses::Ellipse const & ellipse,
+    afw::geom::ellipses::Ellipse const & ellipse,
     afw::geom::Box2I const & region
 ) : _order(order), _ellipse(ellipse),
     _model(ndarray::allocate(region.getArea(), computeSize(order))),
@@ -106,8 +106,8 @@ ModelBuilder::ModelBuilder(
 }
 
 
-void ModelBuilder::update(geom::ellipses::Ellipse const & ellipse) {
-    typedef geom::AffineTransform AT;
+void ModelBuilder::update(afw::geom::ellipses::Ellipse const & ellipse) {
+    typedef afw::geom::AffineTransform AT;
     _ellipse = ellipse;
     AT transform = _ellipse.getGridTransform();
     _xt = _x * transform[AT::XX] + _y * transform[AT::XY] + transform[AT::X];
@@ -131,7 +131,7 @@ void ModelBuilder::computeDerivative(
     Eigen::Matrix<Pixel,5,Eigen::Dynamic> const & jacobian,
     bool add
 ) const {
-    geom::ellipses::Ellipse::GridTransform::DerivativeMatrix gtJac = _ellipse.getGridTransform().d();
+    afw::geom::ellipses::Ellipse::GridTransform::DerivativeMatrix gtJac = _ellipse.getGridTransform().d();
     Eigen::Matrix<Pixel,6,Eigen::Dynamic> finalJac = gtJac * jacobian;
     _computeDerivative(output, finalJac, add);
 }
@@ -142,7 +142,7 @@ void ModelBuilder::_computeDerivative(
     bool add
 ) const {
     static double const eps = std::numeric_limits<double>::epsilon();
-    typedef geom::AffineTransform AT;
+    typedef afw::geom::AffineTransform AT;
     Eigen::ArrayXXd dxWorkspace(_xWorkspace.rows(), _xWorkspace.cols());
     Eigen::ArrayXXd dyWorkspace(_yWorkspace.rows(), _yWorkspace.cols());
     Eigen::ArrayXd tmp(_x.size());
@@ -179,4 +179,4 @@ void ModelBuilder::_computeDerivative(
 }
 
 
-}}}} // namespace lsst::afw::math::shapelets
+}} // namespace lsst::shapelet

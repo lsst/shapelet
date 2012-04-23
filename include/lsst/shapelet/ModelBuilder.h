@@ -25,14 +25,11 @@
 #ifndef LSST_AFW_MATH_SHAPELETS_ModelBuilder_h_INCLUDED
 #define LSST_AFW_MATH_SHAPELETS_ModelBuilder_h_INCLUDED
 
-#include "lsst/afw/math/shapelets/BasisEvaluator.h"
+#include "lsst/shapelet/BasisEvaluator.h"
 #include "lsst/afw/detection/Footprint.h"
 #include "lsst/afw/geom/ellipses.h"
 
-namespace lsst {
-namespace afw {
-namespace math {
-namespace shapelets {
+namespace lsst { namespace shapelet {
 
 /**
  *  @brief A class that evaluates a Gauss-Hermite (shapelet with HERMITE basis type) basis over a footprint.
@@ -63,8 +60,8 @@ public:
      */
     ModelBuilder(
         int order,
-        geom::ellipses::Ellipse const & ellipse,
-        detection::Footprint const & region
+        afw::geom::ellipses::Ellipse const & ellipse,
+        afw::detection::Footprint const & region
     );
 
     /**
@@ -81,8 +78,8 @@ public:
      */
     ModelBuilder(
         int order,
-        geom::ellipses::Ellipse const & ellipse,
-        geom::Box2I const & region
+        afw::geom::ellipses::Ellipse const & ellipse,
+        afw::geom::Box2I const & region
     );
 
     /**
@@ -90,7 +87,7 @@ public:
      *
      *  This does not change the ellipse parameterization used by computeDerivative.
      */
-    void update(geom::ellipses::Ellipse const & ellipse);
+    void update(afw::geom::ellipses::Ellipse const & ellipse);
 
     /// @brief Return the model design matrix (basis functions in columns, flattened pixels in rows).
     ndarray::Array<Pixel const,2,-2> getModel() const { return _model; }
@@ -151,7 +148,7 @@ private:
     void _allocate();
 
     int _order;
-    geom::ellipses::Ellipse _ellipse;
+    afw::geom::ellipses::Ellipse _ellipse;
     ndarray::Array<Pixel,2,-2> _model;
     Eigen::ArrayXd _x;
     Eigen::ArrayXd _y;
@@ -161,6 +158,6 @@ private:
     Eigen::ArrayXXd _yWorkspace;
 };
 
-}}}}   // lsst::afw::math::shapelets
+}} // namespace lsst::shapelet
 
 #endif // !defined(LSST_AFW_MATH_SHAPELETS_ModelBuilder_h_INCLUDED)

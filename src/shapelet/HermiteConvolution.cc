@@ -21,16 +21,16 @@
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
-#include "lsst/afw/math/shapelets/ShapeletFunction.h"
-#include "lsst/afw/math/shapelets/HermiteConvolution.h"
+#include "lsst/shapelet/ShapeletFunction.h"
+#include "lsst/shapelet/HermiteConvolution.h"
 #include "lsst/afw/geom/Angle.h"
 #include "ndarray/eigen.h"
 
-namespace lsst { namespace afw { namespace math { namespace shapelets {
+namespace lsst { namespace shapelet {
 
 namespace {
 
-static double const NORMALIZATION = std::pow(geom::PI, -0.25);
+static double const NORMALIZATION = std::pow(afw::geom::PI, -0.25);
 
 class TripleProductIntegral {
 public:
@@ -308,7 +308,7 @@ ndarray::Array<Pixel const,2,2> HermiteConvolution::Impl::evaluate(
             }
         }
     }
-    kq *= 4.0 * geom::PI * (
+    kq *= 4.0 * afw::geom::PI * (
         std::fabs(convolved_gt_inv.computeDeterminant()
                   * psf_gt.computeDeterminant()
                   * model_gt.computeDeterminant())
@@ -360,7 +360,7 @@ ndarray::Array<Pixel const,2,2> HermiteConvolution::Impl::evaluate(
 }
 
 Eigen::MatrixXd HermiteConvolution::Impl::computeHermiteTransformMatrix(
-    int order, geom::LinearTransform const & transform
+    int order, afw::geom::LinearTransform const & transform
 ) const {
     int const size = computeSize(order);
     Eigen::MatrixXd result = Eigen::MatrixXd::Zero(size, size);
@@ -373,15 +373,15 @@ Eigen::MatrixXd HermiteConvolution::Impl::computeHermiteTransformMatrix(
                         int const order_minus_m = order - m;
                         Binomial binomial_m(
                             m, 
-                            transform[geom::LinearTransform::XX],
-                            transform[geom::LinearTransform::XY]
+                            transform[afw::geom::LinearTransform::XX],
+                            transform[afw::geom::LinearTransform::XY]
                         );
                         for (int p = 0; p <= m; ++p) {
                             for (int n = 0; n <= order_minus_m; ++n) {
                                 Binomial binomial_n(
                                     n, 
-                                    transform[geom::LinearTransform::YX], 
-                                    transform[geom::LinearTransform::YY]
+                                    transform[afw::geom::LinearTransform::YX], 
+                                    transform[afw::geom::LinearTransform::YY]
                                 );
                                 for (int q = 0; q <= n; ++q) {
                                     element +=
@@ -405,7 +405,7 @@ int HermiteConvolution::getColOrder() const { return _impl->getColOrder(); }
 
 ndarray::Array<Pixel const,2,2>
 HermiteConvolution::evaluate(
-    geom::ellipses::Ellipse & ellipse
+    afw::geom::ellipses::Ellipse & ellipse
 ) const {
     return _impl->evaluate(ellipse);
 }
@@ -417,4 +417,4 @@ HermiteConvolution::HermiteConvolution(
 
 HermiteConvolution::~HermiteConvolution() {}
 
-}}}} // namespace lsst::afw::math
+}} // namespace lsst::shapelet

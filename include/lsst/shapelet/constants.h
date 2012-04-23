@@ -37,14 +37,11 @@
 #include "ndarray.h"
 #include "lsst/pex/exceptions.h"
 
-namespace lsst {
-namespace afw {
-namespace math {
-namespace shapelets {
+namespace lsst { namespace shapelet {
 
 typedef double Pixel;
 
-typedef geom::ellipses::Axes EllipseCore;
+typedef afw::geom::ellipses::Axes EllipseCore;
 
 /**
  *  @brief An enum that sets whether to use real-valued polar shapelets or Cartesian shapelets.
@@ -99,6 +96,6 @@ inline int computeOffset(int order) { return order * (order + 1) / 2; }
 /// @brief Return the size of the coefficient vector for the given order.
 inline int computeSize(int order) { return computeOffset(order + 1); }
 
-}}}}   // lsst::afw::math::shapelets
+}} // namespace lsst::shapelet
 
 #endif // !defined(LSST_AFW_MATH_SHAPELETS_CONSTANTS_H)

@@ -28,12 +28,9 @@
 
 #include "lsst/afw/geom/ellipses.h"
 #include "ndarray.h"
-#include "lsst/afw/math/shapelets/constants.h"
+#include "lsst/shapelet/constants.h"
 
-namespace lsst {
-namespace afw {
-namespace math {
-namespace shapelets {
+namespace lsst { namespace shapelet {
 
 /**
  *  @brief Conversions between shapelet basis types.
@@ -52,24 +49,24 @@ public:
     Eigen::MatrixXd buildDenseMatrix() const;
 
     /// @brief Multiply the given array by the conversion matrix on the left in-place.
-    void multiplyOnLeft(ndarray::Array<lsst::afw::math::shapelets::Pixel,1> const & array) const;
+    void multiplyOnLeft(ndarray::Array<Pixel,1> const & array) const;
     
     /// @brief Multiply the given array by the conversion matrix on the right in-place.
-    void multiplyOnRight(ndarray::Array<lsst::afw::math::shapelets::Pixel,1> const & array) const;
+    void multiplyOnRight(ndarray::Array<Pixel,1> const & array) const;
 
     /// @brief Construct a conversion matrix that maps the input basis to the output basis.
     explicit ConversionMatrix(BasisTypeEnum input, BasisTypeEnum output, int order);
 
     /// @brief Convert a coefficient vector between basis types in-place.
     static void convertCoefficientVector(
-        ndarray::Array<lsst::afw::math::shapelets::Pixel,1> const & array,
+        ndarray::Array<Pixel,1> const & array,
         BasisTypeEnum input,
         BasisTypeEnum output, int order
     );
 
     /// @brief Convert an operation (evaluation, integration) vector between basis types in-place.
     static void convertOperationVector(
-        ndarray::Array<lsst::afw::math::shapelets::Pixel,1> const & array,
+        ndarray::Array<Pixel,1> const & array,
         BasisTypeEnum input,
         BasisTypeEnum output, int order
     );
@@ -81,6 +78,6 @@ private:
 };
 
 
-}}}}   // lsst::afw::math::shapelets
+}} // namespace lsst::shapelet
 
 #endif // !defined(LSST_AFW_MATH_SHAPELETS_CONVERSIONMATRIX_H)

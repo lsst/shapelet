@@ -22,14 +22,14 @@
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
-#include "lsst/afw/math/shapelets/ShapeletFunction.h"
-#include "lsst/afw/math/shapelets/ConversionMatrix.h"
-#include "lsst/afw/math/shapelets/HermiteConvolution.h"
+#include "lsst/shapelet/ShapeletFunction.h"
+#include "lsst/shapelet/ConversionMatrix.h"
+#include "lsst/shapelet/HermiteConvolution.h"
 #include "lsst/pex/exceptions.h"
 #include "ndarray/eigen.h"
 #include <boost/format.hpp>
 
-namespace lsst { namespace afw { namespace math { namespace shapelets {
+namespace lsst { namespace shapelet {
 
 namespace {
 
@@ -48,7 +48,7 @@ static inline void validateSize(int expected, int actual) {
 
 ShapeletFunction::ShapeletFunction() : 
     _order(0), _basisType(HERMITE),
-    _ellipse(EllipseCore(1.0, 1.0, 0.0), geom::Point2D()), 
+    _ellipse(EllipseCore(1.0, 1.0, 0.0), afw::geom::Point2D()), 
     _coefficients(ndarray::allocate(1))
 {
     _coefficients[0] = 0.0;
@@ -73,7 +73,7 @@ ShapeletFunction::ShapeletFunction(
  
 ShapeletFunction::ShapeletFunction(
     int order, BasisTypeEnum basisType, double radius,
-    geom::Point2D const & center
+    afw::geom::Point2D const & center
 ) :
     _order(order), _basisType(basisType), _ellipse(EllipseCore(radius, radius, 0.0), center),
     _coefficients(ndarray::allocate(computeSize(_order)))
@@ -82,7 +82,7 @@ ShapeletFunction::ShapeletFunction(
 }
 
 ShapeletFunction::ShapeletFunction(
-    int order, BasisTypeEnum basisType, double radius, geom::Point2D const & center,
+    int order, BasisTypeEnum basisType, double radius, afw::geom::Point2D const & center,
     ndarray::Array<Pixel,1,1> const & coefficients
 ) :
     _order(order), _basisType(basisType), _ellipse(EllipseCore(radius, radius, 0.0), center),
@@ -92,7 +92,7 @@ ShapeletFunction::ShapeletFunction(
 }
  
 ShapeletFunction::ShapeletFunction(
-    int order, BasisTypeEnum basisType, geom::ellipses::Ellipse const & ellipse
+    int order, BasisTypeEnum basisType, afw::geom::ellipses::Ellipse const & ellipse
 ) :
     _order(order), _basisType(basisType), _ellipse(EllipseCore(ellipse.getCore()), ellipse.getCenter()),
     _coefficients(ndarray::allocate(computeSize(_order)))
@@ -101,7 +101,7 @@ ShapeletFunction::ShapeletFunction(
 }
 
 ShapeletFunction::ShapeletFunction(
-    int order, BasisTypeEnum basisType, geom::ellipses::Ellipse const & ellipse,
+    int order, BasisTypeEnum basisType, afw::geom::ellipses::Ellipse const & ellipse,
     ndarray::Array<Pixel,1,1> const & coefficients
 ) :
     _order(order), _basisType(basisType), _ellipse(EllipseCore(ellipse.getCore()), ellipse.getCenter()),
@@ -162,7 +162,7 @@ void ShapeletFunctionEvaluator::_initialize(ShapeletFunction const & function) {
 
 ShapeletFunction ShapeletFunction::convolve(ShapeletFunction const & other) const {
     HermiteConvolution convolution(getOrder(), other);
-    geom::ellipses::Ellipse newEllipse(_ellipse);
+    afw::geom::ellipses::Ellipse newEllipse(_ellipse);
     ndarray::EigenView<Pixel const,2,2> matrix(convolution.evaluate(newEllipse));
     if (_basisType == LAGUERRE) {
         ConversionMatrix::convertCoefficientVector(_coefficients, LAGUERRE, HERMITE, getOrder());
@@ -201,7 +201,7 @@ void ShapeletFunctionEvaluator::_computeRawMoments(
         / determinant;
 }
 
-geom::ellipses::Ellipse ShapeletFunctionEvaluator::computeMoments() const {
+afw::geom::ellipses::Ellipse ShapeletFunctionEvaluator::computeMoments() const {
     double q0 = 0.0;
     Eigen::Vector2d q1 = Eigen::Vector2d::Zero();
     Eigen::Matrix2d q2 = Eigen::Matrix2d::Zero();
@@ -209,10 +209,10 @@ geom::ellipses::Ellipse ShapeletFunctionEvaluator::computeMoments() const {
     q1 /= q0;
     q2 /= q0;
     q2 -= q1 * q1.transpose();
-    return geom::ellipses::Ellipse(
-        geom::ellipses::Quadrupole(geom::ellipses::Quadrupole::Matrix(q2), false),
-        geom::Point2D(q1)
+    return afw::geom::ellipses::Ellipse(
+        afw::geom::ellipses::Quadrupole(afw::geom::ellipses::Quadrupole::Matrix(q2), false),
+        afw::geom::Point2D(q1)
     );
 }
 
-}}}} // namespace lsst::afw::math::shapelets
+}} // namespace lsst::shapelet

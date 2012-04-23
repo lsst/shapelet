@@ -27,13 +27,10 @@
 
 #include "ndarray.h"
 #include "lsst/afw/geom.h"
-#include "lsst/afw/math/shapelets/constants.h"
+#include "lsst/shapelet/constants.h"
 #include "Eigen/Core"
 
-namespace lsst {
-namespace afw {
-namespace math {
-namespace shapelets {
+namespace lsst { namespace shapelet {
 
 /**
  *  @brief An iterator-like object to help in traversing "packed" shapelet or Hermite polynomial
@@ -116,7 +113,7 @@ public:
      *         simple unscaled shapelet expansion at the given point.
      */
     void fillEvaluation(
-        ndarray::Array<Pixel,1> const & target, geom::Point2D const & point,
+        ndarray::Array<Pixel,1> const & target, afw::geom::Point2D const & point,
         ndarray::Array<Pixel,1> const & dx = ndarray::Array<Pixel,1>(),
         ndarray::Array<Pixel,1> const & dy = ndarray::Array<Pixel,1>()
     ) const {
@@ -128,7 +125,7 @@ public:
      *         simple unscaled shapelet expansion at the given point.
      */
     void fillEvaluation(
-        ndarray::Array<Pixel,1> const & target, geom::Extent2D const & point,
+        ndarray::Array<Pixel,1> const & target, afw::geom::Extent2D const & point,
         ndarray::Array<Pixel,1> const & dx = ndarray::Array<Pixel,1>(),
         ndarray::Array<Pixel,1> const & dy = ndarray::Array<Pixel,1>()
     ) const {
@@ -153,7 +150,7 @@ public:
      *  @brief Evaluate a simple unscaled shapelet expansion at the given point.
      */
     double sumEvaluation(
-        ndarray::Array<Pixel const,1> const & coeff, geom::Point2D const & point,
+        ndarray::Array<Pixel const,1> const & coeff, afw::geom::Point2D const & point,
         double * dx = 0, double * dy = 0
     ) const {
         return sumEvaluation(coeff, point.getX(), point.getY(), dx, dy);
@@ -163,7 +160,7 @@ public:
      *  @brief Evaluate a simple unscaled shapelet expansion at the given point.
      */
     double sumEvaluation(
-        ndarray::Array<Pixel const,1> const & coeff, geom::Extent2D const & point,
+        ndarray::Array<Pixel const,1> const & coeff, afw::geom::Extent2D const & point,
         double * dx = 0, double * dy = 0
     ) const {
         return sumEvaluation(coeff, point.getX(), point.getY(), dx, dy);
@@ -184,6 +181,6 @@ private:
     ndarray::Array<Pixel,1,1> _dyWorkspace;
 };
 
-}}}}   // lsst::afw::math::shapelets
+}} // namespace lsst::shapelet
 
 #endif // !defined(LSST_AFW_MATH_SHAPELETS_HERMITEEVALUATOR_H)

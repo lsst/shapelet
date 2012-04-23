@@ -22,14 +22,14 @@
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
-#include "lsst/afw/math/shapelets/HermiteEvaluator.h"
+#include "lsst/shapelet/HermiteEvaluator.h"
 #include "lsst/afw/geom/Angle.h"
 
-namespace lsst { namespace afw { namespace math { namespace shapelets {
+namespace lsst { namespace shapelet {
 
 namespace {
 
-static double const NORMALIZATION = std::pow(geom::PI, -0.25);
+static double const NORMALIZATION = std::pow(afw::geom::PI, -0.25);
 
 /**
  *  @brief An iterator-like construct for evaluating either normalized Hermite polynomials or
@@ -88,7 +88,7 @@ void fillEvaluation1d(
 void fillIntegration1d(ndarray::Array<Pixel,1,1> const & result, int moment) {
     int const order = result.getSize<0>() - 1;
     result.deep() = 0.0;
-    result[0] = std::pow(4.0*geom::PI, 0.25);
+    result[0] = std::pow(4.0 * afw::geom::PI, 0.25);
     for (int n = 2; n <= order; n += 2) {
         result[n] = std::sqrt((n - 1.0) / n) * result[n-2];
     }
@@ -245,4 +245,4 @@ Eigen::MatrixXd HermiteEvaluator::computeInnerProductMatrix(
     return result;
 }
 
-}}}} // namespace lsst::afw::math::shapelets
+}} // namespace lsst::shapelet

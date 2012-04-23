@@ -25,9 +25,9 @@
 #include "boost/format.hpp"
 
 #include "lsst/pex/exceptions.h"
-#include "lsst/afw/math/shapelets/BasisEvaluator.h"
+#include "lsst/shapelet/BasisEvaluator.h"
 
-namespace lsst { namespace afw { namespace math { namespace shapelets {
+namespace lsst { namespace shapelet {
 
 namespace {
 
@@ -68,4 +68,4 @@ void BasisEvaluator::fillIntegration(ndarray::Array<Pixel,1> const & array, int 
     ConversionMatrix::convertOperationVector(array, HERMITE, _basisType, getOrder());
 }
 
-}}}} // namespace lsst::afw::math::shapelets
+}} // namespace lsst::shapelet

@@ -25,13 +25,10 @@
 #ifndef LSST_AFW_MATH_SHAPELETS_MULTISHAPELETFUNCTION_H
 #define LSST_AFW_MATH_SHAPELETS_MULTISHAPELETFUNCTION_H
 
-#include "lsst/afw/math/shapelets/ShapeletFunction.h"
+#include "lsst/shapelet/ShapeletFunction.h"
 #include <list>
 
-namespace lsst {
-namespace afw {
-namespace math {
-namespace shapelets {
+namespace lsst { namespace shapelet {
 
 class MultiShapeletFunctionEvaluator;
 
@@ -58,10 +55,10 @@ public:
     void normalize();
 
     /// @brief Shift the shapelet function by shifting the ellipse of each element.
-    void shiftInPlace(lsst::afw::geom::Extent2D const & offset);
+    void shiftInPlace(afw::geom::Extent2D const & offset);
 
     /// @brief Transform the shapelet function by transforming the ellipse of each elements.
-    void transformInPlace(lsst::afw::geom::AffineTransform const & transform);
+    void transformInPlace(afw::geom::AffineTransform const & transform);
 
     /// @brief Convolve the multi-shapelet function.
     MultiShapeletFunction convolve(ShapeletFunction const & other) const;
@@ -99,20 +96,20 @@ public:
 
     /// @brief Evaluate at the given point.
     Pixel operator()(double x, double y) const {
-        return this->operator()(geom::Point2D(x, y));
+        return this->operator()(afw::geom::Point2D(x, y));
     }
 
     /// @brief Evaluate at the given point.
-    Pixel operator()(geom::Point2D const & point) const;
+    Pixel operator()(afw::geom::Point2D const & point) const;
 
     /// @brief Evaluate at the given point.
-    Pixel operator()(geom::Extent2D const & point) const;
+    Pixel operator()(afw::geom::Extent2D const & point) const;
 
     /// @brief Compute the definite integral or integral moments.
     Pixel integrate() const;
 
     /// @brief Return the unweighted dipole and quadrupole moments of the function as an ellipse.
-    geom::ellipses::Ellipse computeMoments() const;
+    afw::geom::ellipses::Ellipse computeMoments() const;
 
     /// @brief Update the evaluator from the given function.
     void update(MultiShapeletFunction const & function);
@@ -130,6 +127,6 @@ inline MultiShapeletFunctionEvaluator MultiShapeletFunction::evaluate() const {
     return MultiShapeletFunctionEvaluator(*this);
 }
 
-}}}}   // lsst::afw::math::shapelets
+}} // namespace lsst::shapelet
 
 #endif // !defined(LSST_AFW_MATH_SHAPELETS_MULTISHAPELETFUNCTION_H)

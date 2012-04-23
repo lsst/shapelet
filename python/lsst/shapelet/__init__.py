@@ -20,7 +20,5 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
-from shapeletsLib import *
-from lsst.afw.geom import ellipses
-
-EllipseCore = lsst.afw.geom.ellipses.Separable[ellipses.Distortion, ellipses.TraceRadius]
+from shapeletLib import *
+from lsst.afw.geom.ellipses import Axes as EllipseCore

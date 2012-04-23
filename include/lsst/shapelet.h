@@ -27,13 +27,13 @@
 /**
  * @file
  *
- * @brief An include file to include the header files for lsst::afw::math::shapelets
+ * @brief An include file to include the header files for lsst::shapelet
  */
-#include "lsst/afw/math/shapelets/constants.h"
-#include "lsst/afw/math/shapelets/ConversionMatrix.h"
-#include "lsst/afw/math/shapelets/ShapeletFunction.h"
-#include "lsst/afw/math/shapelets/MultiShapeletFunction.h"
-#include "lsst/afw/math/shapelets/BasisEvaluator.h"
-#include "lsst/afw/math/shapelets/ModelBuilder.h"
+#include "lsst/shapelet/constants.h"
+#include "lsst/shapelet/ConversionMatrix.h"
+#include "lsst/shapelet/ShapeletFunction.h"
+#include "lsst/shapelet/MultiShapeletFunction.h"
+#include "lsst/shapelet/BasisEvaluator.h"
+#include "lsst/shapelet/ModelBuilder.h"
 
 #endif // !defined(LSST_AFW_MATH_SHAPELETS_H)

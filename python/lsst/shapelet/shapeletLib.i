@@ -22,14 +22,14 @@
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
  
-%define shapeletsLib_DOCSTRING
+%define shapeletLib_DOCSTRING
 "
-Python interface to lsst::afw::math::shapelets classes and functions
+Python interface to lsst::shapelet classes and functions
 "
 %enddef
 
 %feature("autodoc", "1");
-%module(package="lsst.afw.math.shapelets", docstring=shapeletsLib_DOCSTRING) shapeletsLib
+%module(package="lsst.shapelet", docstring=shapeletLib_DOCSTRING) shapeletLib
 
 %{
 #   include "lsst/afw/geom.h"
@@ -37,7 +37,7 @@ Python interface to lsst::afw::math::shapelets classes and functions
 #   include "lsst/afw/image.h"
 #   include "lsst/afw/cameraGeom.h"
 #   include "lsst/pex/logging.h"
-#   include "lsst/afw/math/shapelets.h"
+#   include "lsst/shapelet.h"
 %}
 
 %include "lsst/p_lsstSwig.i"
@@ -58,18 +58,18 @@ Python interface to lsst::afw::math::shapelets classes and functions
 %include "ndarray.i"
 
 %declareNumPyConverters(Eigen::MatrixXd);
-%declareNumPyConverters(ndarray::Array<lsst::afw::math::shapelets::Pixel,1>);
-%declareNumPyConverters(ndarray::Array<lsst::afw::math::shapelets::Pixel,1,1>);
-%declareNumPyConverters(ndarray::Array<lsst::afw::math::shapelets::Pixel const,1,1>);
-%declareNumPyConverters(ndarray::Array<lsst::afw::math::shapelets::Pixel const,2,-2>);
-%declareNumPyConverters(ndarray::Array<lsst::afw::math::shapelets::Pixel,3,-3>);
-%declareNumPyConverters(Eigen::Matrix<lsst::afw::math::shapelets::Pixel,5,Eigen::Dynamic>);
+%declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel,1>);
+%declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel,1,1>);
+%declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel const,1,1>);
+%declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel const,2,-2>);
+%declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel,3,-3>);
+%declareNumPyConverters(Eigen::Matrix<lsst::shapelet::Pixel,5,Eigen::Dynamic>);
 
-%feature(valuewrapper) lsst::afw::math::shapelets::ShapeletFunction;
-%feature(valuewrapper) lsst::afw::math::shapelets::MultiShapeletFunction;
-%feature(valuewrapper) lsst::afw::math::shapelets::ModelBuilder;
+%feature(valuewrapper) lsst::shapelet::ShapeletFunction;
+%feature(valuewrapper) lsst::shapelet::MultiShapeletFunction;
+%feature(valuewrapper) lsst::shapelet::ModelBuilder;
 
-%template(MultiShapeletElementList) std::list<lsst::afw::math::shapelets::ShapeletFunction>;
+%template(MultiShapeletElementList) std::list<lsst::shapelet::ShapeletFunction>;
 
 %import "lsst/afw/geom/geomLib.i"
 %import "lsst/afw/geom/ellipses/ellipsesLib.i"
@@ -78,10 +78,10 @@ Python interface to lsst::afw::math::shapelets classes and functions
 
 %lsst_exceptions();
 
-%include "lsst/afw/math/shapelets/constants.h"
-%include "lsst/afw/math/shapelets/ConversionMatrix.h"
-%include "lsst/afw/math/shapelets/ShapeletFunction.h"
-%include "lsst/afw/math/shapelets/MultiShapeletFunction.h"
-%include "lsst/afw/math/shapelets/BasisEvaluator.h"
+%include "lsst/shapelet/constants.h"
+%include "lsst/shapelet/ConversionMatrix.h"
+%include "lsst/shapelet/ShapeletFunction.h"
+%include "lsst/shapelet/MultiShapeletFunction.h"
+%include "lsst/shapelet/BasisEvaluator.h"
 
-%include "lsst/afw/math/shapelets/ModelBuilder.h"
+%include "lsst/shapelet/ModelBuilder.h"

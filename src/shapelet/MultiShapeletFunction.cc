@@ -22,13 +22,13 @@
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
-#include "lsst/afw/math/shapelets/MultiShapeletFunction.h"
-#include "lsst/afw/math/shapelets/ConversionMatrix.h"
+#include "lsst/shapelet/MultiShapeletFunction.h"
+#include "lsst/shapelet/ConversionMatrix.h"
 #include "lsst/pex/exceptions.h"
 #include "ndarray/eigen.h"
 #include <boost/format.hpp>
 
-namespace lsst { namespace afw { namespace math { namespace shapelets {
+namespace lsst { namespace shapelet {
 
 void MultiShapeletFunction::normalize() {
     double integral = evaluate().integrate();
@@ -37,13 +37,13 @@ void MultiShapeletFunction::normalize() {
     }
 }
 
-void MultiShapeletFunction::shiftInPlace(geom::Extent2D const & offset) {
+void MultiShapeletFunction::shiftInPlace(afw::geom::Extent2D const & offset) {
     for (ElementList::iterator i = _elements.begin(); i != _elements.end(); ++i) {
         i->shiftInPlace(offset);
     }    
 }
 
-void MultiShapeletFunction::transformInPlace(geom::AffineTransform const & transform) {
+void MultiShapeletFunction::transformInPlace(afw::geom::AffineTransform const & transform) {
     for (ElementList::iterator i = _elements.begin(); i != _elements.end(); ++i) {
         i->transformInPlace(transform);
     }    
@@ -78,7 +78,7 @@ void MultiShapeletFunctionEvaluator::update(MultiShapeletFunction const & functi
     }
 }
 
-Pixel MultiShapeletFunctionEvaluator::operator()(geom::Point2D const & point) const {
+Pixel MultiShapeletFunctionEvaluator::operator()(afw::geom::Point2D const & point) const {
     Pixel r = 0.0;
     for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
         r += (*i)(point);
@@ -86,7 +86,7 @@ Pixel MultiShapeletFunctionEvaluator::operator()(geom::Point2D const & point) co
     return r;
 }
 
-Pixel MultiShapeletFunctionEvaluator::operator()(geom::Extent2D const & point) const {
+Pixel MultiShapeletFunctionEvaluator::operator()(afw::geom::Extent2D const & point) const {
     Pixel r = 0.0;
     for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
         r += (*i)(point);
@@ -109,7 +109,7 @@ MultiShapeletFunctionEvaluator::MultiShapeletFunctionEvaluator(
     update(function);
 }
 
-geom::ellipses::Ellipse MultiShapeletFunctionEvaluator::computeMoments() const {
+afw::geom::ellipses::Ellipse MultiShapeletFunctionEvaluator::computeMoments() const {
     double q0 = 0.0;
     Eigen::Vector2d q1 = Eigen::Vector2d::Zero();
     Eigen::Matrix2d q2 = Eigen::Matrix2d::Zero();
@@ -119,10 +119,10 @@ geom::ellipses::Ellipse MultiShapeletFunctionEvaluator::computeMoments() const {
     q1 /= q0;
     q2 /= q0;
     q2 -= q1 * q1.transpose();
-    return geom::ellipses::Ellipse(
-        geom::ellipses::Quadrupole(geom::ellipses::Quadrupole::Matrix(q2), false),
-        geom::Point2D(q1)
+    return afw::geom::ellipses::Ellipse(
+        afw::geom::ellipses::Quadrupole(afw::geom::ellipses::Quadrupole::Matrix(q2), false),
+        afw::geom::Point2D(q1)
     );
 }
 
-}}}} // namespace lsst::afw::math::shapelets
+}} // namespace lsst::shapelet

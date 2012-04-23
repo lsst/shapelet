@@ -22,7 +22,7 @@
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
-#include "lsst/afw/math/shapelets/ConversionMatrix.h"
+#include "lsst/shapelet/ConversionMatrix.h"
 #include "lsst/pex/exceptions.h"
 #include "ndarray/eigen.h"
 
@@ -36,7 +36,7 @@
 #include <complex>
 #include <vector>
 
-namespace lsst { namespace afw { namespace math { namespace shapelets {
+namespace lsst { namespace shapelet {
 
 namespace {
 
@@ -242,4 +242,4 @@ void ConversionMatrix::convertOperationVector(
     m.multiplyOnRight(array);
 }
 
-}}}} // namespace lsst::afw::math::shapelets
+}} // namespace lsst::shapelet

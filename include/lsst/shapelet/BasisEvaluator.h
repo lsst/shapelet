@@ -27,17 +27,14 @@
 
 #include "ndarray.h"
 #include "lsst/afw/geom.h"
-#include "lsst/afw/math/shapelets/constants.h"
-#include "lsst/afw/math/shapelets/HermiteEvaluator.h"
-#include "lsst/afw/math/shapelets/ConversionMatrix.h"
+#include "lsst/shapelet/constants.h"
+#include "lsst/shapelet/HermiteEvaluator.h"
+#include "lsst/shapelet/ConversionMatrix.h"
 #include "lsst/afw/image/Image.h"
 #include "lsst/afw/image/MaskedImage.h"
 #include "lsst/afw/detection/Footprint.h"
 
-namespace lsst {
-namespace afw {
-namespace math {
-namespace shapelets {
+namespace lsst { namespace shapelet {
 
 /**
  *  @brief Evaluates a standard shapelet Basis.
@@ -80,7 +77,7 @@ public:
      *  @param[out]    dy       Optional output array for the derivative w.r.t. the y coordinate.
      */
     void fillEvaluation(
-        ndarray::Array<Pixel,1> const & array, geom::Point2D const & point,
+        ndarray::Array<Pixel,1> const & array, afw::geom::Point2D const & point,
         ndarray::Array<Pixel,1> const & dx = ndarray::Array<Pixel,1>(),
         ndarray::Array<Pixel,1> const & dy = ndarray::Array<Pixel,1>()
     ) const {
@@ -97,7 +94,7 @@ public:
      *  @param[out]    dy       Optional output array for the derivative w.r.t. the y coordinate.
      */
     void fillEvaluation(
-        ndarray::Array<Pixel,1> const & array, geom::Extent2D const & point,
+        ndarray::Array<Pixel,1> const & array, afw::geom::Extent2D const & point,
         ndarray::Array<Pixel,1> const & dx = ndarray::Array<Pixel,1>(),
         ndarray::Array<Pixel,1> const & dy = ndarray::Array<Pixel,1>()
     ) const {
@@ -118,6 +115,6 @@ private:
     HermiteEvaluator _h;
 };
 
-}}}}   // lsst::afw::math::shapelets
+}} // namespace lsst::shapelet classes 
 
 #endif // !defined(LSST_AFW_MATH_SHAPELETS_BASISEVALUATOR_H)

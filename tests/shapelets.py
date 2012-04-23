@@ -39,7 +39,7 @@ import lsst.utils.tests as utilsTests
 import lsst.pex.exceptions
 import lsst.afw.geom as geom
 import lsst.afw.geom.ellipses as ellipses
-import lsst.afw.math.shapelets as shapelets
+import lsst.shapelet
 import lsst.afw.image
 import lsst.afw.detection
 
@@ -92,16 +92,16 @@ class ShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
     def setUp(self):
         order = 4
         self.ellipse = ellipses.Ellipse(ellipses.Axes(1.2, 0.8, 0.3), geom.Point2D(0.12, -0.08))
-        self.coefficients = numpy.random.randn(shapelets.computeSize(order))
+        self.coefficients = numpy.random.randn(lsst.shapelet.computeSize(order))
         self.x = numpy.random.randn(25)
         self.y = numpy.random.randn(25)
         self.bases = [
-            shapelets.BasisEvaluator(order, shapelets.HERMITE),
-            shapelets.BasisEvaluator(order, shapelets.LAGUERRE),
+            lsst.shapelet.BasisEvaluator(order, lsst.shapelet.HERMITE),
+            lsst.shapelet.BasisEvaluator(order, lsst.shapelet.LAGUERRE),
             ]
         self.functions = [
-            shapelets.ShapeletFunction(order, shapelets.HERMITE, self.coefficients),
-            shapelets.ShapeletFunction(order, shapelets.LAGUERRE, self.coefficients),
+            lsst.shapelet.ShapeletFunction(order, lsst.shapelet.HERMITE, self.coefficients),
+            lsst.shapelet.ShapeletFunction(order, lsst.shapelet.LAGUERRE, self.coefficients),
             ]
         for function in self.functions:
             function.setEllipse(self.ellipse)
@@ -164,11 +164,11 @@ class MultiShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
                     ),
                 geom.Point2D(0.23, -0.15)
                 )
-            coefficients = numpy.random.randn(shapelets.computeSize(n))
-            element = shapelets.ShapeletFunction(n, shapelets.HERMITE, coefficients)
+            coefficients = numpy.random.randn(lsst.shapelet.computeSize(n))
+            element = lsst.shapelet.ShapeletFunction(n, lsst.shapelet.HERMITE, coefficients)
             element.setEllipse(ellipse)
             elements.append(element)
-        function = shapelets.MultiShapeletFunction(elements)
+        function = lsst.shapelet.MultiShapeletFunction(elements)
         x = numpy.linspace(-10, 10, 101)
         y = x
         z = self.makeImage(function, x, y)
@@ -178,8 +178,9 @@ class MultiShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
 class ModelBuilderTestCase(unittest.TestCase, ShapeletTestMixin):
 
     def buildModel(self, region, ellipse):
-        model = numpy.zeros((shapelets.computeSize(self.order), region.getArea()), dtype=float).transpose()
-        evaluator = shapelets.BasisEvaluator(self.order, shapelets.HERMITE)
+        model = numpy.zeros((lsst.shapelet.computeSize(self.order), region.getArea()),
+                            dtype=float).transpose()
+        evaluator = lsst.shapelet.BasisEvaluator(self.order, lsst.shapelet.HERMITE)
         n = 0
         gt = ellipse.getGridTransform()
         for span in region.getSpans():
@@ -192,7 +193,7 @@ class ModelBuilderTestCase(unittest.TestCase, ShapeletTestMixin):
 
     def buildNumericalDerivative(self, builder, parameters, makeEllipse):
         eps = 1E-6
-        derivative = numpy.zeros((len(parameters), shapelets.computeSize(self.order),
+        derivative = numpy.zeros((len(parameters), lsst.shapelet.computeSize(self.order),
                                   self.region.getArea()), dtype=float).transpose()
         for i in range(len(parameters)):
             parameters[i] += eps
@@ -222,15 +223,15 @@ class ModelBuilderTestCase(unittest.TestCase, ShapeletTestMixin):
         self.assertClose(builder.getModel(), model)
 
     def testModel(self):
-        builder1 = shapelets.ModelBuilder(self.order, self.ellipse, self.region)
-        builder2 = shapelets.ModelBuilder(self.order, self.ellipse, self.bbox)
+        builder1 = lsst.shapelet.ModelBuilder(self.order, self.ellipse, self.region)
+        builder2 = lsst.shapelet.ModelBuilder(self.order, self.ellipse, self.bbox)
         self.assertClose(builder1.getModel(), self.model)
         self.assertClose(builder2.getModel(), self.model)
 
     def testDerivative1(self):
         """test derivative with no reparameterization"""
-        builder = shapelets.ModelBuilder(self.order, self.ellipse, self.region)
-        a = numpy.zeros((5, shapelets.computeSize(self.order), self.region.getArea()),
+        builder = lsst.shapelet.ModelBuilder(self.order, self.ellipse, self.region)
+        a = numpy.zeros((5, lsst.shapelet.computeSize(self.order), self.region.getArea()),
                          dtype=float).transpose()
         builder.computeDerivative(a)
         def makeAxesEllipse(p):
@@ -241,11 +242,11 @@ class ModelBuilderTestCase(unittest.TestCase, ShapeletTestMixin):
 
     def testDerivative2(self):
         """test derivative with trivial reparameterization (derivative wrt center point only)"""
-        builder = shapelets.ModelBuilder(self.order, self.ellipse, self.region)
+        builder = lsst.shapelet.ModelBuilder(self.order, self.ellipse, self.region)
         jac = numpy.zeros((5, 2), dtype=float)
         jac[3,0] = 1.0
         jac[4,1] = 1.0
-        a = numpy.zeros((2, shapelets.computeSize(self.order), self.region.getArea()),
+        a = numpy.zeros((2, lsst.shapelet.computeSize(self.order), self.region.getArea()),
                          dtype=float).transpose()
         builder.computeDerivative(a, jac)
         def makePoint(p):
@@ -256,11 +257,11 @@ class ModelBuilderTestCase(unittest.TestCase, ShapeletTestMixin):
 
     def testDerivative3(self):
         """test derivative with nontrivial reparameterization (derivative wrt different core)"""
-        builder = shapelets.ModelBuilder(self.order, self.ellipse, self.region)
+        builder = lsst.shapelet.ModelBuilder(self.order, self.ellipse, self.region)
         quad = ellipses.Quadrupole(self.ellipse.getCore())
         jac = numpy.zeros((5, 3), dtype=float)
         jac[:3,:] = self.ellipse.getCore().dAssign(quad)
-        a = numpy.zeros((3, shapelets.computeSize(self.order), self.region.getArea()),
+        a = numpy.zeros((3, lsst.shapelet.computeSize(self.order), self.region.getArea()),
                          dtype=float).transpose()
         builder.computeDerivative(a, jac)
         def makeQuadrupole(p):
