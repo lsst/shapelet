@@ -94,6 +94,14 @@ Pixel MultiShapeletFunctionEvaluator::operator()(afw::geom::Extent2D const & poi
     return r;
 }
 
+void MultiShapeletFunctionEvaluator::addToImage(
+    ndarray::Array<Pixel,2,1> const & array,
+    afw::geom::Point2I const & xy0
+) const {
+    for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
+        i->addToImage(array, xy0);
+    }
+}
 
 Pixel MultiShapeletFunctionEvaluator::integrate() const {
     Pixel r = 0.0;

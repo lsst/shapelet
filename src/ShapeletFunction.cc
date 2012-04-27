@@ -25,6 +25,7 @@
 #include "lsst/shapelet/ShapeletFunction.h"
 #include "lsst/shapelet/ConversionMatrix.h"
 #include "lsst/shapelet/HermiteConvolution.h"
+
 #include "lsst/pex/exceptions.h"
 #include "ndarray/eigen.h"
 #include <boost/format.hpp>
@@ -175,6 +176,19 @@ ShapeletFunction ShapeletFunction::convolve(ShapeletFunction const & other) cons
         result.changeBasisType(LAGUERRE);
     }
     return result;
+}
+
+void ShapeletFunctionEvaluator::addToImage(
+    ndarray::Array<Pixel,2,1> const & array,
+    afw::geom::Point2I const & xy0
+) const {
+    ndarray::Array<Pixel,2,1>::Iterator yIter = array.begin();
+    for (int y = xy0.getY(); yIter != array.end(); ++y, ++yIter) {
+        ndarray::Array<Pixel,2,1>::Reference::Iterator xIter = yIter->begin();
+        for (int x = xy0.getX(); xIter != yIter->end(); ++x, ++xIter) {
+            *xIter += (*this)(x, y);
+        }
+    }
 }
 
 void ShapeletFunctionEvaluator::_computeRawMoments(

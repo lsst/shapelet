@@ -105,6 +105,17 @@ public:
     /// @brief Evaluate at the given point.
     Pixel operator()(afw::geom::Extent2D const & point) const;
 
+    /// @brief Add the function to the given image-like array.
+    void addToImage(
+        ndarray::Array<Pixel,2,1> const & array,
+        afw::geom::Point2I const & xy0 = afw::geom::Point2I()
+    ) const;
+
+    /// @brief Evaluate the function on the given image.
+    void addToImage(afw::image::Image<Pixel> & image) const {
+        addToImage(image.getArray(), image.getXY0());
+    }
+
     /// @brief Compute the definite integral or integral moments.
     Pixel integrate() const;
 

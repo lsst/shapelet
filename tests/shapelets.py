@@ -148,7 +148,21 @@ class ShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
                 dy_n = 0.5 * (v_hi - v_lo) / eps
                 self.assertClose(dx_n, dx_a, rtol=2.0*eps)
                 self.assertClose(dy_n, dy_a, rtol=2.0*eps)
-                
+
+    def testAddToImage(self):
+        bbox = geom.Box2I(geom.Point2I(5, 6), geom.Extent2I(20, 30))
+        image = lsst.afw.image.ImageD(bbox)
+        x = numpy.arange(bbox.getBeginX(), bbox.getEndX())
+        y = numpy.arange(bbox.getBeginY(), bbox.getEndY())
+        array = numpy.zeros((bbox.getHeight(), bbox.getWidth()), dtype=float)
+        for f in self.functions:
+            ev = f.evaluate()
+            ev.addToImage(image)
+            ev.addToImage(array, bbox.getMin())
+            check = self.makeImage(f, x, y)
+            self.assertClose(image.getArray(), check)
+            self.assertClose(array, check)
+
 class MultiShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
 
     def testMoments(self):
@@ -173,7 +187,6 @@ class MultiShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
         y = x
         z = self.makeImage(function, x, y)
         self.measureMoments(function, x, y, z)
-    
 
 class ModelBuilderTestCase(unittest.TestCase, ShapeletTestMixin):
 

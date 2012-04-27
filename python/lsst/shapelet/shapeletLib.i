@@ -60,6 +60,7 @@ Python interface to lsst::shapelet classes and functions
 %declareNumPyConverters(Eigen::MatrixXd);
 %declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel,1>);
 %declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel,1,1>);
+%declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel,2,1>);
 %declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel const,1,1>);
 %declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel const,2,-2>);
 %declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel,3,-3>);
