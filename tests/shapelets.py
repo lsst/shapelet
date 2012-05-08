@@ -190,98 +190,35 @@ class MultiShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
 
 class ModelBuilderTestCase(unittest.TestCase, ShapeletTestMixin):
 
-    def buildModel(self, region, ellipse):
-        model = numpy.zeros((lsst.shapelet.computeSize(self.order), region.getArea()),
-                            dtype=float).transpose()
+    def buildModel(self, ellipse):
+        model = numpy.zeros((lsst.shapelet.computeSize(self.order), self.x.size), dtype=float).transpose()
         evaluator = lsst.shapelet.BasisEvaluator(self.order, lsst.shapelet.HERMITE)
         n = 0
         gt = ellipse.getGridTransform()
-        for span in region.getSpans():
-            y = span.getY()
-            for x in range(span.getX0(), span.getX1() + 1):
-                p = gt(geom.Point2D(x, y))
-                evaluator.fillEvaluation(model[n,:], p)
-                n += 1
+        for x, y in zip(self.x, self.y):
+            p = gt(geom.Point2D(x, y))
+            evaluator.fillEvaluation(model[n,:], p)
+            n += 1
         return model
-
-    def buildNumericalDerivative(self, builder, parameters, makeEllipse):
-        eps = 1E-6
-        derivative = numpy.zeros((len(parameters), lsst.shapelet.computeSize(self.order),
-                                  self.region.getArea()), dtype=float).transpose()
-        for i in range(len(parameters)):
-            parameters[i] += eps
-            ellipse = makeEllipse(parameters)
-            builder.update(ellipse)
-            derivative[:,:,i] = builder.getModel()
-            parameters[i] -= 2.0 * eps
-            ellipse = makeEllipse(parameters)
-            builder.update(ellipse)
-            derivative[:,:,i] -= builder.getModel()
-            derivative[:,:,i] /= 2.0 * eps
-        return derivative
 
     def setUp(self):
         self.order = 3
-        self.ellipse = ellipses.Ellipse(ellipses.Axes(10, 7, 0.3), geom.Point2D(500, 600))
-        self.bbox = geom.Box2I(lsst.afw.geom.Point2I(480, 580), geom.Point2I(501, 601))
-        self.region = lsst.afw.detection.Footprint(self.bbox)
-        self.model = self.buildModel(self.region, self.ellipse)
+        self.ellipse = ellipses.Axes(10, 7, 0.3)
+        self.xg, self.yg = numpy.meshgrid(numpy.linspace(-20, 20, 101), numpy.linspace(-15, 25, 95))
+        self.x = self.xg.ravel()
+        self.y = self.yg.ravel()
+        self.model = self.buildModel(self.ellipse)
 
     def tearDown(self):
         del self.ellipse
-        del self.bbox
-        del self.region
 
     def check(self, builder, region, model):
         self.assertClose(builder.getModel(), model)
 
     def testModel(self):
-        builder1 = lsst.shapelet.ModelBuilder(self.order, self.ellipse, self.region)
-        builder2 = lsst.shapelet.ModelBuilder(self.order, self.ellipse, self.bbox)
-        self.assertClose(builder1.getModel(), self.model)
-        self.assertClose(builder2.getModel(), self.model)
-
-    def testDerivative1(self):
-        """test derivative with no reparameterization"""
-        builder = lsst.shapelet.ModelBuilder(self.order, self.ellipse, self.region)
-        a = numpy.zeros((5, lsst.shapelet.computeSize(self.order), self.region.getArea()),
-                         dtype=float).transpose()
-        builder.computeDerivative(a)
-        def makeAxesEllipse(p):
-            return ellipses.Ellipse(ellipses.Axes(*p[0:3]), geom.Point2D(*p[3:5]))
-        n = self.buildNumericalDerivative(builder, self.ellipse.getParameterVector(), makeAxesEllipse)
-        # no hard requirement for tolerances here, but I've dialed them to the max to avoid regressions
-        self.assertClose(a, n, rtol=1E-4, atol=1E-6)
-
-    def testDerivative2(self):
-        """test derivative with trivial reparameterization (derivative wrt center point only)"""
-        builder = lsst.shapelet.ModelBuilder(self.order, self.ellipse, self.region)
-        jac = numpy.zeros((5, 2), dtype=float)
-        jac[3,0] = 1.0
-        jac[4,1] = 1.0
-        a = numpy.zeros((2, lsst.shapelet.computeSize(self.order), self.region.getArea()),
-                         dtype=float).transpose()
-        builder.computeDerivative(a, jac)
-        def makePoint(p):
-            return ellipses.Ellipse(self.ellipse.getCore(), geom.Point2D(*p))
-        n = self.buildNumericalDerivative(builder, self.ellipse.getParameterVector()[3:5], makePoint)
-        # no hard requirement for tolerances here, but I've dialed them to the max to avoid regressions
-        self.assertClose(a, n, rtol=1E-4, atol=1E-6)
-
-    def testDerivative3(self):
-        """test derivative with nontrivial reparameterization (derivative wrt different core)"""
-        builder = lsst.shapelet.ModelBuilder(self.order, self.ellipse, self.region)
-        quad = ellipses.Quadrupole(self.ellipse.getCore())
-        jac = numpy.zeros((5, 3), dtype=float)
-        jac[:3,:] = self.ellipse.getCore().dAssign(quad)
-        a = numpy.zeros((3, lsst.shapelet.computeSize(self.order), self.region.getArea()),
-                         dtype=float).transpose()
-        builder.computeDerivative(a, jac)
-        def makeQuadrupole(p):
-            return ellipses.Ellipse(ellipses.Quadrupole(*p), self.ellipse.getCenter())
-        n = self.buildNumericalDerivative(builder, quad.getParameterVector(), makeQuadrupole)
-        # no hard requirement for tolerances here, but I've dialed them to the max to avoid regressions
-        self.assertClose(a, n, rtol=1E-4, atol=1E-6)
+        builder = lsst.shapelet.ModelBuilder(self.order, self.x, self.y)
+        builder.update(self.ellipse)
+        self.assertClose(builder.getModel(), self.model)
 
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

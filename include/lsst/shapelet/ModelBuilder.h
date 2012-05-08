@@ -25,6 +25,8 @@
 #ifndef LSST_AFW_MATH_SHAPELETS_ModelBuilder_h_INCLUDED
 #define LSST_AFW_MATH_SHAPELETS_ModelBuilder_h_INCLUDED
 
+#include "ndarray/eigen.h"
+
 #include "lsst/shapelet/BasisEvaluator.h"
 #include "lsst/afw/detection/Footprint.h"
 #include "lsst/afw/geom/ellipses.h"
@@ -32,12 +34,8 @@
 namespace lsst { namespace shapelet {
 
 /**
- *  @brief A class that evaluates a Gauss-Hermite (shapelet with HERMITE basis type) basis over a footprint.
- *
- *  This is intended as the primary way to build shapelet models that will be fit to image data.  Given
- *  an Image or MaskedImage, it flattens the pixels according to a footprint and generates a
- *  (pixels) x (basis function) matrix that can be fit to the flattened data vector with linear
- *  least-squares.  It can also produce the derivative of this matrix w.r.t. the ellipse parameters.
+ *  @brief A class that evaluates a Gauss-Hermite (shapelet with HERMITE basis type) basis over 
+ *         multiple pixels in a flattened array.
  *
  *  Unlike virtually everything else in the shapelets library, ModelBuilder does not rely on the
  *  HermiteEvaluator class to compute basis functions.  Instead of making the iteration over the
@@ -51,35 +49,13 @@ public:
      *  @brief Construct a ModelBuilder that can be used to fit data from an Image.
      *
      *  @param[in] order       Order of the shapelet model.
-     *  @param[in] ellipse     Basis ellipse for the shapelet model.  This can be
-     *                         changed after construction, but the parameterization
-     *                         of the ellipse used in the definition of derivatives
-     *                         is based on the ellipse the ModelBuilder was
-     *                         constructed with.
-     *  @param[in] region      Footprint that defines the pixels used in the model.
+     *  @param[in] x           Array of center-subtracted X coordinates (same shape as y).
+     *  @param[in] y           Array of center-subtracted Y coordinates (same shape as x).
      */
     ModelBuilder(
         int order,
-        afw::geom::ellipses::Ellipse const & ellipse,
-        afw::detection::Footprint const & region
-    );
-
-    /**
-     *  @brief Construct a ModelBuilder that can be used to fit data from an Image.
-     *
-     *  @param[in] order       Order of the shapelet model.
-     *  @param[in] ellipse     Basis ellipse for the shapelet model.  This can be
-     *                         changed after construction, but the parameterization
-     *                         of the ellipse used in the definition of derivatives
-     *                         is based on the ellipse the ModelBuilder was
-     *                         constructed with.
-     *  @param[in] region      Bounding box that defines the pixels used in the model
-     *                         (rows will be concatenated to flatten the model).
-     */
-    ModelBuilder(
-        int order,
-        afw::geom::ellipses::Ellipse const & ellipse,
-        afw::geom::Box2I const & region
+        ndarray::Array<double const,1,1> const & x,
+        ndarray::Array<double const,1,1> const & y
     );
 
     /**
@@ -87,71 +63,19 @@ public:
      *
      *  This does not change the ellipse parameterization used by computeDerivative.
      */
-    void update(afw::geom::ellipses::Ellipse const & ellipse);
+    void update(afw::geom::ellipses::BaseCore const & ellipse);
 
     /// @brief Return the model design matrix (basis functions in columns, flattened pixels in rows).
     ndarray::Array<Pixel const,2,-2> getModel() const { return _model; }
     
-    /**
-     *  @brief Evaluate the derivative of the model with respect to the ellipse parameters
-     *         or a function thereof.
-     *
-     *  @param[out]   output       Array that will contain the derivative.  The dimensions
-     *                             are ordered {data points, basis elements, ellipse parameters}.
-     *                             Must be preallocated to the correct dimensions.
-     */
-    void computeDerivative(ndarray::Array<Pixel,3,-3> const & output) const;
-
-    /**
-     *  @brief Evaluate the derivative of the model with respect to the ellipse parameters
-     *         or a function thereof.
-     *
-     *  @param[out]   output       Array that will contain the derivative.  The dimensions
-     *                             are ordered {data points, basis elements, ellipse parameters}.
-     *                             Must be preallocated to the correct dimensions.
-     *  @param[in]    jacobian     Matrix giving the partial derivatives of the ellipse parameters
-     *                             with respect to the desired parameters.  Each row corresponds
-     *                             to a single ellipse parameter, and each column corresponds
-     *                             to a desired output parameter.
-     *  @param[in]    add          If true, the derivative will be added to the output array
-     *                             instead of overwriting it.
-     *
-     *  Passing a Jacobian matrix to computeDerivative is equivalent to multiplying the output
-     *  by the Jacobian on the right; that is:
-     *  @code
-     *  computeDerivative(output, jacobian);
-     *  @endcode
-     *  is equivalent to
-     *  @code
-     *  computeDerivative(tmp);
-     *  for (int n = 0; n < tmp.getSize<0>(); ++n)
-     *      output[n].asEigen() = tmp[n].asEigen() * jacobian;
-     *  @endcode
-     *  The second may be significantly slower, however, because the tmp tensor is never
-     *  actually formed in the first case.
-     */
-    void computeDerivative(
-        ndarray::Array<Pixel,3,-3> const & output,
-        Eigen::Matrix<Pixel,5,Eigen::Dynamic> const & jacobian,
-        bool add=false
-    ) const;
-
 private:
-
-    // Implemenatation takes Jacobian wrt affine transform parameters instead of ellipse parameters.
-    void _computeDerivative(
-        ndarray::Array<Pixel,3,-3> const & output,
-        Eigen::Matrix<Pixel,6,Eigen::Dynamic> const & jacobian,
-        bool add
-    ) const;
 
     void _allocate();
 
     int _order;
-    afw::geom::ellipses::Ellipse _ellipse;
     ndarray::Array<Pixel,2,-2> _model;
-    Eigen::ArrayXd _x;
-    Eigen::ArrayXd _y;
+    ndarray::EigenView<double const,1,1,Eigen::ArrayXpr> _x;
+    ndarray::EigenView<double const,1,1,Eigen::ArrayXpr> _y;
     Eigen::ArrayXd _xt;
     Eigen::ArrayXd _yt;
     Eigen::ArrayXXd _xWorkspace;
