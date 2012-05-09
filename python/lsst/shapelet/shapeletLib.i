@@ -75,9 +75,10 @@ Python interface to lsst::shapelet classes and functions
 %import "lsst/afw/geom/geomLib.i"
 %import "lsst/afw/geom/ellipses/ellipsesLib.i"
 %import "lsst/afw/image/imageLib.i"
-%import "lsst/afw/detection/detectionLib.i"
 
 %lsst_exceptions();
+
+%ignore lsst::shapelet::ShapeletFunction::operator=;
 
 %include "lsst/shapelet/constants.h"
 %include "lsst/shapelet/ConversionMatrix.h"
