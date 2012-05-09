@@ -48,8 +48,8 @@ void fillHermite1d(Eigen::ArrayXXd & workspace, Eigen::ArrayXd const & coord) {
 
 ModelBuilder::ModelBuilder(
     int order,
-    ndarray::Array<double const,1,1> const & x,
-    ndarray::Array<double const,1,1> const & y
+    ndarray::Array<Pixel const,1,1> const & x,
+    ndarray::Array<Pixel const,1,1> const & y
 ) : _order(order),
     _model(ndarray::allocate(x.getSize<0>(), computeSize(order))),
     _x(x), _y(y),

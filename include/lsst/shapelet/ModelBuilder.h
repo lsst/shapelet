@@ -54,8 +54,8 @@ public:
      */
     ModelBuilder(
         int order,
-        ndarray::Array<double const,1,1> const & x,
-        ndarray::Array<double const,1,1> const & y
+        ndarray::Array<Pixel const,1,1> const & x,
+        ndarray::Array<Pixel const,1,1> const & y
     );
 
     /**
@@ -74,8 +74,8 @@ private:
 
     int _order;
     ndarray::Array<Pixel,2,-2> _model;
-    ndarray::EigenView<double const,1,1,Eigen::ArrayXpr> _x;
-    ndarray::EigenView<double const,1,1,Eigen::ArrayXpr> _y;
+    ndarray::EigenView<Pixel const,1,1,Eigen::ArrayXpr> _x;
+    ndarray::EigenView<Pixel const,1,1,Eigen::ArrayXpr> _y;
     Eigen::ArrayXd _xt;
     Eigen::ArrayXd _yt;
     Eigen::ArrayXXd _xWorkspace;
