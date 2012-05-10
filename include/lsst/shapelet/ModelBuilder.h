@@ -48,34 +48,33 @@ public:
     /**
      *  @brief Construct a ModelBuilder that can be used to fit data from an Image.
      *
-     *  @param[in] order       Order of the shapelet model.
      *  @param[in] x           Array of center-subtracted X coordinates (same shape as y).
      *  @param[in] y           Array of center-subtracted Y coordinates (same shape as x).
      */
     ModelBuilder(
-        int order,
-        ndarray::Array<Pixel const,1,1> const & x,
-        ndarray::Array<Pixel const,1,1> const & y
+        ndarray::Array<double const,1,1> const & x,
+        ndarray::Array<double const,1,1> const & y
     );
 
     /**
      *  @brief Update the basis ellipse and recompute the model matrix.
-     *
-     *  This does not change the ellipse parameterization used by computeDerivative.
      */
     void update(afw::geom::ellipses::BaseCore const & ellipse);
 
-    /// @brief Return the model design matrix (basis functions in columns, flattened pixels in rows).
-    ndarray::Array<Pixel const,2,-2> getModel() const { return _model; }
-    
+    /// @brief Fill a model design matrix (basis functions in columns, flattened pixels in rows).
+    void addModelMatrix(int order, ndarray::Array<double,2,-1> const & output);
+
+    /// @brief Fill a model design matrix (basis functions in columns, flattened pixels in rows).
+    void addModelVector(
+        int order,
+        ndarray::Array<double const,1,1> const & coefficients,
+        ndarray::Array<double,1,1> const & output
+    );
+
 private:
-
-    void _allocate();
-
-    int _order;
-    ndarray::Array<Pixel,2,-2> _model;
-    ndarray::EigenView<Pixel const,1,1,Eigen::ArrayXpr> _x;
-    ndarray::EigenView<Pixel const,1,1,Eigen::ArrayXpr> _y;
+    int _wsOrder;
+    ndarray::EigenView<double const,1,1,Eigen::ArrayXpr> _x;
+    ndarray::EigenView<double const,1,1,Eigen::ArrayXpr> _y;
     Eigen::ArrayXd _xt;
     Eigen::ArrayXd _yt;
     Eigen::ArrayXXd _xWorkspace;

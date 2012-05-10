@@ -212,14 +212,18 @@ class ModelBuilderTestCase(unittest.TestCase, ShapeletTestMixin):
     def tearDown(self):
         del self.ellipse
 
-    def check(self, builder, region, model):
-        self.assertClose(builder.getModel(), model)
-
     def testModel(self):
-        builder = lsst.shapelet.ModelBuilder(self.order, self.x, self.y)
+        builder = lsst.shapelet.ModelBuilder(self.x, self.y)
         builder.update(self.ellipse)
-        self.assertClose(builder.getModel(), self.model)
-
+        z1 = numpy.random.randn(*self.model.transpose().shape).transpose()
+        z0 = self.model + z1
+        builder.addModelMatrix(self.order, z1)
+        self.assertClose(z0, z1)
+        coefficients = numpy.random.randn(self.model.shape[1])
+        y1 = numpy.random.randn(self.model.shape[0])
+        y0 = numpy.dot(self.model, coefficients) + y1
+        builder.addModelVector(self.order, coefficients, y1)
+        self.assertClose(y0, y1)
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

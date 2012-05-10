@@ -75,10 +75,10 @@ public:
     void normalize();
 
     /// @brief Return the coefficient vector.
-    ndarray::Array<Pixel,1,1> const getCoefficients() { return _coefficients; }
+    ndarray::Array<double,1,1> const getCoefficients() { return _coefficients; }
 
     /// @brief Return the coefficient vector (const).
-    ndarray::Array<Pixel const,1,1> const getCoefficients() const { return _coefficients; }
+    ndarray::Array<double const,1,1> const getCoefficients() const { return _coefficients; }
 
     /// @brief Convolve the shapelet function.
     ShapeletFunction convolve(ShapeletFunction const & other) const;
@@ -102,7 +102,7 @@ public:
     /// @brief Construct a function with a unit-circle ellipse and a deep-copied coefficient vector.
     ShapeletFunction(
         int order, BasisTypeEnum basisType,
-        ndarray::Array<Pixel,1,1> const & coefficients
+        ndarray::Array<double,1,1> const & coefficients
     );
 
     /// @brief Construct a function with a circular ellipse and set all coefficients to zero.
@@ -112,7 +112,7 @@ public:
     /// @brief Construct a function with a circular ellipse and a deep-copied coefficient vector.
     ShapeletFunction(
         int order, BasisTypeEnum basisType, double radius, afw::geom::Point2D const & center,
-        ndarray::Array<Pixel,1,1> const & coefficients
+        ndarray::Array<double,1,1> const & coefficients
     );
 
     /// @brief Construct a function and set all coefficients to zero.
@@ -123,7 +123,7 @@ public:
     ShapeletFunction(
         int order, BasisTypeEnum basisType,
         afw::geom::ellipses::Ellipse const & ellipse,
-        ndarray::Array<Pixel,1,1> const & coefficients
+        ndarray::Array<double,1,1> const & coefficients
     );
 
     /// @brief Copy constructor (deep).
@@ -142,7 +142,7 @@ private:
     int _order;
     BasisTypeEnum _basisType;
     lsst::afw::geom::ellipses::Ellipse _ellipse;
-    ndarray::Array<Pixel,1,1> _coefficients;
+    ndarray::Array<double,1,1> _coefficients;
 };
 
 /**
@@ -161,33 +161,33 @@ public:
     typedef boost::shared_ptr<ShapeletFunctionEvaluator const> ConstPtr;
 
     /// @brief Evaluate at the given point.
-    Pixel operator()(double x, double y) const {
+    double operator()(double x, double y) const {
         return this->operator()(afw::geom::Point2D(x, y));
     }
 
     /// @brief Evaluate at the given point.
-    Pixel operator()(afw::geom::Point2D const & point) const {
+    double operator()(afw::geom::Point2D const & point) const {
         return _h.sumEvaluation(_coefficients, _transform(point));
     }
 
     /// @brief Evaluate at the given point.
-    Pixel operator()(afw::geom::Extent2D const & point) const {
+    double operator()(afw::geom::Extent2D const & point) const {
         return _h.sumEvaluation(_coefficients, _transform(point));
     }
 
     /// @brief Add the function to the given image-like array.
     void addToImage(
-        ndarray::Array<Pixel,2,1> const & array,
+        ndarray::Array<double,2,1> const & array,
         afw::geom::Point2I const & xy0 = afw::geom::Point2I()
     ) const;
 
     /// @brief Evaluate the function on the given image.
-    void addToImage(afw::image::Image<Pixel> & image) const {
+    void addToImage(afw::image::Image<double> & image) const {
         addToImage(image.getArray(), image.getXY0());
     }
 
     /// @brief Compute the definite integral or integral moments.
-    Pixel integrate() const {
+    double integrate() const {
         return _h.sumIntegration(_coefficients) / _transform.getLinear().computeDeterminant();
     }
 
@@ -208,7 +208,7 @@ private:
 
     void _computeRawMoments(double & q0, Eigen::Vector2d & q1, Eigen::Matrix2d & q2) const;
 
-    ndarray::Array<Pixel const,1,1> _coefficients;
+    ndarray::Array<double const,1,1> _coefficients;
     afw::geom::AffineTransform _transform;
     HermiteEvaluator _h;
 };

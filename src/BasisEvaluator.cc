@@ -45,9 +45,9 @@ static inline void validateSize(int expected, int actual) {
 } // anonymous
 
 void BasisEvaluator::fillEvaluation(
-    ndarray::Array<Pixel,1> const & array, double x, double y,
-    ndarray::Array<Pixel,1> const & dx,
-    ndarray::Array<Pixel,1> const & dy
+    ndarray::Array<double,1> const & array, double x, double y,
+    ndarray::Array<double,1> const & dx,
+    ndarray::Array<double,1> const & dy
 ) const {
     validateSize(computeSize(getOrder()), array.getSize<0>());
     _h.fillEvaluation(array, x, y, dx, dy);
@@ -62,7 +62,7 @@ void BasisEvaluator::fillEvaluation(
     }
 }
 
-void BasisEvaluator::fillIntegration(ndarray::Array<Pixel,1> const & array, int xMoment, int yMoment) const {
+void BasisEvaluator::fillIntegration(ndarray::Array<double,1> const & array, int xMoment, int yMoment) const {
     validateSize(computeSize(getOrder()), array.getSize<0>());
     _h.fillIntegration(array, xMoment, yMoment);
     ConversionMatrix::convertOperationVector(array, HERMITE, _basisType, getOrder());

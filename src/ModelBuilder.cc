@@ -33,12 +33,15 @@ namespace lsst { namespace shapelet {
 
 namespace {
 
-void fillHermite1d(Eigen::ArrayXXd & workspace, Eigen::ArrayXd const & coord) {
+void fillHermite1d(int order, Eigen::ArrayXXd & workspace, Eigen::ArrayXd const & coord) {
+    if (order >= workspace.cols()) {
+        workspace.resize(coord.size(), order + 1);
+    }
     if (workspace.cols() > 0)
         workspace.col(0) = NORMALIZATION * (-0.5 * coord.square()).exp();
     if (workspace.cols() > 1)
         workspace.col(1) = std::sqrt(2.0) * coord * workspace.col(0);
-    for (int j = 2; j < workspace.cols(); ++j) {
+    for (int j = 2; j <= order; ++j) {
         workspace.col(j) = std::sqrt(2.0 / j) * coord * workspace.col(j-1)
             - std::sqrt((j - 1.0) / j) * workspace.col(j-2);
     }
@@ -47,14 +50,11 @@ void fillHermite1d(Eigen::ArrayXXd & workspace, Eigen::ArrayXd const & coord) {
 } // anonymous
 
 ModelBuilder::ModelBuilder(
-    int order,
-    ndarray::Array<Pixel const,1,1> const & x,
-    ndarray::Array<Pixel const,1,1> const & y
-) : _order(order),
-    _model(ndarray::allocate(x.getSize<0>(), computeSize(order))),
+    ndarray::Array<double const,1,1> const & x,
+    ndarray::Array<double const,1,1> const & y
+) : _wsOrder(-1),
     _x(x), _y(y),
-    _xt(_x.size()), _yt(_y.size()),
-    _xWorkspace(_x.size(), order + 1), _yWorkspace(_x.size(), order + 1)
+    _xt(_x.size()), _yt(_y.size())
 {}
 
 void ModelBuilder::update(afw::geom::ellipses::BaseCore const & ellipse) {
@@ -62,11 +62,62 @@ void ModelBuilder::update(afw::geom::ellipses::BaseCore const & ellipse) {
     LT transform = ellipse.getGridTransform();
     _xt = _x * transform[LT::XX] + _y * transform[LT::XY];
     _yt = _x * transform[LT::YX] + _y * transform[LT::YY];
-    fillHermite1d(_xWorkspace, _xt);
-    fillHermite1d(_yWorkspace, _yt);
-    ndarray::EigenView<Pixel,2,-2,Eigen::ArrayXpr> model(_model);
-    for (PackedIndex i; i.getOrder() <= _order; ++i) {
-        model.col(i.getIndex()) = _xWorkspace.col(i.getX()) * _yWorkspace.col(i.getY());
+    _wsOrder = -1;
+}
+
+void ModelBuilder::addModelMatrix(int order, ndarray::Array<double,2,-1> const & output) {
+    if (output.getSize<1>() != computeSize(order)) {
+        throw LSST_EXCEPT(
+            pex::exceptions::LengthErrorException,
+            (boost::format("Number of columns of output matrix (%d) does not match shapelet order (%d->%d)")
+             % output.getSize<1>() % order % computeSize(order)).str()
+        );
+    }
+    if (output.getSize<0>() != _x.size()) {
+        throw LSST_EXCEPT(
+            pex::exceptions::LengthErrorException,
+            (boost::format("Number of rows of output matrix (%d) does not match coordinate array (%d)")
+             % output.getSize<0>() % _x.size()).str()
+        );
+    }
+    if (_wsOrder < order) {
+        fillHermite1d(order, _xWorkspace, _xt);
+        fillHermite1d(order, _yWorkspace, _yt);
+        _wsOrder = order;
+    }
+    ndarray::EigenView<double,2,-1,Eigen::ArrayXpr> model(output);
+    for (PackedIndex i; i.getOrder() <= order; ++i) {
+        model.col(i.getIndex()) += _xWorkspace.col(i.getX()) * _yWorkspace.col(i.getY());
+    }
+}
+
+void ModelBuilder::addModelVector(
+    int order,
+    ndarray::Array<double const,1,1> const & coefficients,
+    ndarray::Array<double,1,1> const & output
+) {
+    if (coefficients.getSize<0>() != computeSize(order)) {
+        throw LSST_EXCEPT(
+            pex::exceptions::LengthErrorException,
+            (boost::format("Number of coefficients (%d) does not match shapelet order (%d->%d)")
+             % coefficients.getSize<0>() % order % computeSize(order)).str()
+        );
+    }
+    if (output.getSize<0>() != _x.size()) {
+        throw LSST_EXCEPT(
+            pex::exceptions::LengthErrorException,
+            (boost::format("Number of rows of output matrix (%d) does not match coordinate array (%d)")
+             % output.getSize<0>() % _x.size()).str()
+        );
+    }
+    if (_wsOrder < order) {
+        fillHermite1d(order, _xWorkspace, _xt);
+        fillHermite1d(order, _yWorkspace, _yt);
+        _wsOrder = order;
+    }
+    ndarray::EigenView<double,1,1,Eigen::ArrayXpr> model(output);
+    for (PackedIndex i; i.getOrder() <= order; ++i) {
+        model += coefficients[i.getIndex()] * _xWorkspace.col(i.getX()) * _yWorkspace.col(i.getY());
     }
 }
 

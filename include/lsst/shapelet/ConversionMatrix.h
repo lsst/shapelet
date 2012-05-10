@@ -49,24 +49,24 @@ public:
     Eigen::MatrixXd buildDenseMatrix() const;
 
     /// @brief Multiply the given array by the conversion matrix on the left in-place.
-    void multiplyOnLeft(ndarray::Array<Pixel,1> const & array) const;
+    void multiplyOnLeft(ndarray::Array<double,1> const & array) const;
     
     /// @brief Multiply the given array by the conversion matrix on the right in-place.
-    void multiplyOnRight(ndarray::Array<Pixel,1> const & array) const;
+    void multiplyOnRight(ndarray::Array<double,1> const & array) const;
 
     /// @brief Construct a conversion matrix that maps the input basis to the output basis.
     explicit ConversionMatrix(BasisTypeEnum input, BasisTypeEnum output, int order);
 
     /// @brief Convert a coefficient vector between basis types in-place.
     static void convertCoefficientVector(
-        ndarray::Array<Pixel,1> const & array,
+        ndarray::Array<double,1> const & array,
         BasisTypeEnum input,
         BasisTypeEnum output, int order
     );
 
     /// @brief Convert an operation (evaluation, integration) vector between basis types in-place.
     static void convertOperationVector(
-        ndarray::Array<Pixel,1> const & array,
+        ndarray::Array<double,1> const & array,
         BasisTypeEnum input,
         BasisTypeEnum output, int order
     );

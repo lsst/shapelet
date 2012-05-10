@@ -64,7 +64,7 @@ ShapeletFunction::ShapeletFunction(int order, BasisTypeEnum basisType) :
 
 ShapeletFunction::ShapeletFunction(
     int order, BasisTypeEnum basisType,
-    ndarray::Array<Pixel,1,1> const & coefficients
+    ndarray::Array<double,1,1> const & coefficients
 ) :
     _order(order), _basisType(basisType), _ellipse(EllipseCore(1.0, 1.0, 0.0)),
     _coefficients(ndarray::copy(coefficients))
@@ -84,7 +84,7 @@ ShapeletFunction::ShapeletFunction(
 
 ShapeletFunction::ShapeletFunction(
     int order, BasisTypeEnum basisType, double radius, afw::geom::Point2D const & center,
-    ndarray::Array<Pixel,1,1> const & coefficients
+    ndarray::Array<double,1,1> const & coefficients
 ) :
     _order(order), _basisType(basisType), _ellipse(EllipseCore(radius, radius, 0.0), center),
     _coefficients(ndarray::copy(coefficients))
@@ -103,7 +103,7 @@ ShapeletFunction::ShapeletFunction(
 
 ShapeletFunction::ShapeletFunction(
     int order, BasisTypeEnum basisType, afw::geom::ellipses::Ellipse const & ellipse,
-    ndarray::Array<Pixel,1,1> const & coefficients
+    ndarray::Array<double,1,1> const & coefficients
 ) :
     _order(order), _basisType(basisType), _ellipse(EllipseCore(ellipse.getCore()), ellipse.getCenter()),
     _coefficients(ndarray::copy(coefficients))
@@ -152,7 +152,7 @@ void ShapeletFunctionEvaluator::_initialize(ShapeletFunction const & function) {
         _coefficients = function.getCoefficients();
         break;
     case LAGUERRE:
-        ndarray::Array<Pixel,1,1> tmp(ndarray::copy(function.getCoefficients()));
+        ndarray::Array<double,1,1> tmp(ndarray::copy(function.getCoefficients()));
         ConversionMatrix::convertCoefficientVector(
             tmp, LAGUERRE, HERMITE, function.getOrder()
         );
@@ -164,7 +164,7 @@ void ShapeletFunctionEvaluator::_initialize(ShapeletFunction const & function) {
 ShapeletFunction ShapeletFunction::convolve(ShapeletFunction const & other) const {
     HermiteConvolution convolution(getOrder(), other);
     afw::geom::ellipses::Ellipse newEllipse(_ellipse);
-    ndarray::EigenView<Pixel const,2,2> matrix(convolution.evaluate(newEllipse));
+    ndarray::EigenView<double const,2,2> matrix(convolution.evaluate(newEllipse));
     if (_basisType == LAGUERRE) {
         ConversionMatrix::convertCoefficientVector(_coefficients, LAGUERRE, HERMITE, getOrder());
     }
@@ -179,12 +179,12 @@ ShapeletFunction ShapeletFunction::convolve(ShapeletFunction const & other) cons
 }
 
 void ShapeletFunctionEvaluator::addToImage(
-    ndarray::Array<Pixel,2,1> const & array,
+    ndarray::Array<double,2,1> const & array,
     afw::geom::Point2I const & xy0
 ) const {
-    ndarray::Array<Pixel,2,1>::Iterator yIter = array.begin();
+    ndarray::Array<double,2,1>::Iterator yIter = array.begin();
     for (int y = xy0.getY(); yIter != array.end(); ++y, ++yIter) {
-        ndarray::Array<Pixel,2,1>::Reference::Iterator xIter = yIter->begin();
+        ndarray::Array<double,2,1>::Reference::Iterator xIter = yIter->begin();
         for (int x = xy0.getX(); xIter != yIter->end(); ++x, ++xIter) {
             *xIter += (*this)(x, y);
         }

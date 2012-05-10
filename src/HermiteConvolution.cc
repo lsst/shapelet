@@ -224,7 +224,7 @@ public:
 
     Impl(int colOrder, ShapeletFunction const & psf);
 
-    ndarray::Array<Pixel const,2,2> evaluate(afw::geom::ellipses::Ellipse & ellipse) const;
+    ndarray::Array<double const,2,2> evaluate(afw::geom::ellipses::Ellipse & ellipse) const;
 
     int getColOrder() const { return _colOrder; }
 
@@ -238,7 +238,7 @@ private:
     int _rowOrder;
     int _colOrder;
     ShapeletFunction _psf;
-    ndarray::Array<Pixel,2,2> _result;
+    ndarray::Array<double,2,2> _result;
     TripleProductIntegral _tpi;
     Eigen::MatrixXd _monomialFwd;
     Eigen::MatrixXd _monomialInv;
@@ -274,7 +274,7 @@ HermiteConvolution::Impl::Impl(
     _monomialFwd.triangularView<Eigen::Lower>().solveInPlace(_monomialInv);
 }
 
-ndarray::Array<Pixel const,2,2> HermiteConvolution::Impl::evaluate(
+ndarray::Array<double const,2,2> HermiteConvolution::Impl::evaluate(
     afw::geom::ellipses::Ellipse & ellipse
 ) const {
     ndarray::EigenView<double,2,2> result(_result);
@@ -401,7 +401,7 @@ int HermiteConvolution::getRowOrder() const { return _impl->getRowOrder(); }
 
 int HermiteConvolution::getColOrder() const { return _impl->getColOrder(); }
 
-ndarray::Array<Pixel const,2,2>
+ndarray::Array<double const,2,2>
 HermiteConvolution::evaluate(
     afw::geom::ellipses::Ellipse & ellipse
 ) const {

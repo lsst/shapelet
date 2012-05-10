@@ -53,7 +53,7 @@ public:
      *  The returned array is owned by the HermiteConvolution object and will be modified
      *  the next time evaluate() is called.
      */
-    ndarray::Array<Pixel const,2,2> evaluate(afw::geom::ellipses::Ellipse & ellipse) const;
+    ndarray::Array<double const,2,2> evaluate(afw::geom::ellipses::Ellipse & ellipse) const;
 
     /// @brief Return the order of the to-be-convolved shapelet basis.
     int getColOrder() const;

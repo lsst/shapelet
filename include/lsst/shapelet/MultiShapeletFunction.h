@@ -95,29 +95,29 @@ public:
     typedef boost::shared_ptr<MultiShapeletFunctionEvaluator const> ConstPtr;
 
     /// @brief Evaluate at the given point.
-    Pixel operator()(double x, double y) const {
+    double operator()(double x, double y) const {
         return this->operator()(afw::geom::Point2D(x, y));
     }
 
     /// @brief Evaluate at the given point.
-    Pixel operator()(afw::geom::Point2D const & point) const;
+    double operator()(afw::geom::Point2D const & point) const;
 
     /// @brief Evaluate at the given point.
-    Pixel operator()(afw::geom::Extent2D const & point) const;
+    double operator()(afw::geom::Extent2D const & point) const;
 
     /// @brief Add the function to the given image-like array.
     void addToImage(
-        ndarray::Array<Pixel,2,1> const & array,
+        ndarray::Array<double,2,1> const & array,
         afw::geom::Point2I const & xy0 = afw::geom::Point2I()
     ) const;
 
     /// @brief Evaluate the function on the given image.
-    void addToImage(afw::image::Image<Pixel> & image) const {
+    void addToImage(afw::image::Image<double> & image) const {
         addToImage(image.getArray(), image.getXY0());
     }
 
     /// @brief Compute the definite integral or integral moments.
-    Pixel integrate() const;
+    double integrate() const;
 
     /// @brief Return the unweighted dipole and quadrupole moments of the function as an ellipse.
     afw::geom::ellipses::Ellipse computeMoments() const;

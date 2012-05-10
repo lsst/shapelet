@@ -67,13 +67,13 @@ private:
 };
 
 void fillEvaluation1d(
-    ndarray::Array<Pixel,1,1> const & result,
+    ndarray::Array<double,1,1> const & result,
     double x,
-    ndarray::Array<Pixel,1,1> const & dx = ndarray::Array<Pixel,1,1>()
+    ndarray::Array<double,1,1> const & dx = ndarray::Array<double,1,1>()
 ) {
     HermiteRecurrenceRelation r(x, NORMALIZATION * std::exp(-0.5*x*x));
-    ndarray::Array<Pixel,1,1>::Iterator const end = result.end();
-    for (ndarray::Array<Pixel,1,1>::Iterator i = result.begin(); i != end; ++i, ++r) {
+    ndarray::Array<double,1,1>::Iterator const end = result.end();
+    for (ndarray::Array<double,1,1>::Iterator i = result.begin(); i != end; ++i, ++r) {
         *i = r();
     }
     if (!dx.isEmpty() && dx.getSize<0>() > 0) {
@@ -85,7 +85,7 @@ void fillEvaluation1d(
     }
 }
 
-void fillIntegration1d(ndarray::Array<Pixel,1,1> const & result, int moment) {
+void fillIntegration1d(ndarray::Array<double,1,1> const & result, int moment) {
     int const order = result.getSize<0>() - 1;
     result.deep() = 0.0;
     result[0] = std::pow(4.0 * afw::geom::PI, 0.25);
@@ -145,9 +145,9 @@ Eigen::MatrixXd computeInnerProductMatrix1d(int rowOrder, int colOrder, double a
 }
 
 void weaveFill(
-    ndarray::Array<Pixel,1> const & target,
-    ndarray::Array<Pixel const,1,1> const & x,
-    ndarray::Array<Pixel const,1,1> const & y
+    ndarray::Array<double,1> const & target,
+    ndarray::Array<double const,1,1> const & x,
+    ndarray::Array<double const,1,1> const & y
 ) {
     int const order = x.getSize<0>() - 1;
     for (PackedIndex i; i.getOrder() <= order; ++i) {
@@ -156,9 +156,9 @@ void weaveFill(
 }
 
 double weaveSum(
-    ndarray::Array<Pixel const,1> const & target,
-    ndarray::Array<Pixel const,1,1> const & x,
-    ndarray::Array<Pixel const,1,1> const & y
+    ndarray::Array<double const,1> const & target,
+    ndarray::Array<double const,1,1> const & x,
+    ndarray::Array<double const,1,1> const & y
 ) {
     double r = 0.0;
     int const order = x.getSize<0>() - 1;
@@ -171,9 +171,9 @@ double weaveSum(
 } // anonymous    
 
 void HermiteEvaluator::fillEvaluation(
-    ndarray::Array<Pixel,1> const & target, double x, double y,
-    ndarray::Array<Pixel,1> const & dx,
-    ndarray::Array<Pixel,1> const & dy 
+    ndarray::Array<double,1> const & target, double x, double y,
+    ndarray::Array<double,1> const & dx,
+    ndarray::Array<double,1> const & dy 
 ) const {
     if (dx.isEmpty()) {
         fillEvaluation1d(_xWorkspace, x);
@@ -191,7 +191,7 @@ void HermiteEvaluator::fillEvaluation(
 }
 
 void HermiteEvaluator::fillIntegration(
-    ndarray::Array<Pixel,1> const & target, int xMoment, int yMoment
+    ndarray::Array<double,1> const & target, int xMoment, int yMoment
 ) const {
     fillIntegration1d(_xWorkspace, xMoment);
     fillIntegration1d(_yWorkspace, yMoment);
@@ -199,7 +199,7 @@ void HermiteEvaluator::fillIntegration(
 }
 
 double HermiteEvaluator::sumEvaluation(
-    ndarray::Array<Pixel const,1> const & coeff, double x, double y,
+    ndarray::Array<double const,1> const & coeff, double x, double y,
     double * dx, double * dy
 ) const {
     if (!dx) {
@@ -218,7 +218,7 @@ double HermiteEvaluator::sumEvaluation(
 }
 
 double HermiteEvaluator::sumIntegration(
-    ndarray::Array<Pixel const,1> const & coeff, int xMoment, int yMoment
+    ndarray::Array<double const,1> const & coeff, int xMoment, int yMoment
 ) const {
     fillIntegration1d(_xWorkspace, xMoment);
     fillIntegration1d(_yWorkspace, yMoment);

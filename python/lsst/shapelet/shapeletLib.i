@@ -58,13 +58,13 @@ Python interface to lsst::shapelet classes and functions
 %include "ndarray.i"
 
 %declareNumPyConverters(Eigen::MatrixXd);
-%declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel,1>);
-%declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel,1,1>);
-%declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel,2,1>);
-%declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel const,1,1>);
-%declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel const,2,-2>);
-%declareNumPyConverters(ndarray::Array<lsst::shapelet::Pixel,3,-3>);
-%declareNumPyConverters(Eigen::Matrix<lsst::shapelet::Pixel,5,Eigen::Dynamic>);
+%declareNumPyConverters(ndarray::Array<double,1>);
+%declareNumPyConverters(ndarray::Array<double,1,1>);
+%declareNumPyConverters(ndarray::Array<double,2,1>);
+%declareNumPyConverters(ndarray::Array<double,2,-1>);
+%declareNumPyConverters(ndarray::Array<double const,1,1>);
+%declareNumPyConverters(ndarray::Array<double const,2,-2>);
+%declareNumPyConverters(ndarray::Array<double,3,-3>);
 
 %feature(valuewrapper) lsst::shapelet::ShapeletFunction;
 %feature(valuewrapper) lsst::shapelet::MultiShapeletFunction;

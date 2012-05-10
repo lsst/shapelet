@@ -40,16 +40,16 @@ namespace lsst { namespace shapelet {
 
 namespace {
 
-inline std::complex<Pixel> iPow(int z) {
+inline std::complex<double> iPow(int z) {
     switch (z % 4) {
     case 0:
-        return std::complex<Pixel>(1.0, 0.0);
+        return std::complex<double>(1.0, 0.0);
     case 1:
-        return std::complex<Pixel>(0.0, 1.0);
+        return std::complex<double>(0.0, 1.0);
     case 2:
-        return std::complex<Pixel>(-1.0, 0.0);
+        return std::complex<double>(-1.0, 0.0);
     case 3:
-        return std::complex<Pixel>(0.0, -1.0);
+        return std::complex<double>(0.0, -1.0);
     };
     return 0.0;
 }
@@ -167,7 +167,7 @@ Eigen::MatrixXd ConversionMatrix::buildDenseMatrix() const {
 }
 
 void ConversionMatrix::multiplyOnLeft(
-    ndarray::Array<Pixel,1> const & array) const {
+    ndarray::Array<double,1> const & array) const {
     if (array.getSize<0>() != computeSize(_order)) {
         throw LSST_EXCEPT(
             lsst::pex::exceptions::LengthErrorException,
@@ -183,7 +183,7 @@ void ConversionMatrix::multiplyOnLeft(
     } else {
         i = ConversionSingleton::get().getL2H().begin();
     }
-    ndarray::EigenView<Pixel,1,0> vector(array);
+    ndarray::EigenView<double,1,0> vector(array);
     for (int offset = 0; offset < vector.size(); ++i) {
         vector.segment(offset, i->rows()).transpose() *= i->transpose();
         offset += i->rows();
@@ -191,7 +191,7 @@ void ConversionMatrix::multiplyOnLeft(
 }
 
 void ConversionMatrix::multiplyOnRight(
-    ndarray::Array<Pixel,1> const & array) const {
+    ndarray::Array<double,1> const & array) const {
     if (array.getSize<0>() != computeSize(_order)) {
         throw LSST_EXCEPT(
             lsst::pex::exceptions::LengthErrorException,
@@ -207,7 +207,7 @@ void ConversionMatrix::multiplyOnRight(
     } else {
         i = ConversionSingleton::get().getL2H().begin();
     }
-    ndarray::EigenView<Pixel,1,0> vector(array);
+    ndarray::EigenView<double,1,0> vector(array);
     for (int offset = 0; offset < vector.size(); ++i) {
         vector.segment(offset, i->rows()).transpose() *= (*i);
         offset += i->rows();
@@ -221,7 +221,7 @@ ConversionMatrix::ConversionMatrix(BasisTypeEnum input, BasisTypeEnum output, in
 }
 
 void ConversionMatrix::convertCoefficientVector(
-    ndarray::Array<Pixel,1> const & array,
+    ndarray::Array<double,1> const & array,
     BasisTypeEnum input,
     BasisTypeEnum output,
     int order
@@ -232,7 +232,7 @@ void ConversionMatrix::convertCoefficientVector(
 }
 
 void ConversionMatrix::convertOperationVector(
-    ndarray::Array<Pixel,1> const & array,
+    ndarray::Array<double,1> const & array,
     BasisTypeEnum input,
     BasisTypeEnum output,
     int order

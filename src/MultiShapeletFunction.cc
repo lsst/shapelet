@@ -78,16 +78,16 @@ void MultiShapeletFunctionEvaluator::update(MultiShapeletFunction const & functi
     }
 }
 
-Pixel MultiShapeletFunctionEvaluator::operator()(afw::geom::Point2D const & point) const {
-    Pixel r = 0.0;
+double MultiShapeletFunctionEvaluator::operator()(afw::geom::Point2D const & point) const {
+    double r = 0.0;
     for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
         r += (*i)(point);
     }
     return r;
 }
 
-Pixel MultiShapeletFunctionEvaluator::operator()(afw::geom::Extent2D const & point) const {
-    Pixel r = 0.0;
+double MultiShapeletFunctionEvaluator::operator()(afw::geom::Extent2D const & point) const {
+    double r = 0.0;
     for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
         r += (*i)(point);
     }
@@ -95,7 +95,7 @@ Pixel MultiShapeletFunctionEvaluator::operator()(afw::geom::Extent2D const & poi
 }
 
 void MultiShapeletFunctionEvaluator::addToImage(
-    ndarray::Array<Pixel,2,1> const & array,
+    ndarray::Array<double,2,1> const & array,
     afw::geom::Point2I const & xy0
 ) const {
     for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
@@ -103,8 +103,8 @@ void MultiShapeletFunctionEvaluator::addToImage(
     }
 }
 
-Pixel MultiShapeletFunctionEvaluator::integrate() const {
-    Pixel r = 0.0;
+double MultiShapeletFunctionEvaluator::integrate() const {
+    double r = 0.0;
     for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
         r += i->integrate();
     }

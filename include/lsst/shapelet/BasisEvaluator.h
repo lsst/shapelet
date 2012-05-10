@@ -62,9 +62,9 @@ public:
      *  @param[out]    dy       Optional output array for the derivative w.r.t. the y coordinate.
      */
     void fillEvaluation(
-        ndarray::Array<Pixel,1> const & array, double x, double y,
-        ndarray::Array<Pixel,1> const & dx = ndarray::Array<Pixel,1>(),
-        ndarray::Array<Pixel,1> const & dy = ndarray::Array<Pixel,1>()
+        ndarray::Array<double,1> const & array, double x, double y,
+        ndarray::Array<double,1> const & dx = ndarray::Array<double,1>(),
+        ndarray::Array<double,1> const & dy = ndarray::Array<double,1>()
     ) const;
 
     /**
@@ -77,9 +77,9 @@ public:
      *  @param[out]    dy       Optional output array for the derivative w.r.t. the y coordinate.
      */
     void fillEvaluation(
-        ndarray::Array<Pixel,1> const & array, afw::geom::Point2D const & point,
-        ndarray::Array<Pixel,1> const & dx = ndarray::Array<Pixel,1>(),
-        ndarray::Array<Pixel,1> const & dy = ndarray::Array<Pixel,1>()
+        ndarray::Array<double,1> const & array, afw::geom::Point2D const & point,
+        ndarray::Array<double,1> const & dx = ndarray::Array<double,1>(),
+        ndarray::Array<double,1> const & dy = ndarray::Array<double,1>()
     ) const {
         fillEvaluation(array, point.getX(), point.getY(), dx, dy);
     }
@@ -94,9 +94,9 @@ public:
      *  @param[out]    dy       Optional output array for the derivative w.r.t. the y coordinate.
      */
     void fillEvaluation(
-        ndarray::Array<Pixel,1> const & array, afw::geom::Extent2D const & point,
-        ndarray::Array<Pixel,1> const & dx = ndarray::Array<Pixel,1>(),
-        ndarray::Array<Pixel,1> const & dy = ndarray::Array<Pixel,1>()
+        ndarray::Array<double,1> const & array, afw::geom::Extent2D const & point,
+        ndarray::Array<double,1> const & dx = ndarray::Array<double,1>(),
+        ndarray::Array<double,1> const & dy = ndarray::Array<double,1>()
     ) const {
         fillEvaluation(array, point.getX(), point.getY(), dx, dy);
     }
@@ -108,7 +108,7 @@ public:
      *  @param[in]     xMoment  Integrate the expansion multiplied by this power of x.
      *  @param[in]     yMoment  Integrate the expansion multiplied by this power of y.
      */
-    void fillIntegration(ndarray::Array<Pixel,1> const & array, int xMoment=0, int yMoment=0) const;
+    void fillIntegration(ndarray::Array<double,1> const & array, int xMoment=0, int yMoment=0) const;
 
 private:
     BasisTypeEnum _basisType;

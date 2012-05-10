@@ -103,9 +103,9 @@ public:
      *         simple unscaled shapelet expansion at the given point.
      */
     void fillEvaluation(
-        ndarray::Array<Pixel,1> const & target, double x, double y,
-        ndarray::Array<Pixel,1> const & dx = ndarray::Array<Pixel,1>(),
-        ndarray::Array<Pixel,1> const & dy = ndarray::Array<Pixel,1>()
+        ndarray::Array<double,1> const & target, double x, double y,
+        ndarray::Array<double,1> const & dx = ndarray::Array<double,1>(),
+        ndarray::Array<double,1> const & dy = ndarray::Array<double,1>()
     ) const;
 
     /**
@@ -113,9 +113,9 @@ public:
      *         simple unscaled shapelet expansion at the given point.
      */
     void fillEvaluation(
-        ndarray::Array<Pixel,1> const & target, afw::geom::Point2D const & point,
-        ndarray::Array<Pixel,1> const & dx = ndarray::Array<Pixel,1>(),
-        ndarray::Array<Pixel,1> const & dy = ndarray::Array<Pixel,1>()
+        ndarray::Array<double,1> const & target, afw::geom::Point2D const & point,
+        ndarray::Array<double,1> const & dx = ndarray::Array<double,1>(),
+        ndarray::Array<double,1> const & dy = ndarray::Array<double,1>()
     ) const {
         fillEvaluation(target, point.getX(), point.getY(), dx, dy);
     }
@@ -125,9 +125,9 @@ public:
      *         simple unscaled shapelet expansion at the given point.
      */
     void fillEvaluation(
-        ndarray::Array<Pixel,1> const & target, afw::geom::Extent2D const & point,
-        ndarray::Array<Pixel,1> const & dx = ndarray::Array<Pixel,1>(),
-        ndarray::Array<Pixel,1> const & dy = ndarray::Array<Pixel,1>()
+        ndarray::Array<double,1> const & target, afw::geom::Extent2D const & point,
+        ndarray::Array<double,1> const & dx = ndarray::Array<double,1>(),
+        ndarray::Array<double,1> const & dy = ndarray::Array<double,1>()
     ) const {
         fillEvaluation(target, point.getX(), point.getY(), dx, dy);
     }    
@@ -136,13 +136,13 @@ public:
      *  @brief Fill a vector whose dot product with a HERMITE coefficient vector integrates
      *         a simple unscaled shapelet expansion.
      */
-    void fillIntegration(ndarray::Array<Pixel,1> const & target, int xMoment=0, int yMoment=0) const;
+    void fillIntegration(ndarray::Array<double,1> const & target, int xMoment=0, int yMoment=0) const;
 
     /**
      *  @brief Evaluate a simple unscaled shapelet expansion at the given point.
      */
     double sumEvaluation(
-        ndarray::Array<Pixel const,1> const & coeff, double x, double y,
+        ndarray::Array<double const,1> const & coeff, double x, double y,
         double * dx = 0, double * dy = 0
     ) const;
 
@@ -150,7 +150,7 @@ public:
      *  @brief Evaluate a simple unscaled shapelet expansion at the given point.
      */
     double sumEvaluation(
-        ndarray::Array<Pixel const,1> const & coeff, afw::geom::Point2D const & point,
+        ndarray::Array<double const,1> const & coeff, afw::geom::Point2D const & point,
         double * dx = 0, double * dy = 0
     ) const {
         return sumEvaluation(coeff, point.getX(), point.getY(), dx, dy);
@@ -160,7 +160,7 @@ public:
      *  @brief Evaluate a simple unscaled shapelet expansion at the given point.
      */
     double sumEvaluation(
-        ndarray::Array<Pixel const,1> const & coeff, afw::geom::Extent2D const & point,
+        ndarray::Array<double const,1> const & coeff, afw::geom::Extent2D const & point,
         double * dx = 0, double * dy = 0
     ) const {
         return sumEvaluation(coeff, point.getX(), point.getY(), dx, dy);
@@ -169,16 +169,16 @@ public:
     /**
      *  @brief Integrate a simple unscale shapelet expansion at the given point.
      */
-    double sumIntegration(ndarray::Array<Pixel const,1> const & coeff, int xMoment=0, int yMoment=0) const;
+    double sumIntegration(ndarray::Array<double const,1> const & coeff, int xMoment=0, int yMoment=0) const;
 
     explicit HermiteEvaluator(int order);
 
 private:
 
-    ndarray::Array<Pixel,1,1> _xWorkspace;
-    ndarray::Array<Pixel,1,1> _yWorkspace;
-    ndarray::Array<Pixel,1,1> _dxWorkspace;
-    ndarray::Array<Pixel,1,1> _dyWorkspace;
+    ndarray::Array<double,1,1> _xWorkspace;
+    ndarray::Array<double,1,1> _yWorkspace;
+    ndarray::Array<double,1,1> _dxWorkspace;
+    ndarray::Array<double,1,1> _dyWorkspace;
 };
 
 }} // namespace lsst::shapelet
