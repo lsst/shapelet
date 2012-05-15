@@ -42,8 +42,6 @@ class ShapeletFunction;
 class HermiteConvolution : private boost::noncopyable {
 public:
 
-    typedef boost::shared_ptr<HermiteConvolution> Ptr;
-
     /**
      *  @brief Evaluate a shapelet convolution matrix in the given array.
      *

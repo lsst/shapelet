@@ -64,6 +64,7 @@ Python interface to lsst::shapelet classes and functions
 %declareNumPyConverters(ndarray::Array<double,2,-1>);
 %declareNumPyConverters(ndarray::Array<double const,1,1>);
 %declareNumPyConverters(ndarray::Array<double const,2,-2>);
+%declareNumPyConverters(ndarray::Array<double const,2,2>);
 %declareNumPyConverters(ndarray::Array<double,3,-3>);
 
 %feature(valuewrapper) lsst::shapelet::ShapeletFunction;
@@ -87,3 +88,5 @@ Python interface to lsst::shapelet classes and functions
 %include "lsst/shapelet/BasisEvaluator.h"
 
 %include "lsst/shapelet/ModelBuilder.h"
+
+%include "lsst/shapelet/HermiteConvolution.h"
