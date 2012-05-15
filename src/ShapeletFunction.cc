@@ -56,7 +56,7 @@ ShapeletFunction::ShapeletFunction() :
 }
 
 ShapeletFunction::ShapeletFunction(int order, BasisTypeEnum basisType) :
-    _order(order), _basisType(basisType), _ellipse(EllipseCore(0.0, 0.0, 1.0)),
+    _order(order), _basisType(basisType), _ellipse(EllipseCore(1.0, 1.0, 0.0)),
     _coefficients(ndarray::allocate(computeSize(_order)))
 {
     _coefficients.deep() = 0.0;
