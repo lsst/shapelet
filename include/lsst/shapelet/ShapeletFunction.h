@@ -41,6 +41,26 @@ class ShapeletFunctionEvaluator;
 
 /**
  *  @brief A 2-d function defined by an expansion onto a Gauss-Laguerre or Gauss-Hermite basis.
+ *
+ *  The coefficients are in units of flux, not surface brightness; increasing
+ *  the area of the basis ellipse while leaving the coefficients unchanged will
+ *  decrease the surface brightness by the ratio of the areas of the new and old
+ *  ellipses.  This convention is necessary to ensure that convolution with a
+ *  delta function is sane.  Because the BasisEvaluator class does not deal with
+ *  ellipses, it is necessary to divide its output by R^2 to get the same result
+ *  as a ShapeletFunctionEvaluator whose ellipse has determinant radius of R.
+ *
+ *  The coefficient normalization is not identical to that of a Gaussian, however;
+ *  a zeroth-order ShapeletFunction with its only coefficient value set to 1 has a
+ *  flux of 2.0 * pi^(1/2).  This value is defined as ShapeletFunction::FLUX_FACTOR.
+ *  Of course, to get the flux of a more complex shapelet expansion you have to use
+ *  ShapeletFunctionEvaluator::integrate().
+ *
+ *  Note that the units of the coefficients would have to be radius for basis
+ *  functions with the same ellipse to be orthonormal, but this orthonormality
+ *  isn't very useful, because the basis functions aren't even orthogonal in the
+ *  more common case that the ellipses differ.  However, basis functions defined
+ *  on the unit circle are still orthonormal.
  */
 class ShapeletFunction {
 public:
@@ -49,6 +69,8 @@ public:
     typedef boost::shared_ptr<ShapeletFunction const> ConstPtr;
 
     typedef ShapeletFunctionEvaluator Evaluator;
+
+    static double const FLUX_FACTOR;
 
     /// @brief Return the maximum order (inclusive), either @f$n_x + n_y@f$ or @f$p + q@f$.
     int getOrder() const { return _order; }

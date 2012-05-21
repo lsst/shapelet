@@ -47,6 +47,8 @@ static inline void validateSize(int expected, int actual) {
 
 } // anonymous
 
+double const ShapeletFunction::FLUX_FACTOR = 2.0 * std::sqrt(afw::geom::PI);
+
 ShapeletFunction::ShapeletFunction() : 
     _order(0), _basisType(HERMITE),
     _ellipse(EllipseCore(1.0, 1.0, 0.0), afw::geom::Point2D()), 
