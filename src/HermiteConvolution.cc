@@ -1,8 +1,8 @@
 // -*- LSST-C++ -*-
-/* 
+/*
  * LSST Data Management System
  * Copyright 2008, 2009, 2010, 2011 LSST Corporation.
- * 
+ *
  * This product includes software developed by the
  * LSST Project (http://www.lsst.org/).
  *
@@ -10,16 +10,18 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the LSST License Statement and 
- * the GNU General Public License along with this program.  If not, 
+ *
+ * You should have received a copy of the LSST License Statement and
+ * the GNU General Public License along with this program.  If not,
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
+
+#include "Eigen/Geometry"
 
 #include "lsst/shapelet/ShapeletFunction.h"
 #include "lsst/shapelet/HermiteConvolution.h"
@@ -30,9 +32,18 @@ namespace lsst { namespace shapelet {
 
 namespace {
 
+// Compute the transform that generates the given ellipse from the unit circle.
+// We don't use GridTransform from afw::geom::ellipses because it blows up at
+// zero radius and has degeneracies for circles.
+Eigen::Matrix2d computeEllipseTransform(afw::geom::ellipses::Axes const & ellipse) {
+    return (
+        Eigen::Rotation2D<double>(ellipse.getTheta()) * Eigen::Scaling(ellipse.getA(), ellipse.getB())
+    ).linear();
+}
+
 class TripleProductIntegral {
 public:
-    
+
     ndarray::Array<double,3,3> const asArray() const { return _array; }
 
     static ndarray::Array<double,3,3> make1d(int const order1, int const order2, int const order3);
@@ -68,7 +79,7 @@ TripleProductIntegral::TripleProductIntegral(int order1, int order2, int order3)
     _array(
         ndarray::allocate(
             ndarray::makeVector(
-                computeOffset(order1+1), 
+                computeOffset(order1+1),
                 computeOffset(order2+1),
                 computeOffset(order3+1)
             )
@@ -166,7 +177,7 @@ TripleProductIntegral::make1d(int order1, int order2, int order3) {
                 + std::sqrt((0.25 * n3) / n1) * array[ndarray::makeVector(n1-1, 0, n3-1)];
         }
     }
-    
+
     for (int n2 = 1; n2 <= order2; ++n2) {
         // n1>=n2, n3=0
         for (int n1 = n2; n1 <= order1; n1 += 2) {
@@ -214,7 +225,7 @@ void Binomial::reset(double a, double b) {
     for (int nk = n; nk >= 0; --nk) {
         _workspace[nk] *= v;
         v *= a;
-    }    
+    }
 }
 
 } // anonymous
@@ -230,9 +241,7 @@ public:
 
     int getRowOrder() const { return _rowOrder; }
 
-    Eigen::MatrixXd computeHermiteTransformMatrix(
-        int order, afw::geom::LinearTransform const & transform
-    ) const;
+    Eigen::MatrixXd computeHermiteTransformMatrix(int order, Eigen::Matrix2d const & transform) const;
 
 private:
     int _rowOrder;
@@ -246,7 +255,7 @@ private:
 
 HermiteConvolution::Impl::Impl(
     int colOrder, ShapeletFunction const & psf
-) : 
+) :
     _rowOrder(colOrder + psf.getOrder()), _colOrder(colOrder), _psf(psf),
     _result(ndarray::allocate(computeSize(_rowOrder), computeSize(_colOrder))),
     _tpi(psf.getOrder(), _rowOrder, _colOrder),
@@ -266,8 +275,8 @@ HermiteConvolution::Impl::Impl(
     for (int n = 2; n <= _rowOrder; ++n) {
         _monomialFwd(n, 0) = -_monomialFwd(n-2, 0) * std::sqrt((n - 1.0) / n);
         for (int m = (n % 2) ? 1:2; m <= n; m += 2) {
-            _monomialFwd(n, m) 
-                = _monomialFwd(n-1, m-1) * std::sqrt(2.0 / n) 
+            _monomialFwd(n, m)
+                = _monomialFwd(n-1, m-1) * std::sqrt(2.0 / n)
                 - _monomialFwd(n-2, m) * std::sqrt((n - 1.0) / n);
         }
     }
@@ -280,34 +289,33 @@ ndarray::Array<double const,2,2> HermiteConvolution::Impl::evaluate(
     ndarray::EigenView<double,2,2> result(_result);
     ndarray::EigenView<double const,1,1> psf_coeff(_psf.getCoefficients());
 
-    afw::geom::LinearTransform psf_igt = _psf.getEllipse().getCore().getGridTransform().invert();
-    afw::geom::LinearTransform model_igt = ellipse.getCore().getGridTransform().invert();
+    Eigen::Matrix2d psfT = computeEllipseTransform(_psf.getEllipse().getCore());
+    Eigen::Matrix2d modelT = computeEllipseTransform(ellipse.getCore());
     ellipse.convolve(_psf.getEllipse()).inPlace();
-    afw::geom::LinearTransform convolved_gt = ellipse.getCore().getGridTransform();
-    afw::geom::LinearTransform psf_htm_arg(
-        Eigen::Matrix2d(M_SQRT2 * (convolved_gt.getMatrix() * psf_igt.getMatrix()).transpose())
-    );
-    afw::geom::LinearTransform model_htm_arg(
-        Eigen::Matrix2d(M_SQRT2 * (convolved_gt.getMatrix() * model_igt.getMatrix()).transpose())
-    );
+    Eigen::Matrix2d convolvedTI = computeEllipseTransform(ellipse.getCore()).inverse() * std::sqrt(2.0);
+
+    Eigen::Matrix2d psfArg = (convolvedTI * psfT).transpose();
+    Eigen::Matrix2d modelArg = (convolvedTI * modelT).transpose();
+
     int const psfOrder = _psf.getOrder();
-    Eigen::MatrixXd psf_htm = computeHermiteTransformMatrix(psfOrder, psf_htm_arg);
-    Eigen::MatrixXd model_htm = computeHermiteTransformMatrix(_colOrder, model_htm_arg);
-        
-    // [kq]_m = \sum_m i^{n+m} [psf_htm]_{m,n} [psf]_n
+
+    Eigen::MatrixXd psfMat = computeHermiteTransformMatrix(psfOrder, psfArg);
+    Eigen::MatrixXd modelMat = computeHermiteTransformMatrix(_colOrder, modelArg);
+
+    // [kq]_m = \sum_m i^{n+m} [psfMat]_{m,n} [psf]_n
     // kq is zero unless {n+m} is even
-    Eigen::VectorXd kq = Eigen::VectorXd::Zero(psf_htm.size());
+    Eigen::VectorXd kq = Eigen::VectorXd::Zero(psfMat.size());
     for (int m = 0, mo = 0; m <= psfOrder; mo += ++m) {
         for (int n = m, no = mo; n <= psfOrder; (no += ++n) += ++n) {
             if ((n + m) % 4) { // (n + m) % 4 is always 0 or 2
-                kq.segment(mo, m+1) -= psf_htm.block(mo, no, m+1, n+1) * psf_coeff.segment(no, n+1);
+                kq.segment(mo, m+1) -= psfMat.block(mo, no, m+1, n+1) * psf_coeff.segment(no, n+1);
             } else {
-                kq.segment(mo, m+1) += psf_htm.block(mo, no, m+1, n+1) * psf_coeff.segment(no, n+1);
+                kq.segment(mo, m+1) += psfMat.block(mo, no, m+1, n+1) * psf_coeff.segment(no, n+1);
             }
         }
     }
     kq *= 4.0 * afw::geom::PI;
-        
+
     // [kqb]_{m,n} = \sum_l i^{m-n-l} [kq]_l [tpi]_{l,m,n}
     Eigen::MatrixXd kqb = Eigen::MatrixXd::Zero(result.rows(), result.cols());
     {
@@ -333,18 +341,18 @@ ndarray::Array<double const,2,2> HermiteConvolution::Impl::evaluate(
             }
         }
     }
-        
+
     result.setZero();
     for (int m = 0, mo = 0; m <= _rowOrder; mo += ++m) {
         for (int n = 0, no = 0; n <= _colOrder; no += ++n) {
             int jo = bool(n % 2);
             for (int j = jo; j <= n; (jo += ++j) += ++j) {
                 if ((n - j) % 4) { // (n - j) % 4 is always 0 or 2
-                    result.block(mo, no, m+1, n+1) 
-                        -= kqb.block(mo, jo, m+1, j+1) * model_htm.block(jo, no, j+1, n+1);
+                    result.block(mo, no, m+1, n+1)
+                        -= kqb.block(mo, jo, m+1, j+1) * modelMat.block(jo, no, j+1, n+1);
                 } else {
                     result.block(mo, no, m+1, n+1)
-                        += kqb.block(mo, jo, m+1, j+1) * model_htm.block(jo, no, j+1, n+1);
+                        += kqb.block(mo, jo, m+1, j+1) * modelMat.block(jo, no, j+1, n+1);
                 }
             }
         }
@@ -354,7 +362,7 @@ ndarray::Array<double const,2,2> HermiteConvolution::Impl::evaluate(
 }
 
 Eigen::MatrixXd HermiteConvolution::Impl::computeHermiteTransformMatrix(
-    int order, afw::geom::LinearTransform const & transform
+    int order, Eigen::Matrix2d const & transform
 ) const {
     int const size = computeSize(order);
     Eigen::MatrixXd result = Eigen::MatrixXd::Zero(size, size);
@@ -365,18 +373,10 @@ Eigen::MatrixXd HermiteConvolution::Impl::computeHermiteTransformMatrix(
                     double & element = result(joff+jx, koff+kx);
                     for (int m = 0; m <= order; ++m) {
                         int const order_minus_m = order - m;
-                        Binomial binomial_m(
-                            m, 
-                            transform[afw::geom::LinearTransform::XX],
-                            transform[afw::geom::LinearTransform::XY]
-                        );
+                        Binomial binomial_m(m, transform(0,0), transform(0,1));
                         for (int p = 0; p <= m; ++p) {
                             for (int n = 0; n <= order_minus_m; ++n) {
-                                Binomial binomial_n(
-                                    n, 
-                                    transform[afw::geom::LinearTransform::YX], 
-                                    transform[afw::geom::LinearTransform::YY]
-                                );
+                                Binomial binomial_n(n, transform(1,0), transform(1,1));
                                 for (int q = 0; q <= n; ++q) {
                                     element +=
                                         _monomialFwd(kx, m) * _monomialFwd(ky, n) *
@@ -405,7 +405,7 @@ HermiteConvolution::evaluate(
 }
 
 HermiteConvolution::HermiteConvolution(
-    int colOrder, 
+    int colOrder,
     ShapeletFunction const & psf
 ) : _impl(new Impl(colOrder, psf)) {}
 

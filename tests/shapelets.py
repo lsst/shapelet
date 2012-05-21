@@ -43,6 +43,9 @@ import lsst.shapelet
 import lsst.afw.image
 import lsst.afw.math
 
+import scipy.ndimage
+import numpy
+
 numpy.random.seed(5)
 numpy.set_printoptions(linewidth=120)
 
@@ -102,41 +105,15 @@ class ShapeletTestMixin(object):
         ic2 = lsst.afw.image.ImageD(bbox)
         fc2.evaluate().addToImage(ic2)
         self.assertClose(ic1.getArray(), ic2.getArray())
-        o1 = lsst.afw.image.ImageD(bbox)
-        o2 = lsst.afw.image.ImageD(bbox)
-
-        if False:
-            k1 = lsst.afw.math.FixedKernel(i1)
-            k2 = lsst.afw.math.FixedKernel(i2)
-            ctrl = lsst.afw.math.ConvolutionControl()
-            ctrl.setDoNormalize(False)
-            ctrl.setDoCopyEdge(True)
-            lsst.afw.math.convolve(o1, i1, k2, ctrl)
-            lsst.afw.math.convolve(o2, i2, k1, ctrl)
-        else:
-            import scipy.ndimage
-            scipy.ndimage.convolve(i1.getArray(), i2.getArray(), output=o1.getArray(),
-                                   mode="constant", cval=0.0)
-            scipy.ndimage.convolve(i2.getArray(), i1.getArray(), output=o2.getArray(),
-                                   mode="constant", cval=0.0)
-        if False:
-            import lsst.afw.display.ds9 as ds9
-            ds9.mtv(o1, frame=1)
-            ds9.mtv(o2, frame=2)
-            ds9.mtv(ic1, frame=3)
-            ds9.mtv(ic2, frame=4)
-        self.assertClose(o1.getArray(), o2.getArray())
-        self.assertClose(o1.getArray(), ic1.getArray(), rtol=1E-4, atol=1E-5)
-        self.assertClose(o2.getArray(), ic2.getArray(), rtol=1E-4, atol=1E-5)
-        # I'm bothered that the explicit deletions below are necessary to appease MemoryTestCase;
-        # these are local variables that should just go out of scope.  Maybe it relies on the
-        # garbage collector to collect things it's not guaranteed to collect immediately?
-        del ic1
-        del ic2
-        del o1
-        del o2
-        del i1
-        del i2
+        out = lsst.afw.image.ImageD(bbox)
+        # I'm using scipy.ndimage to convolve test images, because I can't figure
+        # out how to make afw do it (afw can convolve images with kernels, but two similarly-sized
+        # are apparently another matter; if I try to make a FixedKernel from one of the images,
+        # I can't even make the operation commutative, let alone correct.
+        scipy.ndimage.convolve(i1.getArray(), i2.getArray(), output=out.getArray(),
+                               mode="constant", cval=0.0)
+        self.assertClose(out.getArray(), ic1.getArray(), rtol=1E-4, atol=1E-5)
+        self.assertClose(out.getArray(), ic2.getArray(), rtol=1E-4, atol=1E-5)
         return fc1, fc2
 
 class ShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
@@ -228,7 +205,7 @@ class ShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
         self.assertEqual(fc1.getOrder(), fc2.getOrder())
         fc2.changeBasisType(lsst.shapelet.HERMITE)
         self.assertClose(fc1.getCoefficients(), fc2.getCoefficients())
-
+            
 class MultiShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
 
     def testMoments(self):
