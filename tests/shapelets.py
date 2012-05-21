@@ -41,7 +41,7 @@ import lsst.afw.geom as geom
 import lsst.afw.geom.ellipses as ellipses
 import lsst.shapelet
 import lsst.afw.image
-import lsst.afw.detection
+import lsst.afw.math
 
 numpy.random.seed(5)
 numpy.set_printoptions(linewidth=120)
@@ -87,6 +87,58 @@ class ShapeletTestMixin(object):
         integral = numpy.trapz(numpy.trapz(z, gx, axis=1), y, axis=0)
         self.assertClose(integral, function.evaluate().integrate(), rtol=1E-3, atol=1E-2)
 
+    def checkConvolution(self, f1, f2):
+        bbox = geom.Box2I(geom.Point2I(-50, -50), geom.Point2I(50, 50))
+        i1 = lsst.afw.image.ImageD(bbox)
+        f1.evaluate().addToImage(i1)
+        self.assertClose(i1.getArray().sum(), f1.evaluate().integrate(), rtol=1E-3)
+        i2 = lsst.afw.image.ImageD(bbox)
+        f2.evaluate().addToImage(i2)
+        self.assertClose(i2.getArray().sum(), f2.evaluate().integrate(), rtol=1E-3)
+        fc1 = f1.convolve(f2)
+        fc2 = f2.convolve(f1)
+        ic1 = lsst.afw.image.ImageD(bbox)
+        fc1.evaluate().addToImage(ic1)
+        ic2 = lsst.afw.image.ImageD(bbox)
+        fc2.evaluate().addToImage(ic2)
+        self.assertClose(ic1.getArray(), ic2.getArray())
+        o1 = lsst.afw.image.ImageD(bbox)
+        o2 = lsst.afw.image.ImageD(bbox)
+
+        if False:
+            k1 = lsst.afw.math.FixedKernel(i1)
+            k2 = lsst.afw.math.FixedKernel(i2)
+            ctrl = lsst.afw.math.ConvolutionControl()
+            ctrl.setDoNormalize(False)
+            ctrl.setDoCopyEdge(True)
+            lsst.afw.math.convolve(o1, i1, k2, ctrl)
+            lsst.afw.math.convolve(o2, i2, k1, ctrl)
+        else:
+            import scipy.ndimage
+            scipy.ndimage.convolve(i1.getArray(), i2.getArray(), output=o1.getArray(),
+                                   mode="constant", cval=0.0)
+            scipy.ndimage.convolve(i2.getArray(), i1.getArray(), output=o2.getArray(),
+                                   mode="constant", cval=0.0)
+        if False:
+            import lsst.afw.display.ds9 as ds9
+            ds9.mtv(o1, frame=1)
+            ds9.mtv(o2, frame=2)
+            ds9.mtv(ic1, frame=3)
+            ds9.mtv(ic2, frame=4)
+        self.assertClose(o1.getArray(), o2.getArray())
+        self.assertClose(o1.getArray(), ic1.getArray(), rtol=1E-4, atol=1E-5)
+        self.assertClose(o2.getArray(), ic2.getArray(), rtol=1E-4, atol=1E-5)
+        # I'm bothered that the explicit deletions below are necessary to appease MemoryTestCase;
+        # these are local variables that should just go out of scope.  Maybe it relies on the
+        # garbage collector to collect things it's not guaranteed to collect immediately?
+        del ic1
+        del ic2
+        del o1
+        del o2
+        del i1
+        del i2
+        return fc1, fc2
+
 class ShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
 
     def setUp(self):
@@ -114,11 +166,10 @@ class ShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
             for x, y in zip(self.x, self.y):
                 basis.fillEvaluation(v, t(geom.Point2D(x, y)))
                 p1 = evaluator(x, y)
-                p2 = numpy.dot(v, self.coefficients)
+                p2 = numpy.dot(v, self.coefficients) * t.getLinear().computeDeterminant()
                 self.assertClose(p1, p2)
             v = numpy.zeros(self.coefficients.shape, dtype=float)
             basis.fillIntegration(v)
-            v /= t.getLinear().computeDeterminant()
             p1 = evaluator.integrate()
             p2 = numpy.dot(v, self.coefficients)
             self.assertClose(p1, p2)
@@ -162,6 +213,21 @@ class ShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
             check = self.makeImage(f, x, y)
             self.assertClose(image.getArray(), check)
             self.assertClose(array, check)
+
+    def testConvolution(self):
+        e1 = ellipses.Ellipse(ellipses.Axes(10, 8, 0.3), geom.Point2D(1.5, 2.0))
+        e2 = ellipses.Ellipse(ellipses.Axes(12, 9, -0.5), geom.Point2D(-1.0, -0.25))
+        f1 = lsst.shapelet.ShapeletFunction(3, lsst.shapelet.HERMITE, e1)
+        f2 = lsst.shapelet.ShapeletFunction(2, lsst.shapelet.LAGUERRE, e2)
+        f1.getCoefficients()[:] = numpy.random.randn(*f1.getCoefficients().shape)
+        f2.getCoefficients()[:] = numpy.random.randn(*f2.getCoefficients().shape)
+        fc1, fc2 = self.checkConvolution(f1, f2)
+        self.assertEqual(fc1.getBasisType(), lsst.shapelet.HERMITE)
+        self.assertEqual(fc2.getBasisType(), lsst.shapelet.LAGUERRE)
+        self.assertClose(fc1.getEllipse().getParameterVector(), fc2.getEllipse().getParameterVector())
+        self.assertEqual(fc1.getOrder(), fc2.getOrder())
+        fc2.changeBasisType(lsst.shapelet.HERMITE)
+        self.assertClose(fc1.getCoefficients(), fc2.getCoefficients())
 
 class MultiShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
 

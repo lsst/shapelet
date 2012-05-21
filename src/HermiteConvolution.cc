@@ -280,15 +280,15 @@ ndarray::Array<double const,2,2> HermiteConvolution::Impl::evaluate(
     ndarray::EigenView<double,2,2> result(_result);
     ndarray::EigenView<double const,1,1> psf_coeff(_psf.getCoefficients());
 
-    afw::geom::LinearTransform psf_gt = _psf.getEllipse().getCore().getGridTransform().invert();
-    afw::geom::LinearTransform model_gt = ellipse.getCore().getGridTransform().invert();
+    afw::geom::LinearTransform psf_igt = _psf.getEllipse().getCore().getGridTransform().invert();
+    afw::geom::LinearTransform model_igt = ellipse.getCore().getGridTransform().invert();
     ellipse.convolve(_psf.getEllipse()).inPlace();
-    afw::geom::LinearTransform convolved_gt_inv = ellipse.getCore().getGridTransform();
+    afw::geom::LinearTransform convolved_gt = ellipse.getCore().getGridTransform();
     afw::geom::LinearTransform psf_htm_arg(
-        Eigen::Matrix2d(M_SQRT2 * (convolved_gt_inv.getMatrix() * psf_gt.getMatrix()).transpose())
+        Eigen::Matrix2d(M_SQRT2 * (convolved_gt.getMatrix() * psf_igt.getMatrix()).transpose())
     );
     afw::geom::LinearTransform model_htm_arg(
-        Eigen::Matrix2d(M_SQRT2 * (convolved_gt_inv.getMatrix() * model_gt.getMatrix()).transpose())
+        Eigen::Matrix2d(M_SQRT2 * (convolved_gt.getMatrix() * model_igt.getMatrix()).transpose())
     );
     int const psfOrder = _psf.getOrder();
     Eigen::MatrixXd psf_htm = computeHermiteTransformMatrix(psfOrder, psf_htm_arg);
@@ -306,11 +306,7 @@ ndarray::Array<double const,2,2> HermiteConvolution::Impl::evaluate(
             }
         }
     }
-    kq *= 4.0 * afw::geom::PI * (
-        std::fabs(convolved_gt_inv.computeDeterminant()
-                  * psf_gt.computeDeterminant()
-                  * model_gt.computeDeterminant())
-    );
+    kq *= 4.0 * afw::geom::PI;
         
     // [kqb]_{m,n} = \sum_l i^{m-n-l} [kq]_l [tpi]_{l,m,n}
     Eigen::MatrixXd kqb = Eigen::MatrixXd::Zero(result.rows(), result.cols());

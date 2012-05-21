@@ -167,12 +167,12 @@ public:
 
     /// @brief Evaluate at the given point.
     double operator()(afw::geom::Point2D const & point) const {
-        return _h.sumEvaluation(_coefficients, _transform(point));
+        return _normalization * _h.sumEvaluation(_coefficients, _transform(point));
     }
 
     /// @brief Evaluate at the given point.
     double operator()(afw::geom::Extent2D const & point) const {
-        return _h.sumEvaluation(_coefficients, _transform(point));
+        return _normalization * _h.sumEvaluation(_coefficients, _transform(point));
     }
 
     /// @brief Add the function to the given image-like array.
@@ -188,7 +188,7 @@ public:
 
     /// @brief Compute the definite integral or integral moments.
     double integrate() const {
-        return _h.sumIntegration(_coefficients) / _transform.getLinear().computeDeterminant();
+        return _h.sumIntegration(_coefficients);
     }
 
     /// @brief Return the unweighted dipole and quadrupole moments of the function as an ellipse.
@@ -208,6 +208,7 @@ private:
 
     void _computeRawMoments(double & q0, Eigen::Vector2d & q1, Eigen::Matrix2d & q2) const;
 
+    double _normalization;
     ndarray::Array<double const,1,1> _coefficients;
     afw::geom::AffineTransform _transform;
     HermiteEvaluator _h;

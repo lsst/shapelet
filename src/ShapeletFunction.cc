@@ -142,7 +142,10 @@ void ShapeletFunctionEvaluator::update(ShapeletFunction const & function) {
 
 ShapeletFunctionEvaluator::ShapeletFunctionEvaluator(
     ShapeletFunction const & function
-) : _transform(function.getEllipse().getGridTransform()), _h(function.getOrder()) {
+) : _normalization(1.0),
+    _transform(function.getEllipse().getGridTransform()),
+    _h(function.getOrder())
+{
     _initialize(function);
 }
 
@@ -159,6 +162,7 @@ void ShapeletFunctionEvaluator::_initialize(ShapeletFunction const & function) {
         _coefficients = tmp;
         break;
     }
+    _normalization = _transform.getLinear().computeDeterminant();
 }
 
 ShapeletFunction ShapeletFunction::convolve(ShapeletFunction const & other) const {
@@ -194,25 +198,23 @@ void ShapeletFunctionEvaluator::addToImage(
 void ShapeletFunctionEvaluator::_computeRawMoments(
     double & q0, Eigen::Vector2d & q1, Eigen::Matrix2d & q2
 ) const {
-    double determinant = _transform.getLinear().computeDeterminant();
     Eigen::Matrix2d a = _transform.getLinear().invert().getMatrix();
     Eigen::Vector2d b = _transform.getTranslation().asEigen();
 
     double m0 = _h.sumIntegration(_coefficients, 0, 0);
-    q0 += m0 / determinant;
+    q0 += m0;
 
     Eigen::Vector2d m1(
         _h.sumIntegration(_coefficients, 1, 0),
         _h.sumIntegration(_coefficients, 0, 1)
     );
-    q1 += a * (m1 - b * m0) / determinant;
+    q1 += a * (m1 - b * m0);
 
     Eigen::Matrix2d m2;
     m2(0, 0) = _h.sumIntegration(_coefficients, 2, 0);
     m2(1, 1) = _h.sumIntegration(_coefficients, 0, 2);
     m2(0, 1) = m2(1, 0) = _h.sumIntegration(_coefficients, 1, 1);
-    q2 += a * (m2 + b * b.transpose() * m0 - m1 * b.transpose() - b * m1.transpose()) * a.transpose() 
-        / determinant;
+    q2 += a * (m2 + b * b.transpose() * m0 - m1 * b.transpose() - b * m1.transpose()) * a.transpose();
 }
 
 afw::geom::ellipses::Ellipse ShapeletFunctionEvaluator::computeMoments() const {
