@@ -38,7 +38,7 @@ void fillHermite1d(int order, Eigen::ArrayXXd & workspace, Eigen::ArrayXd const 
         workspace.resize(coord.size(), order + 1);
     }
     if (workspace.cols() > 0)
-        workspace.col(0) = NORMALIZATION * (-0.5 * coord.square()).exp();
+        workspace.col(0) = BASIS_NORMALIZATION * (-0.5 * coord.square()).exp();
     if (workspace.cols() > 1)
         workspace.col(1) = std::sqrt(2.0) * coord * workspace.col(0);
     for (int j = 2; j <= order; ++j) {

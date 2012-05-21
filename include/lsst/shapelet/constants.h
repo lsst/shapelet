@@ -39,7 +39,7 @@
 
 namespace lsst { namespace shapelet {
 
-extern double const NORMALIZATION;
+extern double const BASIS_NORMALIZATION; ///< Normalization factor for 1-d orthonormal shapelets: pi^(-1/4)
 
 typedef afw::geom::ellipses::Axes EllipseCore;
 

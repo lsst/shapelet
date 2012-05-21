@@ -27,7 +27,7 @@
 
 namespace lsst { namespace shapelet {
 
-double const NORMALIZATION = std::pow(afw::geom::PI, -0.25);
+double const BASIS_NORMALIZATION = std::pow(afw::geom::PI, -0.25);
 
 namespace {
 
@@ -71,7 +71,7 @@ void fillEvaluation1d(
     double x,
     ndarray::Array<double,1,1> const & dx = ndarray::Array<double,1,1>()
 ) {
-    HermiteRecurrenceRelation r(x, NORMALIZATION * std::exp(-0.5*x*x));
+    HermiteRecurrenceRelation r(x, BASIS_NORMALIZATION * std::exp(-0.5*x*x));
     ndarray::Array<double,1,1>::Iterator const end = result.end();
     for (ndarray::Array<double,1,1>::Iterator i = result.begin(); i != end; ++i, ++r) {
         *i = r();

@@ -99,7 +99,7 @@ ndarray::Array<double,3,3>
 TripleProductIntegral::make1d(int order1, int order2, int order3) {
     ndarray::Array<double,3,3> array = ndarray::allocate(ndarray::makeVector(order1+1, order2+1, order3+1));
     array.deep() = 0.0;
-    double first = array[ndarray::makeVector(0,0,0)] = NORMALIZATION * M_SQRT1_2;
+    double first = array[ndarray::makeVector(0,0,0)] = BASIS_NORMALIZATION * M_SQRT1_2;
     if (order1 < 1) {
         if (order3 < 1) return array;
         // n1=0, n2=0, n3=even
@@ -259,7 +259,7 @@ HermiteConvolution::Impl::Impl(
     _monomialInv(Eigen::MatrixXd::Identity(_monomialFwd.rows(), _monomialFwd.cols()))
 {
     _psf.changeBasisType(HERMITE);
-    _monomialFwd(0, 0) = NORMALIZATION;
+    _monomialFwd(0, 0) = BASIS_NORMALIZATION;
     if (_rowOrder >= 1) {
         _monomialFwd(1, 1) = _monomialFwd(0, 0) * M_SQRT2;
     }
