@@ -1,4 +1,4 @@
-from lsst.afw.math import shapelets
+import lsst.shapelet
 from lsst.afw import geom
 from lsst.afw.geom import ellipses
 from matplotlib import pyplot
@@ -20,10 +20,10 @@ def main():
     y = numpy.linspace(-5, 5, 101)
     ellipse1 = ellipses.Ellipse(ellipses.Axes(1.0, 1.0, 0.3))
     ellipse2 = ellipses.Ellipse(ellipses.Axes(1.0, 1.0, numpy.pi/2 + 0.3))
-    f1 = shapelets.ShapeletFunction(1, shapelets.HERMITE)
+    f1 = lsst.shapelet.ShapeletFunction(1, lsst.shapelet.HERMITE)
     f1.getCoefficients()[1] = 1.0
     f1.setEllipse(ellipse1)
-    f2 = shapelets.ShapeletFunction(2, shapelets.HERMITE)
+    f2 = lsst.shapelet.ShapeletFunction(2, lsst.shapelet.HERMITE)
     f2.getCoefficients()[4] = 1.0
     f2.setEllipse(ellipse2)
     fC = f1.convolve(f2)
