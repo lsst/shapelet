@@ -242,6 +242,7 @@ class ModelBuilderTestCase(unittest.TestCase, ShapeletTestMixin):
             p = gt(geom.Point2D(x, y))
             evaluator.fillEvaluation(model[n,:], p)
             n += 1
+        model /= ellipse.getArea() / numpy.pi
         return model
 
     def setUp(self):
@@ -267,6 +268,34 @@ class ModelBuilderTestCase(unittest.TestCase, ShapeletTestMixin):
         y0 = numpy.dot(self.model, coefficients) + y1
         builder.addModelVector(self.order, coefficients, y1)
         self.assertClose(y0, y1)
+
+    def testMultiShapelet(self):
+        """Should be redundant with testModel, but we want to be completely sure shapelet
+        functions can be evaluated with ModelBuilder.addModelVector."""
+        builder = lsst.shapelet.ModelBuilder(self.x, self.y)
+        msf = lsst.shapelet.MultiShapeletFunction()
+        z0 = numpy.zeros(self.model.shape[0], dtype=float)
+        z1 = numpy.zeros(self.model.shape[0], dtype=float)
+        for i in range(4):
+            a, b = 6 * numpy.random.randn(2)**2
+            theta = 3 * numpy.random.randn()
+            axes = ellipses.Axes(a, b, theta)
+            sf = lsst.shapelet.ShapeletFunction(
+                2, lsst.shapelet.HERMITE,
+                ellipses.Ellipse(axes, geom.Point2D(0,0)),
+                numpy.random.randn(6)
+                )
+            msf.getElements().push_back(sf)
+            builder.update(axes)
+            builder.addModelVector(sf.getOrder(), sf.getCoefficients(), z1)
+        ev = msf.evaluate()
+        n = 0
+        for x, y in zip(self.x, self.y):
+            z0[n] = ev(x, y)
+            n += 1
+        self.assertClose(z1, z0)
+            
+            
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

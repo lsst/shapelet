@@ -41,6 +41,10 @@ namespace lsst { namespace shapelet {
  *  HermiteEvaluator class to compute basis functions.  Instead of making the iteration over the
  *  pixels the outer loop, it uses Eigen array objects that are the size of an entire image.  This
  *  uses more memory for temporaries, but it takes advantage of Eigen's vectorized arithmetic operators.
+ *
+ *  The ellipse-handling and coefficient conventions of ModelBuilder are the same as those of
+ *  ShapeletFunction and MultiShapeletFunction; the basis functions are divided by a*b, and hence
+ *  coefficients have units of flux, not surface brightness.
  */
 class ModelBuilder {
 public:
@@ -73,6 +77,7 @@ public:
 
 private:
     int _wsOrder;
+    double _ellipseFactor;
     ndarray::EigenView<double const,1,1,Eigen::ArrayXpr> _x;
     ndarray::EigenView<double const,1,1,Eigen::ArrayXpr> _y;
     Eigen::ArrayXd _xt;

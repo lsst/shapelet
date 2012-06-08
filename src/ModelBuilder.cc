@@ -52,16 +52,19 @@ void fillHermite1d(int order, Eigen::ArrayXXd & workspace, Eigen::ArrayXd const 
 ModelBuilder::ModelBuilder(
     ndarray::Array<double const,1,1> const & x,
     ndarray::Array<double const,1,1> const & y
-) : _wsOrder(-1),
+) : _wsOrder(-1), _ellipseFactor(1.0),
     _x(x), _y(y),
     _xt(_x.size()), _yt(_y.size())
-{}
+{
+    assert(_x.size() == _y.size());
+}
 
 void ModelBuilder::update(afw::geom::ellipses::BaseCore const & ellipse) {
     typedef afw::geom::LinearTransform LT;
     LT transform = ellipse.getGridTransform();
     _xt = _x * transform[LT::XX] + _y * transform[LT::XY];
     _yt = _x * transform[LT::YX] + _y * transform[LT::YY];
+    _ellipseFactor = transform.computeDeterminant();
     _wsOrder = -1;
 }
 
@@ -87,7 +90,7 @@ void ModelBuilder::addModelMatrix(int order, ndarray::Array<double,2,-1> const &
     }
     ndarray::EigenView<double,2,-1,Eigen::ArrayXpr> model(output);
     for (PackedIndex i; i.getOrder() <= order; ++i) {
-        model.col(i.getIndex()) += _xWorkspace.col(i.getX()) * _yWorkspace.col(i.getY());
+        model.col(i.getIndex()) += _ellipseFactor *  _xWorkspace.col(i.getX()) * _yWorkspace.col(i.getY());
     }
 }
 
@@ -117,7 +120,8 @@ void ModelBuilder::addModelVector(
     }
     ndarray::EigenView<double,1,1,Eigen::ArrayXpr> model(output);
     for (PackedIndex i; i.getOrder() <= order; ++i) {
-        model += coefficients[i.getIndex()] * _xWorkspace.col(i.getX()) * _yWorkspace.col(i.getY());
+        model += (coefficients[i.getIndex()] * _xWorkspace.col(i.getX()) * _yWorkspace.col(i.getY()))
+            * _ellipseFactor;
     }
 }
 
