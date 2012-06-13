@@ -43,7 +43,11 @@ import lsst.shapelet
 import lsst.afw.image
 import lsst.afw.math
 
-import scipy.ndimage
+try:
+    import scipy.ndimage
+except ImportError:
+    scipy = None
+
 import numpy
 
 numpy.random.seed(5)
@@ -192,6 +196,9 @@ class ShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
             self.assertClose(array, check)
 
     def testConvolution(self):
+        if scipy is None:
+            print "Skipping convolution tests that require SciPy"
+            return
         e1 = ellipses.Ellipse(ellipses.Axes(10, 8, 0.3), geom.Point2D(1.5, 2.0))
         e2 = ellipses.Ellipse(ellipses.Axes(12, 9, -0.5), geom.Point2D(-1.0, -0.25))
         f1 = lsst.shapelet.ShapeletFunction(3, lsst.shapelet.HERMITE, e1)
