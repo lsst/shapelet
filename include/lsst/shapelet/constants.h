@@ -96,6 +96,13 @@ inline int computeOffset(int order) { return order * (order + 1) / 2; }
 /// @brief Return the size of the coefficient vector for the given order.
 inline int computeSize(int order) { return computeOffset(order + 1); }
 
+/**
+ *  @brief Typedef for a commonly-used array type.
+ *
+ *  @note Needed as a workaround for clang bug #13657.
+ */
+typedef ndarray::Array<double,1> Array1d;
+
 }} // namespace lsst::shapelet
 
 #endif // !defined(LSST_AFW_MATH_SHAPELETS_CONSTANTS_H)

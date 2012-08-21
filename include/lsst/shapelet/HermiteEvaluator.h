@@ -103,9 +103,9 @@ public:
      *         simple unscaled shapelet expansion at the given point.
      */
     void fillEvaluation(
-        ndarray::Array<double,1> const & target, double x, double y,
-        ndarray::Array<double,1> const & dx = ndarray::Array<double,1>(),
-        ndarray::Array<double,1> const & dy = ndarray::Array<double,1>()
+        Array1d const & target, double x, double y,
+        Array1d const & dx = Array1d(),
+        Array1d const & dy = Array1d()
     ) const;
 
     /**
@@ -113,9 +113,9 @@ public:
      *         simple unscaled shapelet expansion at the given point.
      */
     void fillEvaluation(
-        ndarray::Array<double,1> const & target, afw::geom::Point2D const & point,
-        ndarray::Array<double,1> const & dx = ndarray::Array<double,1>(),
-        ndarray::Array<double,1> const & dy = ndarray::Array<double,1>()
+        Array1d const & target, afw::geom::Point2D const & point,
+        Array1d const & dx = Array1d(),
+        Array1d const & dy = Array1d()
     ) const {
         fillEvaluation(target, point.getX(), point.getY(), dx, dy);
     }
@@ -125,9 +125,9 @@ public:
      *         simple unscaled shapelet expansion at the given point.
      */
     void fillEvaluation(
-        ndarray::Array<double,1> const & target, afw::geom::Extent2D const & point,
-        ndarray::Array<double,1> const & dx = ndarray::Array<double,1>(),
-        ndarray::Array<double,1> const & dy = ndarray::Array<double,1>()
+        Array1d const & target, afw::geom::Extent2D const & point,
+        Array1d const & dx = Array1d(),
+        Array1d const & dy = Array1d()
     ) const {
         fillEvaluation(target, point.getX(), point.getY(), dx, dy);
     }    
@@ -136,7 +136,7 @@ public:
      *  @brief Fill a vector whose dot product with a HERMITE coefficient vector integrates
      *         a simple unscaled shapelet expansion.
      */
-    void fillIntegration(ndarray::Array<double,1> const & target, int xMoment=0, int yMoment=0) const;
+    void fillIntegration(Array1d const & target, int xMoment=0, int yMoment=0) const;
 
     /**
      *  @brief Evaluate a simple unscaled shapelet expansion at the given point.
