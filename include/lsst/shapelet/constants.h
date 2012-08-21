@@ -99,7 +99,8 @@ inline int computeSize(int order) { return computeOffset(order + 1); }
 /**
  *  @brief Typedef for a commonly-used array type.
  *
- *  @note Needed as a workaround for clang bug #13657.
+ *  @note Serves as a workaround for ambiguities in the C++ standard itself:
+ *        http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_active.html#325
  */
 typedef ndarray::Array<double,1> Array1d;
 
