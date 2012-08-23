@@ -154,12 +154,10 @@ public:
     /// @brief Assignment (deep).
     ShapeletFunction & operator=(ShapeletFunction const & other);
 
-private:
-
-    friend class std::list<ShapeletFunction>;
-
-    /// @brief Default constructor to appease SWIG (used by std::list).
+    /// @brief Default constructor to appease SWIG (used by std::list).  Not for use by users.
     ShapeletFunction();
+
+private:
 
     int _order;
     BasisTypeEnum _basisType;
