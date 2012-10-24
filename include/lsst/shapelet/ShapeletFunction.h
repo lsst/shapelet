@@ -224,8 +224,6 @@ private:
     
     friend class MultiShapeletFunctionEvaluator;
 
-    void _initialize(ShapeletFunction const & function);
-
     void _computeRawMoments(double & q0, Eigen::Vector2d & q1, Eigen::Matrix2d & q2) const;
 
     double _normalization;

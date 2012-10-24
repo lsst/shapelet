@@ -41,7 +41,7 @@ namespace lsst { namespace shapelet {
 
 extern double const BASIS_NORMALIZATION; ///< Normalization factor for 1-d orthonormal shapelets: pi^(-1/4)
 
-typedef afw::geom::ellipses::Axes EllipseCore;
+typedef afw::geom::ellipses::Quadrupole EllipseCore;
 
 /**
  *  @brief An enum that sets whether to use real-valued polar shapelets or Cartesian shapelets.

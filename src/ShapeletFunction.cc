@@ -22,13 +22,13 @@
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
+#include "boost/format.hpp"
+
+#include "ndarray/eigen.h"
 #include "lsst/shapelet/ShapeletFunction.h"
 #include "lsst/shapelet/ConversionMatrix.h"
 #include "lsst/shapelet/HermiteConvolution.h"
-
 #include "lsst/pex/exceptions.h"
-#include "ndarray/eigen.h"
-#include <boost/format.hpp>
 
 namespace lsst { namespace shapelet {
 
@@ -138,20 +138,9 @@ void ShapeletFunction::normalize() {
 
 void ShapeletFunctionEvaluator::update(ShapeletFunction const & function) {
     validateSize(_h.getOrder(), function.getOrder());
-    _transform = function.getEllipse().getGridTransform();
-    _initialize(function);
-}
-
-ShapeletFunctionEvaluator::ShapeletFunctionEvaluator(
-    ShapeletFunction const & function
-) : _normalization(1.0),
-    _transform(function.getEllipse().getGridTransform()),
-    _h(function.getOrder())
-{
-    _initialize(function);
-}
-
-void ShapeletFunctionEvaluator::_initialize(ShapeletFunction const & function) {
+    afw::geom::ellipses::Ellipse::GridTransform gt(function.getEllipse());
+    _transform = gt;
+    _normalization = gt.getDeterminant();
     switch (function.getBasisType()) {
     case HERMITE:
         _coefficients = function.getCoefficients();
@@ -164,7 +153,15 @@ void ShapeletFunctionEvaluator::_initialize(ShapeletFunction const & function) {
         _coefficients = tmp;
         break;
     }
-    _normalization = _transform.getLinear().computeDeterminant();
+}
+
+ShapeletFunctionEvaluator::ShapeletFunctionEvaluator(
+    ShapeletFunction const & function
+) : _normalization(1.0),
+    _transform(),
+    _h(function.getOrder())
+{
+    update(function);
 }
 
 ShapeletFunction ShapeletFunction::convolve(ShapeletFunction const & other) const {

@@ -21,8 +21,6 @@
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
-#include "Eigen/Geometry"
-
 #include "lsst/shapelet/ShapeletFunction.h"
 #include "lsst/shapelet/HermiteConvolution.h"
 #include "lsst/afw/geom/Angle.h"
@@ -31,15 +29,6 @@
 namespace lsst { namespace shapelet {
 
 namespace {
-
-// Compute the transform that generates the given ellipse from the unit circle.
-// We don't use GridTransform from afw::geom::ellipses because it blows up at
-// zero radius and has degeneracies for circles.
-Eigen::Matrix2d computeEllipseTransform(afw::geom::ellipses::Axes const & ellipse) {
-    return (
-        Eigen::Rotation2D<double>(ellipse.getTheta()) * Eigen::Scaling(ellipse.getA(), ellipse.getB())
-    ).linear();
-}
 
 class TripleProductIntegral {
 public:
@@ -288,12 +277,11 @@ ndarray::Array<double const,2,2> HermiteConvolution::Impl::evaluate(
 ) const {
     ndarray::EigenView<double,2,2> result(_result);
     ndarray::EigenView<double const,1,1> psf_coeff(_psf.getCoefficients());
-
-    Eigen::Matrix2d psfT = computeEllipseTransform(_psf.getEllipse().getCore());
-    Eigen::Matrix2d modelT = computeEllipseTransform(ellipse.getCore());
+    
+    Eigen::Matrix2d psfT = _psf.getEllipse().getCore().getGridTransform().invert().getMatrix();
+    Eigen::Matrix2d modelT = ellipse.getCore().getGridTransform().invert().getMatrix();
     ellipse.convolve(_psf.getEllipse()).inPlace();
-    Eigen::Matrix2d convolvedTI = computeEllipseTransform(ellipse.getCore()).inverse() * std::sqrt(2.0);
-
+    Eigen::Matrix2d convolvedTI = ellipse.getCore().getGridTransform().getMatrix() * std::sqrt(2.0);
     Eigen::Matrix2d psfArg = (convolvedTI * psfT).transpose();
     Eigen::Matrix2d modelArg = (convolvedTI * modelT).transpose();
 

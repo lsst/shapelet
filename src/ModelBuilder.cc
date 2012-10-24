@@ -60,11 +60,12 @@ ModelBuilder::ModelBuilder(
 }
 
 void ModelBuilder::update(afw::geom::ellipses::BaseCore const & ellipse) {
+    afw::geom::ellipses::BaseCore::GridTransform gt(ellipse);
     typedef afw::geom::LinearTransform LT;
-    LT transform = ellipse.getGridTransform();
+    LT transform = gt;
     _xt = _x * transform[LT::XX] + _y * transform[LT::XY];
     _yt = _x * transform[LT::YX] + _y * transform[LT::YY];
-    _ellipseFactor = transform.computeDeterminant();
+    _ellipseFactor = gt.getDeterminant();
     _wsOrder = -1;
 }
 
