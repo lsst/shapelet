@@ -1,1 +1,2 @@
 EXCLUDE += src/math/shapelets/*
+EXTRA_PACKAGES = bm amsmath
