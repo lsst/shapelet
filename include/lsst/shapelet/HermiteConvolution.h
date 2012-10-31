@@ -26,69 +26,13 @@
 
 #include "ndarray.h"
 #include "lsst/afw/geom/ellipses.h"
-#include "lsst/shapelet/constants.h"
+#include "lsst/shapelet/HermiteTransformMatrix.h"
 
 #include <boost/scoped_ptr.hpp>
 
 namespace lsst { namespace shapelet {
 
 class ShapeletFunction;
-
-/**
- *  @brief A class that computes a matrix that applies a linear transform to a 2-d Hermite
- *         polynomial expansion.
- *
- *  Let
- *  @f[
- *      Z_{\bm{n}}\!(\bm{x}) \equiv \mathcal{H}_{n_0}\!(x_0)\;\mathcal{H}_{n_1}\!(x_1)
- *  @f]
- *  where
- *  @f[
- *      \mathcal{H}_n(x)=(2^n \pi^{1/2} n!)^{-1/2}H_n(x)
- *  @f]
- *  is the @f$i@f$th "alternate" Hermite
- *  polynomial.  This function computes the matrix @f$\bm{Q}(\bm{U})@f$ given a linear
- *  transform @f$\bm{U}@f$ such that
- *  @f[
- *      Z_{\bm{m}}\!(\bm{U}\bm{x}) = \sum_{\bm{n}}Q_{\bm{m},\bm{n}}\!(\bm{U})\,Z_{\bm{n}}\!(\bm{x})
- *  @f]
- */
-class HermiteTransformMatrix {
-public:
-
-    /// @brief Compute the matrix for a new linear transform.
-    Eigen::MatrixXd compute(Eigen::Matrix2d const & transform) const {
-        return compute(transform, _order);
-    }
-
-    /// @brief Compute the matrix for a new linear transform at the given order (must be <= getOrder()).
-    Eigen::MatrixXd compute(Eigen::Matrix2d const & transform, int order) const;
-
-    /**
-     *  @brief Return the matrix that maps (1-d) regular polynomials to the alternate Hermite polynomials.
-     *
-     *  The matrix is always lower triangular, and has size equal to getOrder()+1.
-     */
-    Eigen::MatrixXd getCoefficientMatrix() const { return _coeffFwd; }
-
-    /**
-     *  @brief Return the matrix that maps (1-d) alternate Hermite polynomials to regular polynomials.
-     *
-     *  The matrix is always lower triangular, and has size equal to getOrder()+1.
-     */
-    Eigen::MatrixXd getInverseCoefficientMatrix() const { return _coeffInv; }
-
-    /// @brief Return the maximum order at which the matrix can be computed.
-    int getOrder() const { return _order; }
-
-    /// @brief Construct an instance able to compute the transform matrix at up to the given order.
-    explicit HermiteTransformMatrix(int order);
-
-private:
-    int _order;
-    Eigen::MatrixXd _coeffFwd;
-    Eigen::MatrixXd _coeffInv;
-};
 
 /**
  *  @brief A parametrized matrix that performs a convolution in shapelet space.

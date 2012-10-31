@@ -47,22 +47,6 @@ private:
     ndarray::Array<double,3,3> _array;
 };
 
-class Binomial {
-public:
-
-    Binomial(int const n, double a, double b);
-
-    void reset(double a, double b);
-
-    double const operator[](int const k) const { return _workspace[k] * _coefficients[k]; }
-
-    int const getOrder() const { return _coefficients.size()-1; }
-
-private:
-    Eigen::VectorXd _coefficients;
-    Eigen::VectorXd _workspace;
-};
-
 TripleProductIntegral::TripleProductIntegral(int order1, int order2, int order3) :
     _orders(ndarray::makeVector(order1, order2, order3)),
     _array(
@@ -191,32 +175,6 @@ TripleProductIntegral::make1d(int order1, int order2, int order3) {
     return array;
 }
 
-Binomial::Binomial(int const n, double a, double b) : _coefficients(n+1), _workspace(n+1) {
-    _coefficients[0] = _coefficients[n] = 1.0;
-    int const mid = n/2;
-    for (int k = 1; k <= mid; ++k) {
-        _coefficients[k] = _coefficients[k-1] * (n - k + 1.0) / k;
-    }
-    for (int k = mid+1; k < n; ++k) {
-        _coefficients[k] = _coefficients[n-k];
-    }
-    reset(a, b);
-}
-
-void Binomial::reset(double a, double b) {
-    int const n = getOrder();
-    double v = 1;
-    for (int k = 0; k <= n; ++k) {
-        _workspace[k] = v;
-        v *= b;
-    }
-    v = 1;
-    for (int nk = n; nk >= 0; --nk) {
-        _workspace[nk] *= v;
-        v *= a;
-    }
-}
-
 } // anonymous
 
 class HermiteConvolution::Impl {
@@ -343,65 +301,5 @@ HermiteConvolution::HermiteConvolution(
 ) : _impl(new Impl(colOrder, psf)) {}
 
 HermiteConvolution::~HermiteConvolution() {}
-
-HermiteTransformMatrix::HermiteTransformMatrix(int order) :
-    _order(order),
-    _coeffFwd(Eigen::MatrixXd::Zero(order+1, order+1)),
-    _coeffInv(Eigen::MatrixXd::Identity(order+1, order+1))
-{
-    _coeffFwd(0, 0) = BASIS_NORMALIZATION;
-    if (_order >= 1) {
-        _coeffFwd(1, 1) = _coeffFwd(0, 0) * M_SQRT2;
-    }
-    for (int n = 2; n <= _order; ++n) {
-        _coeffFwd(n, 0) = -_coeffFwd(n-2, 0) * std::sqrt((n - 1.0) / n);
-        for (int m = (n % 2) ? 1:2; m <= n; m += 2) {
-            _coeffFwd(n, m)
-                = _coeffFwd(n-1, m-1) * std::sqrt(2.0 / n)
-                - _coeffFwd(n-2, m) * std::sqrt((n - 1.0) / n);
-        }
-    }
-    _coeffFwd.triangularView<Eigen::Lower>().solveInPlace(_coeffInv);
-
-}
-
-Eigen::MatrixXd HermiteTransformMatrix::compute(Eigen::Matrix2d const & transform, int order) const {
-    if (order > _order) {
-        throw LSST_EXCEPT(
-            pex::exceptions::InvalidParameterException,
-            boost::str(
-                boost::format("order passed to compute() (%d) is larger than construction order (%d)")
-                % order % _order
-            )
-        );
-    }
-    int const size = computeSize(order);
-    Eigen::MatrixXd result = Eigen::MatrixXd::Zero(size, size);
-    for (int jn=0, joff=0; jn <= order; joff += (++jn)) {
-        for (int kn=jn, koff=joff; kn <= order; (koff += (++kn)) += (++kn)) {
-            for (int jx=0,jy=jn; jx <= jn; ++jx,--jy) {
-                for (int kx=0,ky=kn; kx <= kn; ++kx,--ky) {
-                    double & element = result(joff+jx, koff+kx);
-                    for (int m = 0; m <= order; ++m) {
-                        int const order_minus_m = order - m;
-                        Binomial binomial_m(m, transform(0,0), transform(0,1));
-                        for (int p = 0; p <= m; ++p) {
-                            for (int n = 0; n <= order_minus_m; ++n) {
-                                Binomial binomial_n(n, transform(1,0), transform(1,1));
-                                for (int q = 0; q <= n; ++q) {
-                                    element +=
-                                        _coeffFwd(kx, m) * _coeffFwd(ky, n) *
-                                        _coeffInv(m+n-p-q, jx) * _coeffInv(p+q, jy) *
-                                        binomial_m[p] * binomial_n[q];
-                                } // q
-                            } // n
-                        } // p
-                    } // m
-                } // kx,ky
-            } // jx,jy
-        } // kn
-    } // jn
-    return result;
-}
 
 }} // namespace lsst::shapelet
