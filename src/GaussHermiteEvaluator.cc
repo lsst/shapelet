@@ -22,7 +22,7 @@
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
-#include "lsst/shapelet/HermiteEvaluator.h"
+#include "lsst/shapelet/GaussHermiteEvaluator.h"
 #include "lsst/afw/geom/Angle.h"
 
 namespace lsst { namespace shapelet {
@@ -170,7 +170,7 @@ double weaveSum(
 
 } // anonymous    
 
-void HermiteEvaluator::fillEvaluation(
+void GaussHermiteEvaluator::fillEvaluation(
     ndarray::Array<double,1> const & target, double x, double y,
     ndarray::Array<double,1> const & dx,
     ndarray::Array<double,1> const & dy 
@@ -190,7 +190,7 @@ void HermiteEvaluator::fillEvaluation(
     if (!dy.isEmpty()) weaveFill(dy, _xWorkspace, _dyWorkspace);
 }
 
-void HermiteEvaluator::fillIntegration(
+void GaussHermiteEvaluator::fillIntegration(
     ndarray::Array<double,1> const & target, int xMoment, int yMoment
 ) const {
     fillIntegration1d(_xWorkspace, xMoment);
@@ -198,7 +198,7 @@ void HermiteEvaluator::fillIntegration(
     return weaveFill(target, _xWorkspace, _yWorkspace);
 }
 
-double HermiteEvaluator::sumEvaluation(
+double GaussHermiteEvaluator::sumEvaluation(
     ndarray::Array<double const,1> const & coeff, double x, double y,
     double * dx, double * dy
 ) const {
@@ -217,7 +217,7 @@ double HermiteEvaluator::sumEvaluation(
     return weaveSum(coeff, _xWorkspace, _yWorkspace);
 }
 
-double HermiteEvaluator::sumIntegration(
+double GaussHermiteEvaluator::sumIntegration(
     ndarray::Array<double const,1> const & coeff, int xMoment, int yMoment
 ) const {
     fillIntegration1d(_xWorkspace, xMoment);
@@ -225,14 +225,14 @@ double HermiteEvaluator::sumIntegration(
     return weaveSum(coeff, _xWorkspace, _yWorkspace);
 }
 
-HermiteEvaluator::HermiteEvaluator(int order) :
+GaussHermiteEvaluator::GaussHermiteEvaluator(int order) :
     _xWorkspace(ndarray::allocate(order + 1)),
     _yWorkspace(ndarray::allocate(order + 1)),
     _dxWorkspace(ndarray::allocate(order + 1)),
     _dyWorkspace(ndarray::allocate(order + 1))
 {}
 
-Eigen::MatrixXd HermiteEvaluator::computeInnerProductMatrix(
+Eigen::MatrixXd GaussHermiteEvaluator::computeInnerProductMatrix(
     int rowOrder, int colOrder, double a, double b
 ) {
     Eigen::MatrixXd result = Eigen::MatrixXd::Zero(computeSize(rowOrder), computeSize(colOrder));

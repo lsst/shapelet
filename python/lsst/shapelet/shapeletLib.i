@@ -90,4 +90,4 @@ Python interface to lsst::shapelet classes and functions
 
 %include "lsst/shapelet/ModelBuilder.h"
 
-%include "lsst/shapelet/HermiteConvolution.h"
+%include "lsst/shapelet/GaussHermiteConvolution.h"

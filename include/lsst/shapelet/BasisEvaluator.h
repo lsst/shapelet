@@ -28,7 +28,7 @@
 #include "ndarray.h"
 #include "lsst/afw/geom.h"
 #include "lsst/shapelet/constants.h"
-#include "lsst/shapelet/HermiteEvaluator.h"
+#include "lsst/shapelet/GaussHermiteEvaluator.h"
 #include "lsst/shapelet/ConversionMatrix.h"
 #include "lsst/afw/image/Image.h"
 #include "lsst/afw/image/MaskedImage.h"
@@ -112,7 +112,7 @@ public:
 
 private:
     BasisTypeEnum _basisType;
-    HermiteEvaluator _h;
+    GaussHermiteEvaluator _h;
 };
 
 }} // namespace lsst::shapelet classes 

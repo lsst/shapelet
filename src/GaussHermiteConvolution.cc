@@ -22,7 +22,7 @@
  */
 
 #include "lsst/shapelet/ShapeletFunction.h"
-#include "lsst/shapelet/HermiteConvolution.h"
+#include "lsst/shapelet/GaussHermiteConvolution.h"
 #include "lsst/afw/geom/Angle.h"
 #include "ndarray/eigen.h"
 
@@ -177,7 +177,7 @@ TripleProductIntegral::make1d(int order1, int order2, int order3) {
 
 } // anonymous
 
-class HermiteConvolution::Impl {
+class GaussHermiteConvolution::Impl {
 public:
 
     Impl(int colOrder, ShapeletFunction const & psf);
@@ -197,7 +197,7 @@ private:
     HermiteTransformMatrix _htm;
 };
 
-HermiteConvolution::Impl::Impl(
+GaussHermiteConvolution::Impl::Impl(
     int colOrder, ShapeletFunction const & psf
 ) :
     _rowOrder(colOrder + psf.getOrder()), _colOrder(colOrder), _psf(psf),
@@ -208,7 +208,7 @@ HermiteConvolution::Impl::Impl(
     _psf.changeBasisType(HERMITE);
 }
 
-ndarray::Array<double const,2,2> HermiteConvolution::Impl::evaluate(
+ndarray::Array<double const,2,2> GaussHermiteConvolution::Impl::evaluate(
     afw::geom::ellipses::Ellipse & ellipse
 ) const {
     ndarray::EigenView<double,2,2> result(_result);
@@ -284,22 +284,22 @@ ndarray::Array<double const,2,2> HermiteConvolution::Impl::evaluate(
     return _result;
 }
 
-int HermiteConvolution::getRowOrder() const { return _impl->getRowOrder(); }
+int GaussHermiteConvolution::getRowOrder() const { return _impl->getRowOrder(); }
 
-int HermiteConvolution::getColOrder() const { return _impl->getColOrder(); }
+int GaussHermiteConvolution::getColOrder() const { return _impl->getColOrder(); }
 
 ndarray::Array<double const,2,2>
-HermiteConvolution::evaluate(
+GaussHermiteConvolution::evaluate(
     afw::geom::ellipses::Ellipse & ellipse
 ) const {
     return _impl->evaluate(ellipse);
 }
 
-HermiteConvolution::HermiteConvolution(
+GaussHermiteConvolution::GaussHermiteConvolution(
     int colOrder,
     ShapeletFunction const & psf
 ) : _impl(new Impl(colOrder, psf)) {}
 
-HermiteConvolution::~HermiteConvolution() {}
+GaussHermiteConvolution::~GaussHermiteConvolution() {}
 
 }} // namespace lsst::shapelet

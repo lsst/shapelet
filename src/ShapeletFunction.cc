@@ -27,7 +27,7 @@
 #include "ndarray/eigen.h"
 #include "lsst/shapelet/ShapeletFunction.h"
 #include "lsst/shapelet/ConversionMatrix.h"
-#include "lsst/shapelet/HermiteConvolution.h"
+#include "lsst/shapelet/GaussHermiteConvolution.h"
 #include "lsst/pex/exceptions.h"
 
 namespace lsst { namespace shapelet {
@@ -165,7 +165,7 @@ ShapeletFunctionEvaluator::ShapeletFunctionEvaluator(
 }
 
 ShapeletFunction ShapeletFunction::convolve(ShapeletFunction const & other) const {
-    HermiteConvolution convolution(getOrder(), other);
+    GaussHermiteConvolution convolution(getOrder(), other);
     afw::geom::ellipses::Ellipse newEllipse(_ellipse);
     ndarray::EigenView<double const,2,2> matrix(convolution.evaluate(newEllipse));
     if (_basisType == LAGUERRE) {

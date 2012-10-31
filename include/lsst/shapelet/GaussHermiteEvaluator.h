@@ -81,7 +81,7 @@ private:
 /**
  *  @brief A class to evaluate HERMITE shapelet-related quantities.
  */
-class HermiteEvaluator {
+class GaussHermiteEvaluator {
 public:
 
     /**
@@ -171,7 +171,7 @@ public:
      */
     double sumIntegration(ndarray::Array<double const,1> const & coeff, int xMoment=0, int yMoment=0) const;
 
-    explicit HermiteEvaluator(int order);
+    explicit GaussHermiteEvaluator(int order);
 
 private:
 

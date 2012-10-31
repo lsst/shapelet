@@ -21,8 +21,8 @@
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
-#ifndef LSST_AFW_MATH_SHAPELETS_HermiteConvolution
-#define LSST_AFW_MATH_SHAPELETS_HermiteConvolution
+#ifndef LSST_AFW_MATH_SHAPELETS_GaussHermiteConvolution
+#define LSST_AFW_MATH_SHAPELETS_GaussHermiteConvolution
 
 #include "ndarray.h"
 #include "lsst/afw/geom/ellipses.h"
@@ -37,9 +37,9 @@ class ShapeletFunction;
 /**
  *  @brief A parametrized matrix that performs a convolution in shapelet space.
  *
- *  HermiteConvolution is defined only for the HERMITE basis type.
+ *  GaussHermiteConvolution is defined only for the HERMITE basis type.
  */
-class HermiteConvolution : private boost::noncopyable {
+class GaussHermiteConvolution : private boost::noncopyable {
 public:
 
     /**
@@ -48,7 +48,7 @@ public:
      *  @param[in,out] ellipse   On input, the ellipse core of the unconvolved shapelet expansion.
      *                           On output, the ellipse core of the convolved shapelet expansion.
      *
-     *  The returned array is owned by the HermiteConvolution object and will be modified
+     *  The returned array is owned by the GaussHermiteConvolution object and will be modified
      *  the next time evaluate() is called.
      */
     ndarray::Array<double const,2,2> evaluate(afw::geom::ellipses::Ellipse & ellipse) const;
@@ -60,10 +60,10 @@ public:
     int getRowOrder() const;
 
     /// @brief Construct a matrix that convolves a basis of the given order with the given shapelet function.
-    HermiteConvolution(int colOrder, ShapeletFunction const & psf);
+    GaussHermiteConvolution(int colOrder, ShapeletFunction const & psf);
 
     // Must be defined in .cc file so it can see Impl dtor.
-    ~HermiteConvolution();
+    ~GaussHermiteConvolution();
 
 private:
     class Impl;
@@ -74,4 +74,4 @@ private:
 
 }} // namespace lsst::shapelet
 
-#endif // !LSST_AFW_MATH_SHAPELETS_HermiteConvolution
+#endif // !LSST_AFW_MATH_SHAPELETS_GaussHermiteConvolution

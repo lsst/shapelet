@@ -27,7 +27,7 @@
 
 #include "ndarray.h"
 #include "lsst/shapelet/constants.h"
-#include "lsst/shapelet/HermiteEvaluator.h"
+#include "lsst/shapelet/GaussHermiteEvaluator.h"
 #include "lsst/shapelet/ConversionMatrix.h"
 #include "lsst/afw/geom.h"
 #include "lsst/afw/geom/ellipses.h"
@@ -229,7 +229,7 @@ private:
     double _normalization;
     ndarray::Array<double const,1,1> _coefficients;
     afw::geom::AffineTransform _transform;
-    HermiteEvaluator _h;
+    GaussHermiteEvaluator _h;
 };
 
 inline ShapeletFunctionEvaluator ShapeletFunction::evaluate() const {

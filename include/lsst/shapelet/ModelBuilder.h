@@ -38,7 +38,7 @@ namespace lsst { namespace shapelet {
  *         multiple pixels in a flattened array.
  *
  *  Unlike virtually everything else in the shapelets library, ModelBuilder does not rely on the
- *  HermiteEvaluator class to compute basis functions.  Instead of making the iteration over the
+ *  GaussHermiteEvaluator class to compute basis functions.  Instead of making the iteration over the
  *  pixels the outer loop, it uses Eigen array objects that are the size of an entire image.  This
  *  uses more memory for temporaries, but it takes advantage of Eigen's vectorized arithmetic operators.
  *
