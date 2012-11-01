@@ -52,7 +52,7 @@ except ImportError:
 import numpy
 
 numpy.random.seed(5)
-numpy.set_printoptions(linewidth=120)
+numpy.set_printoptions(linewidth=110, suppress=True, precision=5)
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -349,8 +349,37 @@ class HermiteTransformMatrixTestCase(unittest.TestCase,ShapeletTestMixin):
                     v1 = self.ht(inx)(transPoint.getX()) * self.ht(iny)(transPoint.getY())
                     v2 = 0.0
                     for j, jnx, jny in lsst.shapelet.HermiteIndexGenerator(self.order):
-                        v2 += m[i,j] * self.ht(jnx)(origPoint.getX()) * self.ht(jny)(origPoint.getY())
+                        v2 += m[j,i] * self.ht(jnx)(origPoint.getX()) * self.ht(jny)(origPoint.getY())
                     self.assertClose(v1, v2)
+
+class ProjectionTestCase(unittest.TestCase,ShapeletTestMixin):
+
+    def setUp(self):
+        self.ghp = lsst.shapelet.GaussHermiteProjection(16)
+
+    def testRotation(self):
+        order = 4
+        size = lsst.shapelet.computeSize(order)
+        nPoints = 100
+        unitCircle = lsst.afw.geom.ellipses.Quadrupole(1.0, 1.0, 0.0)
+        # This matrix should represent a pure rotation in shapelet space, which can be done exactly.
+        inputTransform = lsst.afw.geom.LinearTransform.makeRotation(0.0)
+        outputTransform = lsst.afw.geom.LinearTransform.makeRotation(numpy.pi/3)
+        m = self.ghp.compute(inputTransform, order, outputTransform, order)
+        # If we apply a rotation by numpy.pi/3 six times, we should get back where we started with.
+        self.assertClose(numpy.linalg.matrix_power(m, 6), numpy.identity(size))
+        # Now we test that we get the same result (up to round-off error) for a bunch of test points.
+        inputTestPoints = numpy.random.randn(2, nPoints)
+        outputTestPoints = numpy.dot(outputTransform.getMatrix(), inputTestPoints)
+        inputBuilder = lsst.shapelet.ModelBuilder(inputTestPoints[0,:], inputTestPoints[1,:])
+        outputBuilder = lsst.shapelet.ModelBuilder(outputTestPoints[0,:], outputTestPoints[1,:])
+        inputBuilder.update(unitCircle)
+        outputBuilder.update(unitCircle)
+        inputBasis= numpy.zeros((size, nPoints), dtype=float).transpose()
+        outputBasis = numpy.zeros((size, nPoints), dtype=float).transpose()
+        inputBuilder.addModelMatrix(order, inputBasis)
+        outputBuilder.addModelMatrix(order, outputBasis)
+        self.assertClose(numpy.dot(m.transpose(), outputBasis.transpose()), inputBasis.transpose())
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -364,6 +393,7 @@ def suite():
     suites += unittest.makeSuite(MultiShapeletTestCase)
     suites += unittest.makeSuite(ModelBuilderTestCase)
     suites += unittest.makeSuite(HermiteTransformMatrixTestCase)
+    suites += unittest.makeSuite(ProjectionTestCase)
     suites += unittest.makeSuite(utilsTests.MemoryTestCase)
     return unittest.TestSuite(suites)
 
