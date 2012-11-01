@@ -58,7 +58,9 @@ Python interface to lsst::shapelet classes and functions
 
 %include "ndarray.i"
 
+%declareNumPyConverters(Eigen::VectorXd);
 %declareNumPyConverters(Eigen::MatrixXd);
+%declareNumPyConverters(Eigen::Matrix2d);
 %declareNumPyConverters(ndarray::Array<double,1>);
 %declareNumPyConverters(ndarray::Array<double,1,1>);
 %declareNumPyConverters(ndarray::Array<double,2,1>);
@@ -90,4 +92,6 @@ Python interface to lsst::shapelet classes and functions
 
 %include "lsst/shapelet/ModelBuilder.h"
 
+%include "lsst/shapelet/HermiteTransformMatrix.h"
 %include "lsst/shapelet/GaussHermiteConvolution.h"
+%include "lsst/shapelet/GaussHermiteProjection.h"

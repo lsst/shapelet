@@ -35,6 +35,8 @@
 #include "lsst/shapelet/MultiShapeletFunction.h"
 #include "lsst/shapelet/BasisEvaluator.h"
 #include "lsst/shapelet/ModelBuilder.h"
+#include "lsst/shapelet/HermiteTransformMatrix.h"
 #include "lsst/shapelet/GaussHermiteConvolution.h"
+#include "lsst/shapelet/GaussHermiteProjection.h"
 
 #endif // !defined(LSST_AFW_MATH_SHAPELETS_H)
