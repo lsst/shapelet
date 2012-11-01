@@ -45,6 +45,7 @@ import lsst.afw.math
 
 try:
     import scipy.ndimage
+    import scipy.special
 except ImportError:
     scipy = None
 
@@ -301,8 +302,55 @@ class ModelBuilderTestCase(unittest.TestCase, ShapeletTestMixin):
             z0[n] = ev(x, y)
             n += 1
         self.assertClose(z1, z0)
-            
-            
+
+class HermiteTransformMatrixTestCase(unittest.TestCase,ShapeletTestMixin):
+
+    def setUp(self):
+        self.order = 4
+        self.size = lsst.shapelet.computeSize(self.order)
+        self.htm = lsst.shapelet.HermiteTransformMatrix(self.order)
+
+    @staticmethod
+    def ht(n):
+        """return a scipy poly1d for the nth 'alternate' Hermite polynomial (i.e. Hermite polynomial
+        with shapeley normalization)"""
+        return (scipy.poly1d([(2**n * numpy.pi**0.5 * scipy.special.gamma(n+1))**(-0.5)])
+                * scipy.special.hermite(n))
+
+    def testCoefficientMatrices(self):
+        coeff = self.htm.getCoefficientMatrix()
+        coeffInv = self.htm.getInverseCoefficientMatrix()
+        self.assertClose(numpy.identity(self.order+1), numpy.dot(coeff, coeffInv))
+        # Both matrices should be lower-triangular
+        for i in range(0, self.order+1):
+            for j in range(i+1, self.order+1):
+                self.assertEqual(coeff[i,j], 0.0)
+                self.assertEqual(coeffInv[i,j], 0.0)
+        # test coefficient matrix values against scipy Hermite polynomials
+        if scipy is None:
+            print "Skipping Hermite polynomial tests that require SciPy"
+            return
+        for n in range(0, self.order+1):
+            poly = self.ht(n)
+            self.assertClose(coeff[n,:n+1], poly.c[::-1])
+
+    def testTransformMatrix(self):
+        s = lsst.afw.geom.LinearTransform.makeScaling(2.0, 1.5)
+        r = lsst.afw.geom.LinearTransform.makeRotation(0.30)
+        transforms = [s, r, s*r*s]
+        testPoints = numpy.random.randn(10, 2)
+        for transform in transforms:
+            m = self.htm.compute(transform)
+            for testPoint in testPoints:
+                assert(testPoint.size == 2)
+                origPoint = lsst.afw.geom.Point2D(testPoint[0], testPoint[1])
+                transPoint = transform(origPoint)
+                for i, inx, iny in lsst.shapelet.HermiteIndexGenerator(self.order):
+                    v1 = self.ht(inx)(transPoint.getX()) * self.ht(iny)(transPoint.getY())
+                    v2 = 0.0
+                    for j, jnx, jny in lsst.shapelet.HermiteIndexGenerator(self.order):
+                        v2 += m[i,j] * self.ht(jnx)(origPoint.getX()) * self.ht(jny)(origPoint.getY())
+                    self.assertClose(v1, v2)
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -315,6 +363,7 @@ def suite():
     suites += unittest.makeSuite(ShapeletTestCase)
     suites += unittest.makeSuite(MultiShapeletTestCase)
     suites += unittest.makeSuite(ModelBuilderTestCase)
+    suites += unittest.makeSuite(HermiteTransformMatrixTestCase)
     suites += unittest.makeSuite(utilsTests.MemoryTestCase)
     return unittest.TestSuite(suites)
 

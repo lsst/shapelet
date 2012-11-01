@@ -223,8 +223,8 @@ ndarray::Array<double const,2,2> GaussHermiteConvolution::Impl::evaluate(
 
     int const psfOrder = _psf.getOrder();
 
-    Eigen::MatrixXd psfMat = _htm.compute(psfArg, psfOrder);
-    Eigen::MatrixXd modelMat = _htm.compute(modelArg, _colOrder);
+    Eigen::MatrixXd psfMat = _htm.compute(psfArg, psfOrder).adjoint();
+    Eigen::MatrixXd modelMat = _htm.compute(modelArg, _colOrder).adjoint();
 
     // [kq]_m = \sum_m i^{n+m} [psfMat]_{m,n} [psf]_n
     // kq is zero unless {n+m} is even
