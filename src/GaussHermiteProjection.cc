@@ -28,7 +28,7 @@ namespace lsst { namespace shapelet {
 Eigen::MatrixXd GaussHermiteProjection::compute(
     Eigen::Matrix2d const & inputTransform, int inputOrder,
     Eigen::Matrix2d const & outputTransform, int outputOrder
-) {
+) const {
     assert(inputOrder <= getMaxOrder());
     assert(outputOrder <= getMaxOrder());
     int fullOrder = std::max(inputOrder, outputOrder);

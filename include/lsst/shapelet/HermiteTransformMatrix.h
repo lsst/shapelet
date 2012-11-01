@@ -58,8 +58,18 @@ public:
         return compute(transform, _order);
     }
 
+    /// @brief Compute the matrix for a new linear transform.
+    Eigen::MatrixXd compute(afw::geom::LinearTransform const & transform) const {
+        return compute(transform.getMatrix(), _order);
+    }
+
     /// @brief Compute the matrix for a new linear transform at the given order (must be <= getOrder()).
     Eigen::MatrixXd compute(Eigen::Matrix2d const & transform, int order) const;
+
+    /// @brief Compute the matrix for a new linear transform at the given order (must be <= getOrder()).
+    Eigen::MatrixXd compute(afw::geom::LinearTransform const & transform, int order) const {
+        return compute(transform.getMatrix(), order);
+    }
 
     /**
      *  @brief Return the matrix that maps (1-d) regular polynomials to the alternate Hermite polynomials.

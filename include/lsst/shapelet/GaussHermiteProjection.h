@@ -37,7 +37,7 @@ public:
     Eigen::MatrixXd compute(
         afw::geom::ellipses::Quadrupole const & inputEllipse, int inputOrder,
         afw::geom::ellipses::Quadrupole const & outputEllipse, int outputOrder
-    ) {
+    ) const {
         return compute(
             inputEllipse.getGridTransform().getMatrix(), inputOrder,
             outputEllipse.getGridTransform().getMatrix(), outputOrder
@@ -46,9 +46,20 @@ public:
 
     /// @brief Compute a matrix that projects from one shapelet basis "grid transform" to another.
     Eigen::MatrixXd compute(
+        afw::geom::LinearTransform const & inputTransform, int inputOrder,
+        afw::geom::LinearTransform const & outputTransform, int outputOrder
+    ) const {
+        return compute(
+            inputTransform.getMatrix(), inputOrder,
+            outputTransform.getMatrix(), outputOrder
+        );
+    }
+
+    /// @brief Compute a matrix that projects from one shapelet basis "grid transform" to another.
+    Eigen::MatrixXd compute(
         Eigen::Matrix2d const & inputTransform, int inputOrder,
         Eigen::Matrix2d const & outputTransform, int outputOrder
-    );
+    ) const;
 
     int getMaxOrder() const { return _htm.getOrder(); }
 
