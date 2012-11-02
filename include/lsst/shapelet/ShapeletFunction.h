@@ -108,12 +108,12 @@ public:
     /// @brief Construct a helper object that can efficiently evaluate the function.
     Evaluator evaluate() const;
 
-    /// @brief Shift the shapelet function by shifting the ellipse of each element.
+    /// @brief Shift the shapelet function by shifting the basis ellipse.
     void shiftInPlace(afw::geom::Extent2D const & offset) {
         _ellipse.getCenter() += offset;
     }
 
-    /// @brief Transform the shapelet function by transforming the ellipse of each elements.
+    /// @brief Transform the shapelet function by transforming the basis ellipse.
     void transformInPlace(afw::geom::AffineTransform const & transform) {
         _ellipse.transform(transform).inPlace();
     }

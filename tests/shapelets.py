@@ -381,6 +381,30 @@ class ProjectionTestCase(unittest.TestCase,ShapeletTestMixin):
         outputBuilder.addModelMatrix(order, outputBasis)
         self.assertClose(numpy.dot(m.transpose(), outputBasis.transpose()), inputBasis.transpose())
 
+    def testPerturbation(self):
+        inputEllipse = lsst.afw.geom.ellipses.Quadrupole(2.0, 2.0, 0.0)
+        outputEllipse = lsst.afw.geom.ellipses.Quadrupole(2.01, 2.0, 0.02)
+        inputShapelet = lsst.shapelet.ShapeletFunction(2, lsst.shapelet.HERMITE,
+                                                       lsst.afw.geom.ellipses.Ellipse(inputEllipse))
+        outputShapelet = lsst.shapelet.ShapeletFunction(8, lsst.shapelet.HERMITE,
+                                                        lsst.afw.geom.ellipses.Ellipse(outputEllipse))
+        m = self.ghp.compute(inputEllipse, inputShapelet.getOrder(),
+                             outputEllipse, outputShapelet.getOrder())
+        x = numpy.random.randn(50)
+        y = numpy.random.randn(50)
+        for i, nx, ny in lsst.shapelet.HermiteIndexGenerator(2):
+            inputShapelet.getCoefficients()[:] = 0.0
+            inputShapelet.getCoefficients()[i] = 1.0
+            outputShapelet.getCoefficients()[:] = numpy.dot(m, inputShapelet.getCoefficients())
+            inputEv = inputShapelet.evaluate()
+            outputEv = outputShapelet.evaluate()
+            inputZ = numpy.array([inputEv(px,py) for px,py in zip(x,y)])
+            outputZ = numpy.array([outputEv(px,py) for px,py in zip(x,y)])
+            # tolerances here aren't rigorous; it's mostly just a regression/sanity test, with the real
+            # check in a visual inspection of examples/shapeletProject.py
+            self.assertClose(inputZ, outputZ, atol=5E-3, rtol=5E-3)
+        
+
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 def suite():

@@ -43,7 +43,7 @@ Eigen::MatrixXd GaussHermiteProjection::compute(
     Eigen::MatrixXd q1 = _htm.compute(outputTransform * w, fullOrder);
     Eigen::MatrixXd q2 = _htm.compute(inputTransform * w, fullOrder);
     Eigen::MatrixXd result = q1.adjoint().topRows(outputSize) * q2.leftCols(inputSize);
-    result *= outputTransform.determinant() / eig.eigenvalues().prod();
+    result *= outputTransform.determinant() / std::sqrt(eig.eigenvalues().prod());
     return result;
 }
 
