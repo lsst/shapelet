@@ -335,6 +335,10 @@ class HermiteTransformMatrixTestCase(unittest.TestCase,ShapeletTestMixin):
             self.assertClose(coeff[n,:n+1], poly.c[::-1])
 
     def testTransformMatrix(self):
+        if scipy is None:
+            print "Skipping transform tests that require SciPy"
+            return
+
         s = lsst.afw.geom.LinearTransform.makeScaling(2.0, 1.5)
         r = lsst.afw.geom.LinearTransform.makeRotation(0.30)
         transforms = [s, r, s*r*s]
