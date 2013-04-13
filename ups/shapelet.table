@@ -1,5 +1,5 @@
-setupRequired(meas_algorithms >= 5.0.1.0)
-setupRequired(afw >= 5.0.1.0)
+setupRequired(afw)
+setupOptional(scipy)  # only needed for examples/sersicApprox.y, optional tests
 
 envPrepend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
 envPrepend(DYLD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
