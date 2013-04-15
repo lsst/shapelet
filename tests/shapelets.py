@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-# 
+#
 # LSST Data Management System
-# Copyright 2008, 2009, 2010 LSST Corporation.
-# 
+# Copyright 2008-2013 LSST Corporation.
+#
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
 #
@@ -11,14 +11,14 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
-# You should have received a copy of the LSST License Statement and 
-# the GNU General Public License along with this program.  If not, 
+#
+# You should have received a copy of the LSST License Statement and
+# the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
@@ -173,10 +173,10 @@ class ShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
         for basis in self.bases:
             for x, y in zip(self.x, self.y):
                 basis.fillEvaluation(v, x, y, dx_a, dy_a)
-                basis.fillEvaluation(v_hi, x+eps, y) 
+                basis.fillEvaluation(v_hi, x+eps, y)
                 basis.fillEvaluation(v_lo, x-eps, y)
                 dx_n = 0.5 * (v_hi - v_lo) / eps
-                basis.fillEvaluation(v_hi, x, y+eps) 
+                basis.fillEvaluation(v_hi, x, y+eps)
                 basis.fillEvaluation(v_lo, x, y-eps)
                 dy_n = 0.5 * (v_hi - v_lo) / eps
                 self.assertClose(dx_n, dx_a, rtol=2.0*eps)
@@ -213,7 +213,7 @@ class ShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
         self.assertEqual(fc1.getOrder(), fc2.getOrder())
         fc2.changeBasisType(lsst.shapelet.HERMITE)
         self.assertClose(fc1.getCoefficients(), fc2.getCoefficients())
-            
+
 class MultiShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
 
     def testMoments(self):
@@ -265,7 +265,7 @@ class ModelBuilderTestCase(unittest.TestCase, ShapeletTestMixin):
         del self.ellipse
 
     def testModel(self):
-        builder = lsst.shapelet.ModelBuilder(self.x, self.y)
+        builder = lsst.shapelet.ModelBuilderD(self.x, self.y)
         builder.update(self.ellipse)
         z1 = numpy.random.randn(*self.model.transpose().shape).transpose()
         z0 = self.model + z1
@@ -280,7 +280,7 @@ class ModelBuilderTestCase(unittest.TestCase, ShapeletTestMixin):
     def testMultiShapelet(self):
         """Should be redundant with testModel, but we want to be completely sure shapelet
         functions can be evaluated with ModelBuilder.addModelVector."""
-        builder = lsst.shapelet.ModelBuilder(self.x, self.y)
+        builder = lsst.shapelet.ModelBuilderD(self.x, self.y)
         msf = lsst.shapelet.MultiShapeletFunction()
         z0 = numpy.zeros(self.model.shape[0], dtype=float)
         z1 = numpy.zeros(self.model.shape[0], dtype=float)
@@ -375,8 +375,8 @@ class ProjectionTestCase(unittest.TestCase,ShapeletTestMixin):
         # Now we test that we get the same result (up to round-off error) for a bunch of test points.
         inputTestPoints = numpy.random.randn(2, nPoints)
         outputTestPoints = numpy.dot(outputTransform.getMatrix(), inputTestPoints)
-        inputBuilder = lsst.shapelet.ModelBuilder(inputTestPoints[0,:], inputTestPoints[1,:])
-        outputBuilder = lsst.shapelet.ModelBuilder(outputTestPoints[0,:], outputTestPoints[1,:])
+        inputBuilder = lsst.shapelet.ModelBuilderD(inputTestPoints[0,:], inputTestPoints[1,:])
+        outputBuilder = lsst.shapelet.ModelBuilderD(outputTestPoints[0,:], outputTestPoints[1,:])
         inputBuilder.update(unitCircle)
         outputBuilder.update(unitCircle)
         inputBasis= numpy.zeros((size, nPoints), dtype=float).transpose()
