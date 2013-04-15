@@ -125,7 +125,7 @@ class ShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
 
     def setUp(self):
         order = 4
-        self.ellipse = ellipses.Ellipse(ellipses.Axes(1.2, 0.8, 0.3), geom.Point2D(0.12, -0.08))
+        self.ellipse = ellipses.Ellipse(ellipses.Axes(2.2, 0.8, 0.3), geom.Point2D(0.12, -0.08))
         self.coefficients = numpy.random.randn(lsst.shapelet.computeSize(order))
         self.x = numpy.random.randn(25)
         self.y = numpy.random.randn(25)
@@ -185,10 +185,12 @@ class ShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
     def testAddToImage(self):
         bbox = geom.Box2I(geom.Point2I(5, 6), geom.Extent2I(20, 30))
         image = lsst.afw.image.ImageD(bbox)
-        x = numpy.arange(bbox.getBeginX(), bbox.getEndX())
-        y = numpy.arange(bbox.getBeginY(), bbox.getEndY())
+        x = numpy.arange(bbox.getBeginX(), bbox.getEndX(), dtype=float)
+        y = numpy.arange(bbox.getBeginY(), bbox.getEndY(), dtype=float)
         array = numpy.zeros((bbox.getHeight(), bbox.getWidth()), dtype=float)
         for f in self.functions:
+            image.getArray()[:] = 0.0
+            array[:] = 0.0
             ev = f.evaluate()
             ev.addToImage(image)
             ev.addToImage(array, bbox.getMin())

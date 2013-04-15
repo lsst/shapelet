@@ -167,7 +167,7 @@ public:
     }
 
     /**
-     *  @brief Integrate a simple unscale shapelet expansion at the given point.
+     *  @brief Integrate a simple unscaled shapelet expansion.
      */
     double sumIntegration(ndarray::Array<double const,1> const & coeff, int xMoment=0, int yMoment=0) const;
 

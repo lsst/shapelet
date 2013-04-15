@@ -129,7 +129,7 @@ public:
 
     /// @brief Construct a function with a circular ellipse and set all coefficients to zero.
     ShapeletFunction(int order, BasisTypeEnum basisType, double radius,
-                     afw::geom::Point2D const & center);
+                     afw::geom::Point2D const & center=afw::geom::Point2D());
 
     /// @brief Construct a function with a circular ellipse and a deep-copied coefficient vector.
     ShapeletFunction(
