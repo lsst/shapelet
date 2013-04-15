@@ -65,6 +65,11 @@ public:
      */
     void update(afw::geom::ellipses::BaseCore const & ellipse);
 
+    /**
+     *  @brief Update the basis ellipse (including center) and recompute the model matrix.
+     */
+    void update(afw::geom::ellipses::Ellipse const & ellipse);
+
     /// @brief Fill a model design matrix (basis functions in columns, flattened pixels in rows).
     void addModelMatrix(int order, ndarray::Array<T,2,-1> const & output);
 

@@ -76,6 +76,17 @@ void ModelBuilder<T>::update(afw::geom::ellipses::BaseCore const & ellipse) {
 }
 
 template <typename T>
+void ModelBuilder<T>::update(afw::geom::ellipses::Ellipse const & ellipse) {
+    afw::geom::ellipses::Ellipse::GridTransform gt(ellipse);
+    typedef afw::geom::AffineTransform AT;
+    AT transform = gt;
+    _xt = _x * transform[AT::XX] + _y * transform[AT::XY] + transform[AT::X];
+    _yt = _x * transform[AT::YX] + _y * transform[AT::YY] + transform[AT::Y];
+    _ellipseFactor = gt.getDeterminant();
+    _wsOrder = -1;
+}
+
+template <typename T>
 void ModelBuilder<T>::addModelMatrix(int order, ndarray::Array<T,2,-1> const & output) {
     if (output.template getSize<1>() != computeSize(order)) {
         throw LSST_EXCEPT(
