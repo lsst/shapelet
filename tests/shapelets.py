@@ -55,6 +55,11 @@ numpy.random.seed(5)
 numpy.set_printoptions(linewidth=110, suppress=True, precision=5)
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    
+def makeUnitVector(i, n):
+    v = numpy.zeros(n, dtype=float)
+    v[i] = 1.0
+    return v
 
 class ShapeletTestMixin(object):
 
@@ -68,6 +73,53 @@ class ShapeletTestMixin(object):
             for j, px in enumerate(x):
                 z[i,j] = e(float(px), float(py))
         return z
+
+    def makeRandomShapeletFunction(self, order=2, zeroCenter=False):
+        center = geom.Point2D()
+        if not zeroCenter:
+            center = geom.Point2D(numpy.random.randn(), numpy.random.randn())
+        ellipse = ellipses.Ellipse(
+            ellipses.Axes(
+                float(numpy.random.uniform(low=1, high=2)),
+                float(numpy.random.uniform(low=1, high=2)),
+                float(numpy.random.uniform(low=0, high=numpy.pi))
+                ),
+            center
+            )
+        coefficients = numpy.random.randn(lsst.shapelet.computeSize(order))
+        result = lsst.shapelet.ShapeletFunction(order, lsst.shapelet.HERMITE, coefficients)
+        result.setEllipse(ellipse)
+        return result
+
+    def makeRandomMultiShapeletFunction(self, nElements=3):
+        elements = []
+        for n in range(nElements):
+            elements.append(self.makeRandomShapeletFunction())
+        return lsst.shapelet.MultiShapeletFunction(elements)
+
+    def compareShapeletFunctions(self, a, b):
+        self.assertEqual(a.getOrder(), b.getOrder())
+        self.assertEqual(a.getBasisType(), b.getBasisType())
+        self.assertClose(a.getEllipse().getParameterVector(), b.getEllipse().getParameterVector())
+        self.assertClose(a.getCoefficients(), b.getCoefficients())
+
+    def simplifyMultiShapeletFunction(self, msf):
+        keep = []
+        for s in msf.getElements():
+            if not numpy.allclose(s.getCoefficients(), 0.0):
+                keep.append(s)
+        msf = lsst.shapelet.MultiShapeletFunction()
+        for s in keep:
+            msf.getElements().push_back(s)
+        return msf
+
+    def compareMultiShapeletFunctions(self, a, b, simplify=True):
+        if simplify:
+            a = self.simplifyMultiShapeletFunction(a)
+            b = self.simplifyMultiShapeletFunction(b)
+        self.assertEqual(a.getElements().size(), b.getElements().size())  
+        for sa, sb in zip(a.getElements(), b.getElements()):
+            self.compareShapeletFunctions(sa, sb)
 
     def measureMoments(self, function, x, y, z):
         gx, gy = numpy.meshgrid(x, y)
@@ -221,25 +273,92 @@ class MultiShapeletTestCase(unittest.TestCase, ShapeletTestMixin):
     def testMoments(self):
         x = numpy.linspace(-50, 50, 1001)
         y = x
-        elements = []
-        for n in range(3):
-            ellipse = ellipses.Ellipse(
-                ellipses.Axes(
-                    float(numpy.random.uniform(low=1, high=2)),
-                    float(numpy.random.uniform(low=1, high=2)),
-                    float(numpy.random.uniform(low=0, high=numpy.pi))
-                    ),
-                geom.Point2D(0.23, -0.15)
-                )
-            coefficients = numpy.random.randn(lsst.shapelet.computeSize(n))
-            element = lsst.shapelet.ShapeletFunction(n, lsst.shapelet.HERMITE, coefficients)
-            element.setEllipse(ellipse)
-            elements.append(element)
-        function = lsst.shapelet.MultiShapeletFunction(elements)
+        function = self.makeRandomMultiShapeletFunction()
         x = numpy.linspace(-10, 10, 101)
         y = x
         z = self.makeImage(function, x, y)
         self.measureMoments(function, x, y, z)
+
+    def testBasisNormalize(self):
+        def makePositiveMatrix(*shape):
+            """Return a random basis matrix, but with a lot of power
+            in the zeroth component to ensure the integral is positve."""
+            a = numpy.random.randn(*shape)
+            a[0,:] += 4.0
+            return a
+        basis = lsst.shapelet.MultiShapeletBasis(2)
+        basis.addComponent(0.5, 1, makePositiveMatrix(3,2))
+        basis.addComponent(1.0, 2, makePositiveMatrix(6,2))
+        basis.addComponent(1.2, 0, makePositiveMatrix(1,2))
+        basis.normalize()
+        for n in range(2):
+            coefficients = numpy.zeros(2, dtype=float)
+            coefficients[n] = 1.0
+            msf = basis.makeFunction(ellipses.Ellipse(ellipses.Axes()), coefficients)
+            self.assertClose(msf.evaluate().integrate(), 1.0)
+
+    def testBasisScale(self):
+        ellipse = ellipses.Ellipse(ellipses.Axes())
+        basis = lsst.shapelet.MultiShapeletBasis(2)
+        basis.addComponent(0.5, 1, numpy.random.randn(3,2))
+        basis.addComponent(1.0, 2, numpy.random.randn(6,2))
+        basis.addComponent(1.2, 0, numpy.random.randn(1,2))
+        msf1 = [basis.makeFunction(ellipse, makeUnitVector(i,2)) for i in range(2)]
+        basis.scale(2.0)
+        ellipse.getCore().scale(0.5)
+        msf2 = [basis.makeFunction(ellipse, makeUnitVector(i,2)) for i in range(2)]
+        for a, b in zip(msf1, msf2):
+            self.compareMultiShapeletFunctions(a, b)
+
+    def testBasisMerge(self):
+        ellipse = ellipses.Ellipse(ellipses.Axes())
+        basis1 = lsst.shapelet.MultiShapeletBasis(2)
+        basis1.addComponent(0.5, 1, numpy.random.randn(3,2))
+        basis1.addComponent(1.0, 2, numpy.random.randn(6,2))
+        basis1.addComponent(1.2, 0, numpy.random.randn(1,2))
+        basis2 = lsst.shapelet.MultiShapeletBasis(3)
+        basis2.addComponent(0.4, 1, numpy.random.randn(3,3))
+        basis2.addComponent(1.1, 2, numpy.random.randn(6,3))
+        basis2.addComponent(1.6, 0, numpy.random.randn(1,3))
+        basis3 = lsst.shapelet.MultiShapeletBasis(basis1)
+        basis3.merge(basis2)
+        self.assertEqual(basis3.getSize(), 5)
+        msf1 = [basis1.makeFunction(ellipse, makeUnitVector(i,2)) for i in range(2)]
+        msf2 = [basis2.makeFunction(ellipse, makeUnitVector(i,3)) for i in range(3)]
+        msf3 = [basis3.makeFunction(ellipse, makeUnitVector(i,5)) for i in range(5)]
+        for a, b in zip(msf3, msf1+msf2):
+            self.compareMultiShapeletFunctions(a, b)
+
+    def testMatrixBuilder(self):
+        basis = lsst.shapelet.MultiShapeletBasis(2)
+        basis.addComponent(0.5, 1, numpy.random.randn(3,2))
+        basis.addComponent(1.0, 2, numpy.random.randn(6,2))
+        basis.addComponent(1.2, 0, numpy.random.randn(1,2))
+        psf = self.makeRandomMultiShapeletFunction()
+        psf.normalize()
+        ellipse = ellipses.Ellipse(
+            ellipses.Axes(
+                float(numpy.random.uniform(low=1, high=2)),
+                float(numpy.random.uniform(low=1, high=2)),
+                float(numpy.random.uniform(low=0, high=numpy.pi))
+                ),
+            geom.Point2D(0.23, -0.15)
+            )
+        coefficients = numpy.random.randn(2)
+        msf = basis.makeFunction(ellipse, coefficients).convolve(psf)
+        xa = numpy.random.randn(50)
+        ya = numpy.random.randn(50)
+        z0 = numpy.zeros(xa.shape, dtype=float)
+        ev = msf.evaluate()
+        n = 0
+        for x, y in zip(xa, ya):
+            z0[n] = ev(x, y)
+            n += 1
+        builder = lsst.shapelet.MultiShapeletMatrixBuilderD(basis, psf, xa, ya)
+        m = numpy.zeros((basis.getSize(), xa.size), dtype=float).transpose()
+        builder.build(m, ellipse)
+        z1 = numpy.dot(m, coefficients)
+        self.assertClose(z1, z0)
 
 class ModelBuilderTestCase(unittest.TestCase, ShapeletTestMixin):
 
@@ -279,7 +398,7 @@ class ModelBuilderTestCase(unittest.TestCase, ShapeletTestMixin):
         builder.addModelVector(self.order, coefficients, y1)
         self.assertClose(y0, y1)
 
-    def testMultiShapelet(self):
+    def testMultiShapeletFunction(self):
         """Should be redundant with testModel, but we want to be completely sure shapelet
         functions can be evaluated with ModelBuilder.addModelVector."""
         builder = lsst.shapelet.ModelBuilderD(self.x, self.y)
