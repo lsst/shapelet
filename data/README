@@ -1,0 +1,16 @@
+The files in this directory are multi-Gaussian approximations to Sersic profiles,
+as computed by the file optimize_mixture_profiles.py in TheTractor:
+
+https://github.com/davidwhogg/TheTractor
+
+For more information on why this is a useful idea, and how to select which one
+to use, please see Hogg and Lang 2012:
+
+http://arxiv.org/abs/1210.6563
+
+The pickled objects themselves are numpy.ndarray objects of size 2K, in which the
+first K elements are the amplitudes, the last K elements are the variances, and
+K is the number of Gaussian components in the approximation.  The filenames are
+of the form "<model>_K<number-of-gaussians>_MR<maximum-radius>".  The maximum radius
+is the maximum radius used when optimizing the approximation, in units of the
+profile's half-light radius.
