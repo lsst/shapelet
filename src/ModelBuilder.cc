@@ -33,6 +33,14 @@ namespace lsst { namespace shapelet {
 namespace {
 
 template <typename T>
+void fillExp(
+    Eigen::Array<T,Eigen::Dynamic,1> const & x, Eigen::Array<T,Eigen::Dynamic,1> const & y,
+    Eigen::Array<T,Eigen::Dynamic,1> & workspace
+) {
+    workspace = (-0.5 * (x.square() + y.square())).exp();
+}
+
+template <typename T>
 void fillHermite1d(
     int order,
     Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> & workspace,
@@ -41,10 +49,12 @@ void fillHermite1d(
     if (order >= workspace.cols()) {
         workspace.resize(coord.size(), order + 1);
     }
-    if (workspace.cols() > 0)
-        workspace.col(0) = BASIS_NORMALIZATION * (-0.5 * coord.square()).exp();
-    if (workspace.cols() > 1)
+    if (workspace.cols() > 0) {
+        workspace.col(0).setConstant(BASIS_NORMALIZATION);
+    }
+    if (workspace.cols() > 1) {
         workspace.col(1) = std::sqrt(2.0) * coord * workspace.col(0);
+    }
     for (int j = 2; j <= order; ++j) {
         workspace.col(j) = std::sqrt(2.0 / j) * coord * workspace.col(j-1)
             - std::sqrt((j - 1.0) / j) * workspace.col(j-2);
@@ -59,7 +69,7 @@ ModelBuilder<T>::ModelBuilder(
     ndarray::Array<T const,1,1> const & y
 ) : _wsOrder(-1), _ellipseFactor(1.0),
     _x(x), _y(y),
-    _xt(_x.size()), _yt(_y.size())
+    _xt(_x.size()), _yt(_y.size()), _expWorkspace(_x.size())
 {
     assert(_x.size() == _y.size());
 }
@@ -73,6 +83,7 @@ void ModelBuilder<T>::update(afw::geom::ellipses::BaseCore const & ellipse) {
     _yt = _x * transform[LT::YX] + _y * transform[LT::YY];
     _ellipseFactor = gt.getDeterminant();
     _wsOrder = -1;
+    fillExp(_xt, _yt, _expWorkspace);
 }
 
 template <typename T>
@@ -84,6 +95,7 @@ void ModelBuilder<T>::update(afw::geom::ellipses::Ellipse const & ellipse) {
     _yt = _x * transform[AT::YX] + _y * transform[AT::YY] + transform[AT::Y];
     _ellipseFactor = gt.getDeterminant();
     _wsOrder = -1;
+    fillExp(_xt, _yt, _expWorkspace);
 }
 
 template <typename T>
@@ -109,7 +121,8 @@ void ModelBuilder<T>::addModelMatrix(int order, ndarray::Array<T,2,-1> const & o
     }
     ndarray::EigenView<T,2,-1,Eigen::ArrayXpr> model(output);
     for (PackedIndex i; i.getOrder() <= order; ++i) {
-        model.col(i.getIndex()) += _ellipseFactor *  _xWorkspace.col(i.getX()) * _yWorkspace.col(i.getY());
+        model.col(i.getIndex()) += _ellipseFactor * _expWorkspace
+            * _xWorkspace.col(i.getX()) * _yWorkspace.col(i.getY());
     }
 }
 
@@ -140,8 +153,8 @@ void ModelBuilder<T>::addModelVector(
     }
     ndarray::EigenView<T,1,1,Eigen::ArrayXpr> model(output);
     for (PackedIndex i; i.getOrder() <= order; ++i) {
-        model += (coefficients[i.getIndex()] * _xWorkspace.col(i.getX()) * _yWorkspace.col(i.getY()))
-            * _ellipseFactor;
+        model += _ellipseFactor * coefficients[i.getIndex()] * _expWorkspace
+            * _xWorkspace.col(i.getX()) * _yWorkspace.col(i.getY());
     }
 }
 

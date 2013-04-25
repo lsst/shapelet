@@ -87,6 +87,7 @@ private:
     ndarray::EigenView<T const,1,1,Eigen::ArrayXpr> _y;
     Eigen::Array<T,Eigen::Dynamic,1> _xt;
     Eigen::Array<T,Eigen::Dynamic,1> _yt;
+    Eigen::Array<T,Eigen::Dynamic,1> _expWorkspace;
     Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> _xWorkspace;
     Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> _yWorkspace;
 };
