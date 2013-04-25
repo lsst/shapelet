@@ -163,12 +163,14 @@ public:
      *  @param[in] x         Array of x coordinates at which the matrix will be evaluated
      *  @param[in] y         Array of y coordinates at which the matrix will be evaluated (must have the
      *                       same size as x).
+     *  @param[in] useApproximateExp   Use utils::PowFast to compute fast approximate exponentials
      */
     MultiShapeletMatrixBuilder(
         MultiShapeletBasis const & basis,
         MultiShapeletFunction const & psf,
         ndarray::Array<T const,1,1> const & x,
-        ndarray::Array<T const,1,1> const & y
+        ndarray::Array<T const,1,1> const & y,
+        bool useApproximateExp = false
     );
 
     /**

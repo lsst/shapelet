@@ -70,6 +70,20 @@ class ModelBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         builder.addModelVector(self.order, coefficients, y1)
         self.assertClose(y0, y1, rtol=1E-12)
 
+    def testFastExp(self):
+        x = self.x.astype(numpy.float32)
+        y = self.y.astype(numpy.float32)
+        builder1 = lsst.shapelet.ModelBuilderF(x, y, False)
+        builder2 = lsst.shapelet.ModelBuilderF(x, y, True)
+        z1 = numpy.zeros(self.model.transpose().shape, dtype=numpy.float32).transpose()
+        z2 = numpy.zeros(self.model.transpose().shape, dtype=numpy.float32).transpose()
+        builder1.update(self.ellipse)
+        builder2.update(self.ellipse)
+        builder1.addModelMatrix(self.order, z1)
+        builder2.addModelMatrix(self.order, z2)
+        self.assertClose(z1, z2, rtol=2E-4, atol=1E-8)
+
+
     def testMultiShapeletFunction(self):
         """Should be redundant with testModel, but we want to be completely sure shapelet
         functions can be evaluated with ModelBuilder.addModelVector."""

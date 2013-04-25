@@ -143,8 +143,9 @@ public:
 
     Impl(
         ndarray::Array<T const,1,1> const & x,
-        ndarray::Array<T const,1,1> const & y
-    ) : modelBuilder(x,y) {}
+        ndarray::Array<T const,1,1> const & y,
+        bool useApproximateExp
+    ) : modelBuilder(x, y, useApproximateExp) {}
 
     ModelBuilder<T> modelBuilder;
     ItemVector items;
@@ -174,8 +175,9 @@ MultiShapeletMatrixBuilder<T>::MultiShapeletMatrixBuilder(
     MultiShapeletBasis const & basis,
     MultiShapeletFunction const & psf,
     ndarray::Array<T const,1,1> const & x,
-    ndarray::Array<T const,1,1> const & y
-) : _impl(new Impl(x, y))
+    ndarray::Array<T const,1,1> const & y,
+    bool useApproximateExp
+) : _impl(new Impl(x, y, useApproximateExp))
 {
     // Add the cartesian product of (basis components) x (PSF elements) to the ItemVector
     int maxConvolvedOrder = 0;

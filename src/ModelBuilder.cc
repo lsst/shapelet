@@ -24,6 +24,7 @@
 #include "boost/format.hpp"
 #include "boost/make_shared.hpp"
 
+#include "lsst/utils/PowFast.h"
 #include "lsst/pex/exceptions.h"
 #include "lsst/shapelet/ModelBuilder.h"
 #include "ndarray/eigen.h"
@@ -32,12 +33,25 @@ namespace lsst { namespace shapelet {
 
 namespace {
 
+utils::PowFast const & powFast = utils::getPowFast<11>();
+
+struct PowFastExpFunctor {
+    inline float operator()(float x) const {
+        return powFast.exp(x);
+    }
+};
+
 template <typename T>
 void fillExp(
     Eigen::Array<T,Eigen::Dynamic,1> const & x, Eigen::Array<T,Eigen::Dynamic,1> const & y,
-    Eigen::Array<T,Eigen::Dynamic,1> & workspace
+    Eigen::Array<T,Eigen::Dynamic,1> & workspace,
+    bool useApproximateExp
 ) {
-    workspace = (-0.5 * (x.square() + y.square())).exp();
+    if (useApproximateExp) {
+        workspace = (-0.5 * (x.square() + y.square())).unaryExpr(PowFastExpFunctor());
+    } else {
+        workspace = (-0.5 * (x.square() + y.square())).exp();
+    }
 }
 
 template <typename T>
@@ -66,9 +80,10 @@ void fillHermite1d(
 template <typename T>
 ModelBuilder<T>::ModelBuilder(
     ndarray::Array<T const,1,1> const & x,
-    ndarray::Array<T const,1,1> const & y
-) : _wsOrder(-1), _ellipseFactor(1.0),
-    _x(x), _y(y),
+    ndarray::Array<T const,1,1> const & y,
+    bool useApproximateExp
+) : _wsOrder(-1), _useApproximateExp(useApproximateExp),
+    _ellipseFactor(1.0), _x(x), _y(y),
     _xt(_x.size()), _yt(_y.size()), _expWorkspace(_x.size())
 {
     assert(_x.size() == _y.size());
@@ -83,7 +98,7 @@ void ModelBuilder<T>::update(afw::geom::ellipses::BaseCore const & ellipse) {
     _yt = _x * transform[LT::YX] + _y * transform[LT::YY];
     _ellipseFactor = gt.getDeterminant();
     _wsOrder = -1;
-    fillExp(_xt, _yt, _expWorkspace);
+    fillExp(_xt, _yt, _expWorkspace, _useApproximateExp);
 }
 
 template <typename T>
@@ -95,7 +110,7 @@ void ModelBuilder<T>::update(afw::geom::ellipses::Ellipse const & ellipse) {
     _yt = _x * transform[AT::YX] + _y * transform[AT::YY] + transform[AT::Y];
     _ellipseFactor = gt.getDeterminant();
     _wsOrder = -1;
-    fillExp(_xt, _yt, _expWorkspace);
+    fillExp(_xt, _yt, _expWorkspace, _useApproximateExp);
 }
 
 template <typename T>

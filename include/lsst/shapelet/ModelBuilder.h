@@ -54,10 +54,12 @@ public:
      *
      *  @param[in] x           Array of center-subtracted X coordinates (same shape as y).
      *  @param[in] y           Array of center-subtracted Y coordinates (same shape as x).
+     *  @param[in] useApproximateExp  Use utils::PowFast to compute approximate fast exponentials.
      */
     ModelBuilder(
         ndarray::Array<T const,1,1> const & x,
-        ndarray::Array<T const,1,1> const & y
+        ndarray::Array<T const,1,1> const & y,
+        bool useAppoximateExp = false
     );
 
     /**
@@ -82,6 +84,7 @@ public:
 
 private:
     int _wsOrder;
+    bool _useApproximateExp;
     double _ellipseFactor;
     ndarray::EigenView<T const,1,1,Eigen::ArrayXpr> _x;
     ndarray::EigenView<T const,1,1,Eigen::ArrayXpr> _y;
