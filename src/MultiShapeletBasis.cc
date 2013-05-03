@@ -216,9 +216,6 @@ MultiShapeletMatrixBuilder<T>::MultiShapeletMatrixBuilder(
     }
 }
 
-template <typename T>
-MultiShapeletMatrixBuilder<T>::~MultiShapeletMatrixBuilder() {}
-
 template class MultiShapeletMatrixBuilder<float>;
 template class MultiShapeletMatrixBuilder<double>;
 

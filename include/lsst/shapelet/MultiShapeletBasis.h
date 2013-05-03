@@ -23,9 +23,6 @@
 #ifndef LSST_SHAPELET_MultiShapeletBasis_h_INCLUDED
 #define LSST_SHAPELET_MultiShapeletBasis_h_INCLUDED
 
-#include "boost/scoped_ptr.hpp"
-#include "boost/noncopyable.hpp"
-
 #include "lsst/shapelet/MultiShapeletFunction.h"
 
 namespace lsst { namespace shapelet {
@@ -152,7 +149,7 @@ private:
  *  this is the design matrix involved in a linear least squares fit for the basis coefficients.
  */
 template <typename T>
-class MultiShapeletMatrixBuilder : private boost::noncopyable {
+class MultiShapeletMatrixBuilder {
 public:
 
     /**
@@ -186,12 +183,9 @@ public:
         afw::geom::ellipses::Ellipse const & ellipse
     ) const;
 
-    // dtor needs to be explicit in cc file, because Impl dtor is undefined in .h file
-    ~MultiShapeletMatrixBuilder();
-
 private:
     class Impl;
-    boost::scoped_ptr<Impl> _impl;
+    PTR(Impl) _impl;
 };
 
 }} // namespace lsst::shapelet
