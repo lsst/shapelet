@@ -116,6 +116,9 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
             self.assertClose(array, check)
 
     def testConvolution(self):
+        if scipy is None:
+            print "Skipping convolution test; scipy could not be imported."
+            return
         e1 = ellipses.Ellipse(ellipses.Axes(10, 8, 0.3), geom.Point2D(1.5, 2.0))
         e2 = ellipses.Ellipse(ellipses.Axes(12, 9, -0.5), geom.Point2D(-1.0, -0.25))
         f1 = lsst.shapelet.ShapeletFunction(3, lsst.shapelet.HERMITE, e1)
