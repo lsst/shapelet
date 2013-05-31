@@ -4,6 +4,7 @@ config.log
 *.o
 *.os
 *.so
+*.dylib
 *.cfgc
 *.pyc
 *_wrap.cc
