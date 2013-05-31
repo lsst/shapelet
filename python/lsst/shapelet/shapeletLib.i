@@ -49,7 +49,7 @@ Python interface to lsst::shapelet classes and functions
 #include "numpy/arrayobject.h"
 #include "ndarray/swig.h"
 #include "ndarray/swig/eigen.h"
-#include "lsst/afw/geom/ellipses/PyPixelRegion.h"
+#include "lsst/afw/geom/ellipses.h"
 %}
 
 %init %{

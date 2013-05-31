@@ -90,8 +90,8 @@ ModelBuilder<T>::ModelBuilder(
 }
 
 template <typename T>
-void ModelBuilder<T>::update(afw::geom::ellipses::BaseCore const & ellipse) {
-    afw::geom::ellipses::BaseCore::GridTransform gt(ellipse);
+void ModelBuilder<T>::update(afw::geom::ellipses::EllipseCore const & ellipse) {
+    afw::geom::ellipses::EllipseCore::GridTransform gt(ellipse);
     typedef afw::geom::LinearTransform LT;
     LT transform = gt;
     _xt = _x * transform[LT::XX] + _y * transform[LT::XY];

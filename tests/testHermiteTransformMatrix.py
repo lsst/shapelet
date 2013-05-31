@@ -73,7 +73,7 @@ class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
             return
 
         s = lsst.afw.geom.LinearTransform.makeScaling(2.0, 1.5)
-        r = lsst.afw.geom.LinearTransform.makeRotation(0.30)
+        r = lsst.afw.geom.LinearTransform.makeRotation(0.30 * lsst.afw.geom.radians)
         transforms = [s, r, s*r*s]
         testPoints = numpy.random.randn(10, 2)
         for transform in transforms:

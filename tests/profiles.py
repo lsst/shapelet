@@ -56,7 +56,8 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
         psf = lsst.shapelet.MultiShapeletFunction()
         psf.getElements().push_back(psf0)
         psf.normalize()
-        ellipse = el.Separable[el.Distortion, el.DeterminantRadius](E1, E2, GALAXY_RADIUS)
+        ellipticity = el.Distortion(E1, E2)
+        ellipse = el.DistortionEllipseCore(ellipticity, GALAXY_RADIUS * ellipticity.getRadiusRatio())
         for profile, nComponents, maxRadius in PROFILES:
             # check1 is the multi-Gaussian approximation, as convolved and evaluated by GalSim,
             check1 = lsst.afw.image.ImageD(os.path.join("tests", "data", profile + "-approx.fits")).getArray()

@@ -42,7 +42,7 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def setUp(self):
         order = 4
-        self.ellipse = ellipses.Ellipse(ellipses.Axes(2.2, 0.8, 0.3), geom.Point2D(0.12, -0.08))
+        self.ellipse = ellipses.Ellipse(ellipses.Axes(2.2, 0.8, 0.3*geom.radians), geom.Point2D(0.12, -0.08))
         self.coefficients = numpy.random.randn(lsst.shapelet.computeSize(order))
         self.x = numpy.random.randn(25)
         self.y = numpy.random.randn(25)
@@ -116,8 +116,8 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
             self.assertClose(array, check)
 
     def testConvolution(self):
-        e1 = ellipses.Ellipse(ellipses.Axes(10, 8, 0.3), geom.Point2D(1.5, 2.0))
-        e2 = ellipses.Ellipse(ellipses.Axes(12, 9, -0.5), geom.Point2D(-1.0, -0.25))
+        e1 = ellipses.Ellipse(ellipses.Axes(10, 8, 0.3*geom.radians), geom.Point2D(1.5, 2.0))
+        e2 = ellipses.Ellipse(ellipses.Axes(12, 9, -0.5*geom.radians), geom.Point2D(-1.0, -0.25))
         f1 = lsst.shapelet.ShapeletFunction(3, lsst.shapelet.HERMITE, e1)
         f2 = lsst.shapelet.ShapeletFunction(2, lsst.shapelet.LAGUERRE, e2)
         f1.getCoefficients()[:] = numpy.random.randn(*f1.getCoefficients().shape)

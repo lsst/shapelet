@@ -61,7 +61,7 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
             lsst.afw.geom.ellipses.Axes(
                 float(numpy.random.uniform(low=1, high=2)),
                 float(numpy.random.uniform(low=1, high=2)),
-                float(numpy.random.uniform(low=0, high=numpy.pi))
+                float(numpy.random.uniform(low=0, high=numpy.pi)) * lsst.afw.geom.radians
                 ),
             center
             )

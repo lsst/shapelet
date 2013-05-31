@@ -65,7 +65,7 @@ public:
     /**
      *  @brief Update the basis ellipse and recompute the model matrix.
      */
-    void update(afw::geom::ellipses::BaseCore const & ellipse);
+    void update(afw::geom::ellipses::EllipseCore const & ellipse);
 
     /**
      *  @brief Update the basis ellipse (including center) and recompute the model matrix.

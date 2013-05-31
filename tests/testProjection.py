@@ -44,8 +44,8 @@ class ProjectionTestCase(lsst.shapelet.tests.ShapeletTestCase):
         nPoints = 100
         unitCircle = lsst.afw.geom.ellipses.Quadrupole(1.0, 1.0, 0.0)
         # This matrix should represent a pure rotation in shapelet space, which can be done exactly.
-        inputTransform = lsst.afw.geom.LinearTransform.makeRotation(0.0)
-        outputTransform = lsst.afw.geom.LinearTransform.makeRotation(numpy.pi/3)
+        inputTransform = lsst.afw.geom.LinearTransform.makeRotation(0.0 * lsst.afw.geom.radians)
+        outputTransform = lsst.afw.geom.LinearTransform.makeRotation(numpy.pi/3 * lsst.afw.geom.radians)
         m = self.ghp.compute(inputTransform, order, outputTransform, order)
         # If we apply a rotation by numpy.pi/3 six times, we should get back where we started with.
         self.assertClose(numpy.linalg.matrix_power(m, 6), numpy.identity(size), rtol=1E-14, atol=1E-14)

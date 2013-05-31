@@ -48,7 +48,7 @@ class ModelBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def setUp(self):
         self.order = 3
-        self.ellipse = lsst.afw.geom.ellipses.Axes(10, 7, 0.3)
+        self.ellipse = lsst.afw.geom.ellipses.Axes(10, 7, 0.3*lsst.afw.geom.radians)
         self.xg, self.yg = numpy.meshgrid(numpy.linspace(-20, 20, 101), numpy.linspace(-15, 25, 95))
         self.x = self.xg.ravel()
         self.y = self.yg.ravel()
@@ -94,7 +94,7 @@ class ModelBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         for i in range(4):
             a, b = 6 * numpy.random.randn(2)**2
             theta = 3 * numpy.random.randn()
-            axes = lsst.afw.geom.ellipses.Axes(a, b, theta)
+            axes = lsst.afw.geom.ellipses.Axes(a, b, theta*lsst.afw.geom.radians)
             sf = lsst.shapelet.ShapeletFunction(
                 2, lsst.shapelet.HERMITE,
                 lsst.afw.geom.ellipses.Ellipse(axes, lsst.afw.geom.Point2D(0,0)),

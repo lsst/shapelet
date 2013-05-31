@@ -178,12 +178,12 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
             lsst.afw.geom.ellipses.Axes(
                 float(numpy.random.uniform(low=1, high=2)),
                 float(numpy.random.uniform(low=1, high=2)),
-                float(numpy.random.uniform(low=0, high=numpy.pi))
+                float(numpy.random.uniform(low=0, high=numpy.pi)) * lsst.afw.geom.radians
                 ),
             lsst.afw.geom.Point2D(0.23, -0.15)
             )
         ellipse2 = lsst.afw.geom.ellipses.Ellipse(
-            lsst.afw.geom.ellipses.Axes(0.0, 0.0, 0.0),
+            lsst.afw.geom.ellipses.Axes(0.0),
             lsst.afw.geom.Point2D(-0.2, 0.12)
             )
         coefficients = numpy.random.randn(2)
