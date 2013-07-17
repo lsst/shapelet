@@ -51,8 +51,8 @@ public:
 
     ElementList const & getElements() const { return _elements; }
 
-    /// @brief Normalize the integral of the shapelet function to 1.
-    void normalize();
+    /// @brief Normalize the integral of the shapelet function to the given value.
+    void normalize(double value=1.0);
 
     /// @brief Shift the shapelet function by shifting the ellipse of each element.
     void shiftInPlace(afw::geom::Extent2D const & offset);
