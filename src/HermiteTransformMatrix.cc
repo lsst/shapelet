@@ -107,18 +107,18 @@ Eigen::MatrixXd HermiteTransformMatrix::compute(Eigen::Matrix2d const & transfor
         for (int kn=jn, koff=joff; kn <= order; (koff += (++kn)) += (++kn)) {
             for (int jx=0,jy=jn; jx <= jn; ++jx,--jy) {
                 for (int kx=0,ky=kn; kx <= kn; ++kx,--ky) {
-                    double & element = result(joff+jx, koff+kx);
+                    double & element = result(koff+kx, joff+jx);
                     for (int m = 0; m <= order; ++m) {
                         int const order_minus_m = order - m;
                         binomial_m.reset(m, transform(0,0), transform(0,1));
                         for (int p = 0; p <= m; ++p) {
+                            double const tmp1 = binomial_m[p] * _coeffFwd(kx, m);
                             for (int n = 0; n <= order_minus_m; ++n) {
                                 binomial_n.reset(n, transform(1,0), transform(1,1));
+                                double const tmp2 = _coeffFwd(ky, n) * tmp1;
                                 for (int q = 0; q <= n; ++q) {
-                                    element +=
-                                        _coeffFwd(kx, m) * _coeffFwd(ky, n) *
-                                        _coeffInv(m+n-p-q, jx) * _coeffInv(p+q, jy) *
-                                        binomial_m[p] * binomial_n[q];
+                                    element += tmp2 * _coeffInv(m+n-p-q, jx) * _coeffInv(p+q, jy)
+                                        * binomial_n[q];
                                 } // q
                             } // n
                         } // p

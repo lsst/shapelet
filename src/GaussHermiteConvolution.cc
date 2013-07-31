@@ -232,9 +232,9 @@ ndarray::Array<double const,2,2> GaussHermiteConvolution::Impl::evaluate(
     for (int m = 0, mo = 0; m <= psfOrder; mo += ++m) {
         for (int n = m, no = mo; n <= psfOrder; (no += ++n) += ++n) {
             if ((n + m) % 4) { // (n + m) % 4 is always 0 or 2
-                kq.segment(mo, m+1) -= psfMat.block(mo, no, m+1, n+1) * psf_coeff.segment(no, n+1);
+                kq.segment(mo, m+1) -= psfMat.block(no, mo, n+1, m+1).adjoint() * psf_coeff.segment(no, n+1);
             } else {
-                kq.segment(mo, m+1) += psfMat.block(mo, no, m+1, n+1) * psf_coeff.segment(no, n+1);
+                kq.segment(mo, m+1) += psfMat.block(no, mo, n+1, m+1).adjoint() * psf_coeff.segment(no, n+1);
             }
         }
     }
@@ -272,10 +272,10 @@ ndarray::Array<double const,2,2> GaussHermiteConvolution::Impl::evaluate(
             for (int j = jo; j <= n; (jo += ++j) += ++j) {
                 if ((n - j) % 4) { // (n - j) % 4 is always 0 or 2
                     result.block(mo, no, m+1, n+1)
-                        -= kqb.block(mo, jo, m+1, j+1) * modelMat.block(jo, no, j+1, n+1);
+                        -= kqb.block(mo, jo, m+1, j+1) * modelMat.block(no, jo, n+1, j+1).adjoint();
                 } else {
                     result.block(mo, no, m+1, n+1)
-                        += kqb.block(mo, jo, m+1, j+1) * modelMat.block(jo, no, j+1, n+1);
+                        += kqb.block(mo, jo, m+1, j+1) * modelMat.block(no, jo, n+1, j+1).adjoint();
                 }
             }
         }
