@@ -103,3 +103,22 @@ Python interface to lsst::shapelet classes and functions
 %template(ModelBuilderD) lsst::shapelet::ModelBuilder<double>;
 %template(MultiShapeletMatrixBuilderF) lsst::shapelet::MultiShapeletMatrixBuilder<float>;
 %template(MultiShapeletMatrixBuilderD) lsst::shapelet::MultiShapeletMatrixBuilder<double>;
+
+%extend lsst::shapelet::ShapeletFunction {
+
+%pythoncode %{
+def __reduce__(self):
+    return (ShapeletFunction, (self.getOrder(), self.getBasisType(),
+                               self.getEllipse(), self.getCoefficients()))
+%}
+
+}
+
+%extend lsst::shapelet::MultiShapeletFunction {
+
+%pythoncode %{
+def __reduce__(self):
+    return (MultiShapeletFunction, (list(self.getElements()),))
+%}
+
+}
