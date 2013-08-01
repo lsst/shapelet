@@ -47,7 +47,7 @@ public:
     HermiteRecurrenceRelation & operator++() {
         double copy = _current;
         ++_order;
-        _current = std::sqrt(2.0/_order)*_x*_current - std::sqrt((_order - 1.0)/_order)*_previous;
+        _current = rationalSqrt(2, _order)*_x*_current - rationalSqrt(_order - 1, _order)*_previous;
         _previous = copy;
         return *this;
     }
@@ -80,7 +80,7 @@ void fillEvaluation1d(
         assert(dx.getSize<0>() == result.getSize<0>());
         dx[0] = -x * result[0];
         for (int n = 1; n < result.getSize<0>(); ++n) {
-            dx[n] = -x * result[n] + std::sqrt(2.0 * n) * result[n - 1];
+            dx[n] = -x * result[n] + intSqrt(2*n) * result[n - 1];
         }
     }
 }
@@ -90,17 +90,17 @@ void fillIntegration1d(ndarray::Array<double,1,1> const & result, int moment) {
     result.deep() = 0.0;
     result[0] = std::pow(4.0 * afw::geom::PI, 0.25);
     for (int n = 2; n <= order; n += 2) {
-        result[n] = std::sqrt((n - 1.0) / n) * result[n-2];
+        result[n] = rationalSqrt(n - 1, n) * result[n-2];
     }
     if (moment > 0) {
         // since result is only nonzero for (m+n) even, we store both n,m and n-1,m-1 in the same vector
         for (int n = 1; n <= order; n += 2) {
-            result[n] = result[n-1] * std::sqrt(2.0*n);
+            result[n] = result[n-1] * intSqrt(2*n);
         }
         for (int m = 2; m <= moment; ++m) {
             if (m % 2 == 0) result[0] *= (m-1);
             for (int n = 2 - (m % 2); n <= order; n += 2) {
-                result[n] = (m-1) * result[n] + std::sqrt(2.0*n) * result[n-1];
+                result[n] = (m-1) * result[n] + intSqrt(2*n) * result[n-1];
             }
         }
         // zero the elements corresponding to n-1,m-1
@@ -113,31 +113,31 @@ Eigen::MatrixXd computeInnerProductMatrix1d(int rowOrder, int colOrder, double a
     double v = 1.0 / (a*a + b*b);
     double f1 = 2.0 * a * b * v;
     double f2 = (a*a - b*b) * v;
-    result(0, 0) = std::sqrt(2.0 * v);
+    result(0, 0) = intSqrt(2 * v);
     for (int j = 2; j <= rowOrder; j += 2) {
-        result(j, 0) = f2 * std::sqrt(double(j-1) / j) * result(j-2, 0);
+        result(j, 0) = f2 * rationalSqrt(j-1, j) * result(j-2, 0);
     }
     for (int k = 2; k <= colOrder; k += 2) {
-        result(0, k) = -f2 * std::sqrt(double(k-1) / k) * result(0, k-2);
+        result(0, k) = -f2 * rationalSqrt(k-1, k) * result(0, k-2);
     }
     if (rowOrder > 0 && colOrder > 0) result(1, 1) = f1 * result(0,0);
     if (colOrder > 0) {
         for (int j = 3; j <= rowOrder; j += 2) {
-            result(j, 1) = f1 * std::sqrt(j) * result(j-1, 0);
+            result(j, 1) = f1 * intSqrt(j) * result(j-1, 0);
         }
     }
     if (rowOrder > 0) {
         for (int k = 3; k <= colOrder; k += 2) {
-            result(1, k) = f1 * std::sqrt(k) * result(0, k-1);
+            result(1, k) = f1 * intSqrt(k) * result(0, k-1);
         }
     }
     for (int j = 2; j <= rowOrder; ++j) {
-        double q2 = std::sqrt(double(j-1)/j);
+        double q2 = rationalSqrt(j-1, j);
         if (j <= colOrder) {
             result(j, j) = f1 * result(j-1, j-1) + f2 * q2 * result(j-2, j);
         }
         for (int k = (j%2) + 2; k <= colOrder; k += 2) {
-            double q1 = std::sqrt(double(k) / j);
+            double q1 = rationalSqrt(k, j);
             result(j, k) = f1 * q1 * result(j-1, k-1) + f2 * q2 * result(j-2, k);
         }
     }

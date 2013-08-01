@@ -67,11 +67,11 @@ void fillHermite1d(
         workspace.col(0).setConstant(BASIS_NORMALIZATION);
     }
     if (workspace.cols() > 1) {
-        workspace.col(1) = std::sqrt(2.0) * coord * workspace.col(0);
+        workspace.col(1) = intSqrt(2) * coord * workspace.col(0);
     }
     for (int j = 2; j <= order; ++j) {
-        workspace.col(j) = std::sqrt(2.0 / j) * coord * workspace.col(j-1)
-            - std::sqrt((j - 1.0) / j) * workspace.col(j-2);
+        workspace.col(j) = rationalSqrt(2, j) * coord * workspace.col(j-1)
+            - rationalSqrt(j - 1, j) * workspace.col(j-2);
     }
 }
 
