@@ -59,7 +59,7 @@ public:
     ModelBuilder(
         ndarray::Array<T const,1,1> const & x,
         ndarray::Array<T const,1,1> const & y,
-        bool useAppoximateExp = false
+        bool useApproximateExp = false
     );
 
     /**
