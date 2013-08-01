@@ -28,6 +28,8 @@
 
 namespace lsst { namespace shapelet {
 
+//================= TripleProductIntegral ===================================================================
+
 namespace {
 
 class TripleProductIntegral {
@@ -177,43 +179,67 @@ TripleProductIntegral::make1d(int order1, int order2, int order3) {
 
 } // anonymous
 
+//================= Impl Base Class =========================================================================
+
 class GaussHermiteConvolution::Impl {
 public:
 
     Impl(int colOrder, ShapeletFunction const & psf);
 
-    ndarray::Array<double const,2,2> evaluate(afw::geom::ellipses::Ellipse & ellipse) const;
+    virtual ndarray::Array<double const,2,2> evaluate(afw::geom::ellipses::Ellipse & ellipse) const = 0;
 
     int getColOrder() const { return _colOrder; }
 
     int getRowOrder() const { return _rowOrder; }
 
-private:
+    virtual ~Impl() {}
+
+protected:
     int _rowOrder;
     int _colOrder;
     ShapeletFunction _psf;
     ndarray::Array<double,2,2> _result;
-    TripleProductIntegral _tpi;
-    HermiteTransformMatrix _htm;
 };
 
 GaussHermiteConvolution::Impl::Impl(
     int colOrder, ShapeletFunction const & psf
 ) :
     _rowOrder(colOrder + psf.getOrder()), _colOrder(colOrder), _psf(psf),
-    _result(ndarray::allocate(computeSize(_rowOrder), computeSize(_colOrder))),
-    _tpi(psf.getOrder(), _rowOrder, _colOrder),
-    _htm(_rowOrder)
+    _result(ndarray::allocate(computeSize(_rowOrder), computeSize(_colOrder)))
 {
     _psf.changeBasisType(HERMITE);
 }
 
-ndarray::Array<double const,2,2> GaussHermiteConvolution::Impl::evaluate(
+//================= ImplN: Arbitrary Order ==================================================================
+
+namespace {
+
+class ImplN : public GaussHermiteConvolution::Impl {
+public:
+
+    ImplN(int colOrder, ShapeletFunction const & psf);
+
+    virtual ndarray::Array<double const,2,2> evaluate(afw::geom::ellipses::Ellipse & ellipse) const;
+
+private:
+    TripleProductIntegral _tpi;
+    HermiteTransformMatrix _htm;
+};
+
+ImplN::ImplN(
+    int colOrder, ShapeletFunction const & psf
+) :
+    GaussHermiteConvolution::Impl(colOrder, psf),
+    _tpi(psf.getOrder(), _rowOrder, _colOrder),
+    _htm(_rowOrder)
+{}
+
+ndarray::Array<double const,2,2> ImplN::evaluate(
     afw::geom::ellipses::Ellipse & ellipse
 ) const {
     ndarray::EigenView<double,2,2> result(_result);
     ndarray::EigenView<double const,1,1> psf_coeff(_psf.getCoefficients());
-    
+
     Eigen::Matrix2d psfT = _psf.getEllipse().getCore().getGridTransform().invert().getMatrix();
     Eigen::Matrix2d modelT = ellipse.getCore().getGridTransform().invert().getMatrix();
     ellipse.convolve(_psf.getEllipse()).inPlace();
@@ -284,6 +310,10 @@ ndarray::Array<double const,2,2> GaussHermiteConvolution::Impl::evaluate(
     return _result;
 }
 
+} // anonymous
+
+//================= public GaussHermiteConvolution ==========================================================
+
 int GaussHermiteConvolution::getRowOrder() const { return _impl->getRowOrder(); }
 
 int GaussHermiteConvolution::getColOrder() const { return _impl->getColOrder(); }
@@ -298,7 +328,7 @@ GaussHermiteConvolution::evaluate(
 GaussHermiteConvolution::GaussHermiteConvolution(
     int colOrder,
     ShapeletFunction const & psf
-) : _impl(new Impl(colOrder, psf)) {}
+) : _impl(new ImplN(colOrder, psf)) {}
 
 GaussHermiteConvolution::~GaussHermiteConvolution() {}
 
