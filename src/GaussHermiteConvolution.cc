@@ -312,6 +312,190 @@ ndarray::Array<double const,2,2> ImplN::evaluate(
 
 } // anonymous
 
+//================= Impl0: Zeroth Order =====================================================================
+
+namespace {
+
+class Impl0 : public GaussHermiteConvolution::Impl {
+public:
+
+    typedef double Scalar;
+
+    explicit Impl0(ShapeletFunction const & psf);
+
+    virtual ndarray::Array<double const,2,2> evaluate(afw::geom::ellipses::Ellipse & ellipse) const;
+
+private:
+    ndarray::Array<Scalar,1,0> _r;
+    ndarray::Array<Scalar,4,4> _p;
+};
+
+Impl0::Impl0(
+    ShapeletFunction const & psf
+) :
+    GaussHermiteConvolution::Impl(0, psf),
+    _r(_result[ndarray::view()(0)]), // _result has one column, so it's more convenient if we have a 1-d view
+    _p(ndarray::allocate(ndarray::makeVector(_rowOrder+1, _rowOrder+1, _rowOrder+1, _rowOrder+1)))
+{
+    _p.deep() = 0.0;
+}
+
+ndarray::Array<double const,2,2> Impl0::evaluate(
+    afw::geom::ellipses::Ellipse & ellipse
+) const {
+    ndarray::Array<double const,1,1> psfCoeff(_psf.getCoefficients());
+
+    Eigen::Matrix2d psfT = _psf.getEllipse().getCore().getGridTransform().invert().getMatrix();
+    ellipse.convolve(_psf.getEllipse()).inPlace();
+    Eigen::Matrix2d convolvedTI = ellipse.getCore().getGridTransform().getMatrix();
+    Eigen::Matrix2d psfArg = (convolvedTI * psfT).transpose();
+
+    int const psfOrder = _psf.getOrder();
+
+    // Just for readability: extract matrix elements and strides
+    double const sxx = psfArg(0,0);
+    double const sxy = psfArg(0,1);
+    double const syx = psfArg(1,0);
+    double const syy = psfArg(1,1);
+
+    int const idx_00_01 = _p.getStride<3>();
+    int const idx_00_10 = _p.getStride<2>();
+    int const idx_01_00 = _p.getStride<1>();
+    int const idx_10_00 = _p.getStride<0>();
+
+    // at each step in many of the loops, we increment n_x and decrement n_y (or likewise with m)
+    int const incr_n = idx_10_00 - idx_01_00;
+    int const incr_m = idx_00_10 - idx_00_01;
+
+    //---- Some terminology to help with the ugly math and abbreviated comments below
+
+    // The offsetX variables below are the offsets of the elements on the rhs of
+    // the recurrence relations, relative to the element we're setting on the
+    // lhs.  Hence a recurrence setting line will often look like this:
+    //
+    //    *pc = t1 * pc[offset1] + t2 * pc[offset2];
+    //
+    // Here, "pc" is a pointer to the current item, so we set it simply by
+    // dereferencing it, and we refer to the previous elements using the offsetX
+    // variables.  Number suffixes indicate the term in the recurrence, while
+    // letter suffices indicate different related recurrence relations.
+
+    double * p = _p.getData();
+    *p = 1.0;
+
+    // do n == 0, m >= 2, m even
+    if (psfOrder > 1) {
+        double const t1a = sxx*sxx + sxy*sxy - 1;
+        double const t1b = syy*syy + syx*syx - 1;
+        double const t2 = sxx*syx + sxy*syy;
+        int const offset1a = -2*idx_00_10;
+        int const offset1b = -2*idx_00_01;
+        int const offset2 = -idx_00_10 - idx_00_01;
+        for (int m = 2; m <= psfOrder; m += 2) {
+            int m_x = 0, m_y = m;
+            double * pc = p + idx_00_01*m_y;
+            // for m_x == 0, use 'b' recurrence, dropping terms that vanish for m_x == 0:
+            // p[n_x,n_y,m_x,m_y] = \sqrt{\frac{m_y-1}{m_y}} (S_{yy}^2 + S_{yx}^2 - 1) p[n_x,n_y,m_x,m_y-2]
+            for (; m_x == 0; ++m_x, --m_y, pc += incr_m) {
+                *pc = t1b*rationalSqrt(m_y-1,m_y)*pc[offset1b];
+            }
+            // for m_x == 1, use 'a' recurrence, dropping first term
+            for (; m_x == 1; ++m_x, --m_y, pc += incr_m) {
+                *pc = t2*rationalSqrt(m_y, m_x)*pc[offset2];
+            }
+            // for m_x > 0, m_y > 0, use full 'a' recurrence:
+            // p[n_x,n_y,m_x,m_y] = \sqrt{\frac{m_x-1}{m_x}} (S_{xx}^2 + S_{xy}^2 - 1) p[n_x,n_y,m_x-2,m_y]
+            //                    + \sqrt{m_y/m_x} (S_{xx}S_{yx} + S_{xy}S_{yy}) p[n_x,n_y,m_x-1,m_y-1]
+            for (; m_y > 0; ++m_x, --m_y, pc += incr_m) {
+                *pc = t1a*rationalSqrt(m_x-1,m_x)*pc[offset1a]
+                    + t2*rationalSqrt(m_y, m_x)*pc[offset2];
+            }
+            // for m_y == 0, use 'a' recurrence, drop 2nd term
+            for (; m_y == 0; ++m_x, --m_y, pc += incr_m) {
+                *pc = t1a*rationalSqrt(m_x-1,m_x)*pc[offset1a];
+            }
+        }
+    }
+
+    // do n > 0, m >= n, m + n even
+    if (psfOrder > 0) {
+        int const offset1a = -idx_10_00 - idx_00_10;
+        int const offset2a = -idx_10_00 - idx_00_01;
+        int const offset1b = -idx_01_00 - idx_00_01;
+        int const offset2b = -idx_01_00 - idx_00_10;
+        for (int n = 1; n <= psfOrder; ++n) {
+            int n_x = 0, n_y = n;
+            double * pnc = p + idx_01_00*n_y;
+            // for n_x == 0, use 'b' recurrence
+            // p[n_x,n_y,m_x,m_y] = \sqrt{m_x/n_x} S_{xx} p[n_x-1,n_y,m_x-1,m_y]
+            //                    + \sqrt{m_y,n_x} S_{yx} p[n_x-1,n_y,m_x,m_y-1]
+            for (; n_x == 0; ++n_x, --n_y, pnc += incr_n) {
+                for (int m = n; m <= psfOrder; m += 2) {
+                    int m_x = 0, m_y = m;
+                    double * pc = pnc + idx_00_01*m_y;
+                    // for m_x == 0, drop 2nd term
+                    for (; m_x == 0; ++m_x, --m_y, pc += incr_m) {
+                        *pc = rationalSqrt(m_y, n_y)*syy*pc[offset1b];
+                    }
+                    // for m_x > 0, m_y > 0, use both terms
+                    for (; m_x < m; ++m_x, --m_y, pc += incr_m) {
+                        *pc = rationalSqrt(m_y, n_y)*syy*pc[offset1b]
+                            + rationalSqrt(m_x, n_y)*sxy*pc[offset2b];
+                    }
+                    // for m_y == 0, drop 1st term
+                    for (; m_y == 0; ++m_x, --m_y, pc += incr_m) {
+                        *pc = rationalSqrt(m_x, n_y)*sxy*pc[offset2b];
+                    }
+                }
+            }
+            // for n_x > 0, use 'a' recurrence:
+            // p[n_x,n_y,m_x,m_y] = \sqrt{m_y/n_y} S_{yy} p[n_x,n_y-1,m_x,m_y-1]
+            //                    + \sqrt{m_x,n_y} S_{xy} p[n_x,n_y-1,m_x-1,m_y]
+            for (; n_x <= n; ++n_x, --n_y, pnc += incr_n) {
+                for (int m = n; m <= psfOrder; m += 2) {
+                    int m_x = 0, m_y = m;
+                    double * pc = pnc + idx_00_01*m_y;
+                    // for m_x == 0, drop 1st term
+                    for (; m_x == 0; ++m_x, --m_y, pc += incr_m) {
+                        *pc = rationalSqrt(m_y, n_x)*syx*pc[offset2a];
+                    }
+                    // for m_x > 0, m_y > 0, use both terms
+                    for (; m_x < m; ++m_x, --m_y, pc += incr_m) {
+                        *pc = rationalSqrt(m_x, n_x)*sxx*pc[offset1a]
+                            + rationalSqrt(m_y, n_x)*syx*pc[offset2a];
+                    }
+                    // for m_y == 0, drop 2nd term
+                    for (; m_y == 0; ++m_x, --m_y, pc += incr_m) {
+                        *pc = rationalSqrt(m_x, n_x)*sxx*pc[offset1a];
+                    }
+                }
+            }
+        }
+    }
+
+    // Form inner product between p and psfCoeffs, including 2\sqrt{\pi} i^{m-n} factor
+    double const f1 = 2.0 * std::sqrt(M_PI);
+    for (int n = 0, n_o = 0; n <= psfOrder; n_o += ++n) {
+        double const * pnc = p + idx_01_00*n;
+        ndarray::Array<double,1,0>::Iterator rIter = _r.begin() + n_o;
+        for (int n_x = 0; n_x <= n; ++n_x, ++rIter, pnc += incr_n) {
+            *rIter = 0;
+            for (int m = n, m_o = computeSize(n-1); m <= psfOrder; (m_o += ++m) += ++m) {
+                double f2 = ((m-n) % 4) ? -f1 : f1;
+                double const * pc = pnc + idx_00_01*m;
+                ndarray::Array<double const,1,1>::Iterator psfIter = psfCoeff.begin() + m_o;
+                for (int m_x = 0; m_x <= m; ++m_x, ++psfIter, pc += incr_m) {
+                    *rIter += f2 * (*pc) * (*psfIter);
+                }
+            }
+        }
+    }
+
+    return _result;
+}
+
+} // anonymous
+
 //================= public GaussHermiteConvolution ==========================================================
 
 int GaussHermiteConvolution::getRowOrder() const { return _impl->getRowOrder(); }
@@ -328,7 +512,13 @@ GaussHermiteConvolution::evaluate(
 GaussHermiteConvolution::GaussHermiteConvolution(
     int colOrder,
     ShapeletFunction const & psf
-) : _impl(new ImplN(colOrder, psf)) {}
+) : _impl() {
+    if (colOrder == 0) {
+        _impl.reset(new Impl0(psf));
+    } else {
+        _impl.reset(new ImplN(colOrder, psf));
+    }
+}
 
 GaussHermiteConvolution::~GaussHermiteConvolution() {}
 

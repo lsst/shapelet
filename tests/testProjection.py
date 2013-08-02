@@ -85,6 +85,18 @@ class ProjectionTestCase(lsst.shapelet.tests.ShapeletTestCase):
             # computing how good it should be; it's mostly just a regression/sanity test
             self.assertClose(inputZ, outputZ, rtol=5E-3)
 
+    def testConvolution0(self):
+        """Test that the specialization for zeroth-order convolution produces the same tensor
+        as the general case, which is tested more rigorously elsewhere."""
+        psf = self.makeRandomShapeletFunction(order=4)
+        ellipse1 = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Quadrupole(2.0, 3.0, 1.0))
+        ellipse2 = lsst.afw.geom.ellipses.Ellipse(ellipse1)
+        ghcN = lsst.shapelet.GaussHermiteConvolution(1, psf)
+        ghc0 = lsst.shapelet.GaussHermiteConvolution(0, psf)
+        rN = ghcN.evaluate(ellipse1)
+        r0 = ghc0.evaluate(ellipse2)
+        self.assertClose(rN[:15,0], r0[:15,0], rtol=1E-14)
+
 def suite():
     """Returns a suite containing all the test cases in this module."""
 
