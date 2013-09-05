@@ -101,6 +101,8 @@ import lsst.shapelet.tractor
 
 def main():
     parser = argparse.ArgumentParser(description="Benchmark shapelet-based galaxy model evaluation")
+    parser.add_argument("-p", "--psf", help="Pickled PSF to use",
+                        default="psf.p", type=str, metavar="FILE")
     parser.add_argument("-r", "--repeat", help="Number of times to repeat the test (loop in Python)",
                         default=100, type=int)
     parser.add_argument("-n", "--n-samples", help="Number of parameter points to evaluate (loop in C++)",
@@ -120,7 +122,7 @@ def main():
     disk = lsst.shapelet.tractor.loadBasis("lux", args.n_disk_terms)
     bulge.scale(0.6)
     disk.merge(bulge)
-    with open(os.path.join(os.path.split(__file__)[0], "psf.p"), "r") as psfFile:
+    with open(os.path.join(os.path.split(__file__)[0], args.psf), "r") as psfFile:
         psf = cPickle.load(psfFile)
     xMin = -args.n_x_pixels // 2
     yMin = -args.n_y_pixels // 2
