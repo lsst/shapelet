@@ -36,6 +36,46 @@ except ImportError:
 
 import lsst.shapelet
 
+class sdss(object):
+    """Namespace-only class for the softened/truncated exponential and de Vaucouleur
+    profiles used in SDSS Photo model fits)."""
+
+    DEFAC = -7.66925
+    DEVOUT = 8.0
+    DEVCUT = 7.0
+
+    EXPFAC = -1.67835
+    EXPOUT = 4.0
+    EXPCUT = 3.0
+
+    @classmethod
+    def dev(cls, r):
+        """Truncated de Vaucouleur - copied/translated from SDSS Photo package
+
+        Expected input is a NumPy array of radius values.
+        """
+        p = numpy.exp(cls.DEFAC * ((r**2 + 0.0004)**0.125 - 1.0))
+        big = r > cls.DEVCUT
+        scr = (r[big] - cls.DEVCUT) / (cls.DEVOUT - cls.DEVCUT)
+        scr = 1.0 - scr**2
+        p[big] *= scr*scr
+        p[r > cls.DEVOUT] = 0.0
+        return p
+
+    @classmethod
+    def exp(cls, r):
+        """Truncated exponential - copied/translated from SDSS from SDSS Photo package
+
+        Expected input is a NumPy array of radius values.
+        """
+        p = numpy.exp(cls.EXPFAC * (r - 1.0))
+        big = r > cls.EXPCUT
+        scr = (r[big] - cls.EXPCUT) / (cls.EXPOUT - cls.EXPCUT);
+        scr = 1.0 - scr**2
+        p[big] *= scr * scr
+        p[r > cls.EXPOUT] = 0.0
+        return p
+
 def loadParameters(profile, nComponents, maxRadius=None):
     """Load the parameters of a multi-Gaussian profile
 
@@ -126,7 +166,7 @@ def plotSuite(doComponents=False):
             axes[i,j] = fig.add_subplot(2, 4, i*4+j+1)
     basis = {name: loadBasis(name, nComponents=8) for name in ("exp", "lux", "dev", "luv")}
     z = numpy.zeros((2,4), dtype=object)
-    colors = ("k", "b", "r")
+    colors = ("k", "g", "b", "r")
     fig.subplots_adjust(wspace=0.025, hspace=0.025, bottom=0.15, left=0.1, right=0.98, top=0.92)
     centers = [None, None]
     for i in range(2):
@@ -141,17 +181,19 @@ def plotSuite(doComponents=False):
     for j in range(0,2):
         z[0,j] = [evaluateRadial(basis[k], r[j], sbNormalize=True, doComponents=doComponents)
                   for k in ("exp", "lux")]
-        z[0,j].insert(0, numpy.exp(-1.67834699*(r[j] - 1.0))[numpy.newaxis,:])
+        z[0,j][0:0] = [numpy.exp(-1.67834699*(r[j] - 1.0))[numpy.newaxis,:],
+                       sdss.exp(r[j])[numpy.newaxis,:]]
         z[0,j+2] = [evaluateRadial(basis[k], r[j], sbNormalize=True, doComponents=doComponents)
                     for k in ("dev", "luv")]
-        z[0,j+2].insert(0, numpy.exp(-7.66924944*(r[j]**0.25 - 1.0))[numpy.newaxis,:])
+        z[0,j+2][0:0] = [numpy.exp(-7.66924944*(r[j]**0.25 - 1.0))[numpy.newaxis,:],
+                         sdss.dev(r[j])[numpy.newaxis,:]]
     methodNames = [["loglog", "semilogy"], ["semilogx", "plot"]]
     for j in range(0,4):
-        z[1,j] = [(z[0,j][0][0,:] - z[0,j][i][0,:])/z[0,j][0][0,:] for i in range(3)]
+        z[1,j] = [(z[0,j][0][0,:] - z[0,j][i][0,:])/z[0,j][0][0,:] for i in range(0,4)]
         handles = []
         method0 = getattr(axes[0,j], methodNames[0][j%2])
         method1 = getattr(axes[1,j], methodNames[1][j%2])
-        for k in range(3):
+        for k in range(4):
             z0 = z[0,j][k]
             handles.append(method0(r[j%2], z0[0,:], color=colors[k])[0])
             if doComponents:
@@ -176,8 +218,8 @@ def plotSuite(doComponents=False):
         axes[1,j].set_xticklabels(xticks[j%2])
         for t in axes[1,j].get_xticklabels():
             t.set_fontsize(11)
-    fig.legend(handles, ["true profile", "approx exp/dev", "approx lux/luv"],
-               loc='lower center', ncol=3)
+    fig.legend(handles, ["exp/dev", "lux/luv", "approx exp/dev", "approx lux/luv"],
+               loc='lower center', ncol=4)
     fig.text(centers[0], 0.95, "exponential", ha='center', weight='bold')
     fig.text(centers[1], 0.95, "de Vaucouleur", ha='center', weight='bold')
     return fig, axes
