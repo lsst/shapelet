@@ -88,6 +88,8 @@ Python interface to lsst::shapelet classes and functions
 %copyctor lsst::shapelet::MultiShapeletBasis;
 %ignore lsst::shapelet::ShapeletFunction::operator=;
 
+%shared_ptr(lsst::shapelet::MultiShapeletBasis);
+
 %include "lsst/shapelet/constants.h"
 %include "lsst/shapelet/ConversionMatrix.h"
 %include "lsst/shapelet/ShapeletFunction.h"
