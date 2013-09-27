@@ -152,6 +152,12 @@ template <typename T>
 class MultiShapeletMatrixBuilder {
 public:
 
+    /// Return the number of data points
+    int getDataSize() const;
+
+    /// Return the number of basis elements
+    int getBasisSize() const;
+
     /**
      *  @brief Main constructor.
      *

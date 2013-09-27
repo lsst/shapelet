@@ -145,9 +145,12 @@ public:
     Impl(
         ndarray::Array<T const,1,1> const & x,
         ndarray::Array<T const,1,1> const & y,
+        int basisSize_,
         bool useApproximateExp
-    ) : modelBuilder(x, y, useApproximateExp) {}
+    ) : basisSize(basisSize_), dataSize(x.template getSize<0>()), modelBuilder(x, y, useApproximateExp) {}
 
+    int basisSize;
+    int dataSize;
     ModelBuilder<T> modelBuilder;
     ItemVector items;
 };
@@ -184,7 +187,7 @@ MultiShapeletMatrixBuilder<T>::MultiShapeletMatrixBuilder(
     ndarray::Array<T const,1,1> const & x,
     ndarray::Array<T const,1,1> const & y,
     bool useApproximateExp
-) : _impl(new Impl(x, y, useApproximateExp))
+) : _impl(new Impl(x, y, basis.getSize(), useApproximateExp))
 {
     // Add the cartesian product of (basis components) x (PSF elements) to the ItemVector
     int maxConvolvedOrder = 0;
@@ -222,6 +225,12 @@ MultiShapeletMatrixBuilder<T>::MultiShapeletMatrixBuilder(
         ];
     }
 }
+
+template <typename T>
+int MultiShapeletMatrixBuilder<T>::getDataSize() const { return _impl->dataSize; }
+
+template <typename T>
+int MultiShapeletMatrixBuilder<T>::getBasisSize() const { return _impl->basisSize; }
 
 template class MultiShapeletMatrixBuilder<float>;
 template class MultiShapeletMatrixBuilder<double>;
