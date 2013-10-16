@@ -49,25 +49,14 @@
 
 %declareNumPyConverters(ndarray::Array<double const,2>);
 
-%inline %{
-
-double buildModels(
-    int nPixels, int basisSize,
-    lsst::shapelet::MultiShapeletMatrixBuilder<float> const & builder,
-    ndarray::Array<double const,2> const & parameters,
-    std::string const & ellipseType
-);
-
-%}
-
-
 %{
 
 #include "lsst/afw/geom/ellipses.h"
 
-double buildModels(
+template <typename T>
+double buildModelsImpl(
     int nPixels, int basisSize,
-    lsst::shapelet::MultiShapeletMatrixBuilder<float> const & builder,
+    lsst::shapelet::MultiShapeletMatrixBuilder<T> const & builder,
     ndarray::Array<double const,2> const & parameters,
     std::string const & ellipseType
 ) {
@@ -75,8 +64,8 @@ double buildModels(
         lsst::afw::geom::ellipses::BaseCore::make(ellipseType),
         lsst::afw::geom::Point2D()
     );
-    ndarray::Array<float,2,2> matrixT = ndarray::allocate(basisSize, nPixels);
-    ndarray::Array<float,2,-2> matrix = matrixT.transpose();
+    ndarray::Array<T,2,2> matrixT = ndarray::allocate(basisSize, nPixels);
+    ndarray::Array<T,2,-2> matrix = matrixT.transpose();
     double result = 0.0;
     for (ndarray::Array<double const,2>::Iterator i = parameters.begin(); i != parameters.end(); ++i) {
         ellipse.setParameterVector(i->asEigen());
@@ -84,6 +73,28 @@ double buildModels(
         result += matrix.asEigen().norm();
     }
     return result;
+}
+
+%}
+
+%inline %{
+
+double buildModelsF(
+    int nPixels, int basisSize,
+    lsst::shapelet::MultiShapeletMatrixBuilder<float> const & builder,
+    ndarray::Array<double const,2> const & parameters,
+    std::string const & ellipseType
+) {
+    buildModelsImpl(nPixels, basisSize, builder, parameters, ellipseType);
+}
+
+double buildModelsD(
+    int nPixels, int basisSize,
+    lsst::shapelet::MultiShapeletMatrixBuilder<double> const & builder,
+    ndarray::Array<double const,2> const & parameters,
+    std::string const & ellipseType
+) {
+    buildModelsImpl(nPixels, basisSize, builder, parameters, ellipseType);
 }
 
 %}
@@ -117,6 +128,8 @@ def main():
                         default=20, type=int)
     parser.add_argument("--n-y-pixels", help="Number of pixels in y direction (footprint is a rectangle)",
                         default=20, type=int)
+    parser.add_argument("--double-precision", help="Use double precision instead of single precision",
+                        default=False, action="store_true")
     args = parser.parse_args()
     bulge = lsst.shapelet.tractor.loadBasis("luv", args.n_bulge_terms)
     disk = lsst.shapelet.tractor.loadBasis("lux", args.n_disk_terms)
@@ -126,15 +139,24 @@ def main():
         psf = cPickle.load(psfFile)
     xMin = -args.n_x_pixels // 2
     yMin = -args.n_y_pixels // 2
-    x, y = numpy.meshgrid(numpy.arange(xMin, xMin+args.n_x_pixels, dtype=numpy.float32),
-                          numpy.arange(yMin, yMin+args.n_y_pixels, dtype=numpy.float32))
-    builder = lsst.shapelet.MultiShapeletMatrixBuilderF(disk, psf, x.flatten(), y.flatten(),
+    if args.double_precision:
+        dtype = numpy.float64
+        Builder = lsst.shapelet.MultiShapeletMatrixBuilderD
+        func = buildModelsD
+    else:
+        dtype = numpy.float32
+        Builder = lsst.shapelet.MultiShapeletMatrixBuilderF
+        func = buildModelsF
+
+    x, y = numpy.meshgrid(numpy.arange(xMin, xMin+args.n_x_pixels, dtype=dtype),
+                          numpy.arange(yMin, yMin+args.n_y_pixels, dtype=dtype))
+    builder = Builder(disk, psf, x.flatten(), y.flatten(),
                                                         args.approximate_exp)
     parameters = numpy.random.randn(args.n_samples, 5)
     cpuTime1 = time.clock()
     res1 = resource.getrusage(resource.RUSAGE_SELF)
     for n in range(args.repeat):
-        buildModels(x.size, disk.getSize(), builder, parameters, "SeparableConformalShearLogTraceRadius")
+        func(x.size, disk.getSize(), builder, parameters, "SeparableConformalShearLogTraceRadius")
     cpuTime2 = time.clock()
     res2 = resource.getrusage(resource.RUSAGE_SELF)
     factor = args.n_samples * args.repeat
