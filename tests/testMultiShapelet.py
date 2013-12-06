@@ -174,7 +174,7 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
         basis.addComponent(1.2, 0, numpy.random.randn(1,2))
         psf = self.makeRandomMultiShapeletFunction()
         psf.normalize()
-        ellipse = lsst.afw.geom.ellipses.Ellipse(
+        ellipse1 = lsst.afw.geom.ellipses.Ellipse(
             lsst.afw.geom.ellipses.Axes(
                 float(numpy.random.uniform(low=1, high=2)),
                 float(numpy.random.uniform(low=1, high=2)),
@@ -182,21 +182,33 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
                 ),
             lsst.afw.geom.Point2D(0.23, -0.15)
             )
+        ellipse2 = lsst.afw.geom.ellipses.Ellipse(
+            lsst.afw.geom.ellipses.Axes(0.0, 0.0, 0.0),
+            lsst.afw.geom.Point2D(-0.2, 0.12)
+            )
         coefficients = numpy.random.randn(2)
-        msf = basis.makeFunction(ellipse, coefficients).convolve(psf)
+        msf1 = basis.makeFunction(ellipse1, coefficients).convolve(psf)
+        msf2 = basis.makeFunction(ellipse2, coefficients).convolve(psf)
         xa = numpy.random.randn(50)
         ya = numpy.random.randn(50)
-        z0 = numpy.zeros(xa.shape, dtype=float)
-        ev = msf.evaluate()
+        z01 = numpy.zeros(xa.shape, dtype=float)
+        z02 = numpy.zeros(xa.shape, dtype=float)
+        ev1 = msf1.evaluate()
+        ev2 = msf2.evaluate()
         n = 0
         for x, y in zip(xa, ya):
-            z0[n] = ev(x, y)
+            z01[n] = ev1(x, y)
+            z02[n] = ev2(x, y)
             n += 1
         builder = lsst.shapelet.MultiShapeletMatrixBuilderD(basis, psf, xa, ya)
-        m = numpy.zeros((basis.getSize(), xa.size), dtype=float).transpose()
-        builder.build(m, ellipse)
-        z1 = numpy.dot(m, coefficients)
-        self.assertClose(z1, z0, rtol=1E-13)
+        m1 = numpy.zeros((basis.getSize(), xa.size), dtype=float).transpose()
+        m2 = numpy.zeros((basis.getSize(), xa.size), dtype=float).transpose()
+        builder.build(m1, ellipse1)
+        builder.build(m2, ellipse2)
+        z11 = numpy.dot(m1, coefficients)
+        z12 = numpy.dot(m2, coefficients)
+        self.assertClose(z11, z01, rtol=1E-13)
+        self.assertClose(z12, z02, rtol=1E-13)
 
 def suite():
     """Returns a suite containing all the test cases in this module."""

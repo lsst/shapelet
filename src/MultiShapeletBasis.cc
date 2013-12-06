@@ -22,6 +22,7 @@
  */
 
 #include "ndarray/eigen.h"
+#include "lsst/utils/ieee.h"
 #include "lsst/pex/exceptions.h"
 
 #include "lsst/shapelet/MultiShapeletBasis.h"
@@ -158,9 +159,15 @@ void MultiShapeletMatrixBuilder<T>::build(
 ) const {
     output.asEigen().setZero();
     for (typename Impl::ItemVector::const_iterator i = _impl->items.begin(); i != _impl->items.end(); ++i) {
-        afw::geom::ellipses::Ellipse itemEllipse(ellipse);
+        afw::geom::ellipses::Ellipse itemEllipse
+            = afw::geom::ellipses::Ellipse(afw::geom::ellipses::Quadrupole(0.0, 0.0, 0.0),
+                                           ellipse.getCenter());
+        if (ellipse.getCore().getDeterminantRadius() >= 0.0) {
+            itemEllipse = ellipse;
+        }
         itemEllipse.getCore().scale(i->getRadius());
         ndarray::Array<double const,2,2> convolution = i->convolution->evaluate(itemEllipse);
+        assert(!utils::isnan(itemEllipse.getCore().getDeterminantRadius()));
         i->workspace.asEigen().setZero();
         _impl->modelBuilder.update(itemEllipse);
         _impl->modelBuilder.addModelMatrix(i->convolution->getRowOrder(), i->workspace);
