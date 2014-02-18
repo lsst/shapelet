@@ -76,6 +76,28 @@ class sdss(object):
         p[r > cls.EXPOUT] = 0.0
         return p
 
+class exact(object):
+    """Namespace-only class for exact exponential and de Vaucouleur profiles."""
+
+    EXP_KAPPA = 1.67834699
+    DEV_KAPPA = 7.66924944
+
+    @classmethod
+    def dev(cls, r):
+        """de Vaucouleur (Sersic n=4) profile, normalized to unit surface brightness at r=1
+
+        Expected input is a NumPy array of radius values.
+        """
+        return numpy.exp(-cls.DEV_KAPPA*(r**0.25 - 1.0))
+
+    @classmethod
+    def exp(cls, r):
+        """exponential (Sersic n=1) profile, normalizedd to unit surface brightness at r=1
+
+        Expected input is a NumPy array of radius values.
+        """
+        return numpy.exp(-cls.EXP_KAPPA*(r - 1.0))
+
 def loadParameters(profile, nComponents, maxRadius=None):
     """Load the parameters of a multi-Gaussian profile
 
@@ -132,9 +154,8 @@ def loadBasis(profile, nComponents, maxRadius=None):
     return basis
 
 def evaluateRadial(basis, r, sbNormalize=False, doComponents=False):
-    """Plot a single-element MultiShapeletBasis as a radial profile.
+    """Return a radial profile for a single-element MultiShapeletBasis.
     """
-    from matplotlib import pyplot
     ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes())
     coefficients = numpy.ones(1, dtype=float)
     msf = basis.makeFunction(ellipse, coefficients)
@@ -153,6 +174,22 @@ def evaluateRadial(basis, r, sbNormalize=False, doComponents=False):
     if sbNormalize:
         z /= ev(1.0, 0.0)
     return z
+
+def integrateNormalizedFluxes(maxRadius=20.0, nSteps=5000):
+    radii = numpy.linspace(0.0, maxRadius, nSteps)
+    basis = {name: loadBasis(name, nComponents=8) for name in ("exp", "lux", "dev", "luv")}
+    profiles = {
+        "exp": exact.exp(radii), "lux": sdss.exp(radii),
+        "gexp": evaluateRadial(basis["exp"], radii, sbNormalize=True, doComponents=False)[0,:],
+        "glux": evaluateRadial(basis["lux"], radii, sbNormalize=True, doComponents=False)[0,:],
+        "dev": exact.dev(radii), "luv": sdss.dev(radii),
+        "gdev": evaluateRadial(basis["dev"], radii, sbNormalize=True, doComponents=False)[0,:],
+        "gluv": evaluateRadial(basis["luv"], radii, sbNormalize=True, doComponents=False)[0,:],
+        }
+    fluxes = {
+        name: numpy.trapz(profile*radii, radii) for name, profile in profiles.iteritems()
+        }
+    return fluxes
 
 def plotSuite(doComponents=False):
     from matplotlib import pyplot
@@ -181,12 +218,10 @@ def plotSuite(doComponents=False):
     for j in range(0,2):
         z[0,j] = [evaluateRadial(basis[k], r[j], sbNormalize=True, doComponents=doComponents)
                   for k in ("exp", "lux")]
-        z[0,j][0:0] = [numpy.exp(-1.67834699*(r[j] - 1.0))[numpy.newaxis,:],
-                       sdss.exp(r[j])[numpy.newaxis,:]]
+        z[0,j][0:0] = [exact.exp(r[j])[numpy.newaxis,:], sdss.exp(r[j])[numpy.newaxis,:]]
         z[0,j+2] = [evaluateRadial(basis[k], r[j], sbNormalize=True, doComponents=doComponents)
                     for k in ("dev", "luv")]
-        z[0,j+2][0:0] = [numpy.exp(-7.66924944*(r[j]**0.25 - 1.0))[numpy.newaxis,:],
-                         sdss.dev(r[j])[numpy.newaxis,:]]
+        z[0,j+2][0:0] = [exact.dev(r[j])[numpy.newaxis,:], sdss.dev(r[j])[numpy.newaxis,:]]
     methodNames = [["loglog", "semilogy"], ["semilogx", "plot"]]
     for j in range(0,4):
         z[1,j] = [(z[0,j][0][0,:] - z[0,j][i][0,:])/z[0,j][0][0,:] for i in range(0,4)]
@@ -218,7 +253,7 @@ def plotSuite(doComponents=False):
         axes[1,j].set_xticklabels(xticks[j%2])
         for t in axes[1,j].get_xticklabels():
             t.set_fontsize(11)
-    fig.legend(handles, ["exp/dev", "lux/luv", "approx exp/dev", "approx lux/luv"],
+    fig.legend(handles, ["exp/dev", "lux/luv", "gexp/gdev", "glux/gluv"],
                loc='lower center', ncol=4)
     fig.text(centers[0], 0.95, "exponential", ha='center', weight='bold')
     fig.text(centers[1], 0.95, "de Vaucouleur", ha='center', weight='bold')
