@@ -86,7 +86,7 @@ class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
                     v1 = self.ht(inx)(transPoint.getX()) * self.ht(iny)(transPoint.getY())
                     v2 = 0.0
                     for j, jnx, jny in lsst.shapelet.HermiteIndexGenerator(self.order):
-                        v2 += m[j,i] * self.ht(jnx)(origPoint.getX()) * self.ht(jny)(origPoint.getY())
+                        v2 += m[i,j] * self.ht(jnx)(origPoint.getX()) * self.ht(jny)(origPoint.getY())
                     self.assertClose(v1, v2, rtol=1E-11)
 
 def suite():

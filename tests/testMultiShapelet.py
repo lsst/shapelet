@@ -24,6 +24,7 @@
 
 import unittest
 import numpy
+import cPickle
 
 import lsst.utils.tests
 import lsst.afw.geom.ellipses as ellipses
@@ -42,6 +43,17 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
         y = x
         z = self.makeImage(function, x, y)
         self.checkMoments(function, x, y, z)
+
+    def testPickle(self):
+        function1 = self.makeRandomMultiShapeletFunction()
+        s = cPickle.dumps(function1, protocol=2)
+        function2 = cPickle.loads(s)
+        for element1, element2 in zip(function1.getElements(), function2.getElements()):
+            self.assertEqual(element1.getOrder(), element2.getOrder())
+            self.assertEqual(element1.getBasisType(), element2.getBasisType())
+            self.assertClose(element1.getEllipse().getParameterVector(),
+                             element2.getEllipse().getParameterVector())
+            self.assertClose(element1.getCoefficients(), element2.getCoefficients())
 
     def testConvolveGaussians(self):
         sigma1 = [lsst.afw.geom.ellipses.Quadrupole(6.0, 5.0, 2.0),

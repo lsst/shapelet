@@ -104,6 +104,16 @@ inline int computeSize(int order) { return computeOffset(order + 1); }
  */
 typedef ndarray::Array<double,1> Array1d;
 
+/// Compute the square root of an integer number
+inline double intSqrt(int n) {
+    return std::sqrt(double(n));
+}
+
+/// Compute the square root of a rational number i.e. sqrt(n/d)
+inline double rationalSqrt(int n, int d) {
+    return std::sqrt(double(n) / double(d));
+}
+
 }} // namespace lsst::shapelet
 
 #endif // !defined(LSST_AFW_MATH_SHAPELETS_CONSTANTS_H)
