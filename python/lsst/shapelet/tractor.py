@@ -29,129 +29,43 @@ package for more information.
 
 import numpy
 import os
+import re
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
 
-import lsst.shapelet
+from .shapeletLib import *
 
-class sdss(object):
-    """Namespace-only class for the softened/truncated exponential and de Vaucouleur
-    profiles used in SDSS Photo model fits)."""
-
-    DEFAC = -7.66925
-    DEVOUT = 8.0
-    DEVCUT = 7.0
-
-    EXPFAC = -1.67835
-    EXPOUT = 4.0
-    EXPCUT = 3.0
-
-    @classmethod
-    def dev(cls, r):
-        """Truncated de Vaucouleur - copied/translated from SDSS Photo package
-
-        Expected input is a NumPy array of radius values.
-        """
-        p = numpy.exp(cls.DEFAC * ((r**2 + 0.0004)**0.125 - 1.0))
-        big = r > cls.DEVCUT
-        scr = (r[big] - cls.DEVCUT) / (cls.DEVOUT - cls.DEVCUT)
-        scr = 1.0 - scr**2
-        p[big] *= scr*scr
-        p[r > cls.DEVOUT] = 0.0
-        return p
-
-    @classmethod
-    def exp(cls, r):
-        """Truncated exponential - copied/translated from SDSS from SDSS Photo package
-
-        Expected input is a NumPy array of radius values.
-        """
-        p = numpy.exp(cls.EXPFAC * (r - 1.0))
-        big = r > cls.EXPCUT
-        scr = (r[big] - cls.EXPCUT) / (cls.EXPOUT - cls.EXPCUT);
-        scr = 1.0 - scr**2
-        p[big] *= scr * scr
-        p[r > cls.EXPOUT] = 0.0
-        return p
-
-class exact(object):
-    """Namespace-only class for exact exponential and de Vaucouleur profiles."""
-
-    EXP_KAPPA = 1.67834699
-    DEV_KAPPA = 7.66924944
-
-    @classmethod
-    def dev(cls, r):
-        """de Vaucouleur (Sersic n=4) profile, normalized to unit surface brightness at r=1
-
-        Expected input is a NumPy array of radius values.
-        """
-        return numpy.exp(-cls.DEV_KAPPA*(r**0.25 - 1.0))
-
-    @classmethod
-    def exp(cls, r):
-        """exponential (Sersic n=1) profile, normalizedd to unit surface brightness at r=1
-
-        Expected input is a NumPy array of radius values.
-        """
-        return numpy.exp(-cls.EXP_KAPPA*(r - 1.0))
-
-def loadParameters(profile, nComponents, maxRadius=None):
-    """Load the parameters of a multi-Gaussian profile
-
-    @param[in]   profile       Name of the ideal profile being approximated; usually one of
-                               'exp', 'dev', 'ser2', 'ser3', 'lux', or 'luv'.
-    @param[in]   nComponents   Number of Gaussians in the approximation.
-    @param[in]   maxRadius     Maximum radius at which the multi-Gaussian approximated was optimized, in
-                               units of the half-light radius.  Defaults to 8 for all profiles except 'lux',
-                               which is only defined to 4.
-
-    @return a tuple of (amplitudes, variances), each of which are NumPy arrays of length nComponents,
-            containing the relative flux and variance of the components
-
-    The returned profiles are defined such that the half-light radius of the profile and integrated flux
-    are both unity.
-    """
-    if maxRadius is None:
-        if profile == 'lux':
-            maxRadius = 4
-        else:
-            maxRadius = 8
-    name = "%s_K%02d_MR%02d.pickle" % (profile, nComponents, maxRadius)
-    path = os.path.join(os.environ["SHAPELET_DIR"], "data", name)
-    with open(path, 'r') as stream:
-        array = pickle.load(stream)
-    amplitudes = array[:nComponents]
-    amplitudes /= amplitudes.sum()
-    variances = array[nComponents:]
-    if amplitudes.shape != (nComponents,) or variances.shape != (nComponents,):
-        raise ValueError("Unknown format for pickled profile file %s" % name)
-    return amplitudes, variances
-
-def loadBasis(profile, nComponents, maxRadius=None):
-    """Load the parameters of a multi-Gaussian profile into a single-element MultiShapeletBasis.
-
-    @param[in]   profile       Name of the ideal profile being approximated; usually one of
-                               'exp', 'dev', 'ser2', 'ser3', 'lux', or 'luv'.
-    @param[in]   nComponents   Number of Gaussians in the approximation.
-    @param[in]   maxRadius     Maximum radius at which the multi-Gaussian approximated was optimized, in
-                               units of the half-light radius.  Defaults to 8 for all profiles except 'lux',
-                               which is only defined to 4.
-
-    @return a MultiShapeletBasis object
-
-    The returned profiles are defined such that the half-light radius of the profile and integrated flux
-    are both unity.
-    """
-    amplitudes, variances = loadParameters(profile, nComponents, maxRadius)
-    basis = lsst.shapelet.MultiShapeletBasis(1)
-    for amplitude, variance in zip(amplitudes, variances):
-        radius = variance**0.5
-        matrix = numpy.array([[amplitude / lsst.shapelet.ShapeletFunction.FLUX_FACTOR]], dtype=float)
-        basis.addComponent(radius, 0, matrix)
-    return basis
+def registerRadialProfiles():
+    dataDir = os.path.join(os.environ["SHAPELET_DIR"], "data")
+    regex = re.compile(r"([a-z]+\d?)_K(\d+)_MR(\d+)\.pickle")
+    for filename in os.listdir(dataDir):
+        match = regex.match(filename)
+        if not match: continue
+        name = match.group(1)
+        nComponents = int(match.group(2))
+        maxRadius = int(match.group(3))
+        try:
+            profile = RadialProfile.get(name)
+        except lsst.pex.exceptions.LsstCppException:
+            continue
+        with open(os.path.join(dataDir, filename), 'r') as stream:
+            array = pickle.load(stream)
+        amplitudes = array[:nComponents]
+        amplitudes /= amplitudes.sum()
+        variances = array[nComponents:]
+        if amplitudes.shape != (nComponents,) or variances.shape != (nComponents,):
+            raise ValueError("Unknown format for pickled profile file %s" % name)
+        basis = MultiShapeletBasis(1)
+        for amplitude, variance in zip(amplitudes, variances):
+            radius = variance**0.5
+            matrix = numpy.array([[amplitude / ShapeletFunction.FLUX_FACTOR]], dtype=float)
+            basis.addComponent(radius, 0, matrix)
+        profile.registerBasis(basis, nComponents, maxRadius)
+# We register all the profiles at module import time, to allow C++ code to access all available profiles
+# without having to later call Python code to unpickle them.
+registerRadialProfiles()
 
 def evaluateRadial(basis, r, sbNormalize=False, doComponents=False):
     """Return a radial profile for a single-element MultiShapeletBasis.
@@ -176,22 +90,21 @@ def evaluateRadial(basis, r, sbNormalize=False, doComponents=False):
     return z
 
 def integrateNormalizedFluxes(maxRadius=20.0, nSteps=5000):
+    """After normalizing by surface brightness at r=1 r_e, integrate the profiles to compare
+    relative fluxes between the true profiles and their approximations.
+    """
     radii = numpy.linspace(0.0, maxRadius, nSteps)
-    basis = {name: loadBasis(name, nComponents=8) for name in ("exp", "lux", "dev", "luv")}
-    profiles = {
-        "exp": exact.exp(radii), "lux": sdss.exp(radii),
-        "gexp": evaluateRadial(basis["exp"], radii, sbNormalize=True, doComponents=False)[0,:],
-        "glux": evaluateRadial(basis["lux"], radii, sbNormalize=True, doComponents=False)[0,:],
-        "dev": exact.dev(radii), "luv": sdss.dev(radii),
-        "gdev": evaluateRadial(basis["dev"], radii, sbNormalize=True, doComponents=False)[0,:],
-        "gluv": evaluateRadial(basis["luv"], radii, sbNormalize=True, doComponents=False)[0,:],
-        }
-    fluxes = {
-        name: numpy.trapz(profile*radii, radii) for name, profile in profiles.iteritems()
-        }
+    profiles = {name: RadialProfile.get(name) for name in ("exp", "lux", "dev", "luv")}
+    evaluated = {}
+    for name, profile in profiles.iteritems():
+        evaluated[name] = profile.evaluate(radii)
+        basis = profile.getBasis(8)
+        evaluated["g" + name] = evaluateRadial(basis, radii, sbNormalize=True, doComponents=False)[0,:]
+    fluxes = {name: numpy.trapz(z*radii, radii) for name, z in evaluated.iteritems()}
     return fluxes
 
 def plotSuite(doComponents=False):
+    """Create a plot of the profiles and their approximations."""
     from matplotlib import pyplot
     fig = pyplot.figure(figsize=(9,4.7))
     axes = numpy.zeros((2,4), dtype=object)
@@ -201,7 +114,8 @@ def plotSuite(doComponents=False):
     for i in range(2):
         for j in range(4):
             axes[i,j] = fig.add_subplot(2, 4, i*4+j+1)
-    basis = {name: loadBasis(name, nComponents=8) for name in ("exp", "lux", "dev", "luv")}
+    profiles = {name: RadialProfile.get(name) for name in ("exp", "lux", "dev", "luv")}
+    basis = {name: profiles[name].getBasis(8) for name in profiles}
     z = numpy.zeros((2,4), dtype=object)
     colors = ("k", "g", "b", "r")
     fig.subplots_adjust(wspace=0.025, hspace=0.025, bottom=0.15, left=0.1, right=0.98, top=0.92)
@@ -218,10 +132,10 @@ def plotSuite(doComponents=False):
     for j in range(0,2):
         z[0,j] = [evaluateRadial(basis[k], r[j], sbNormalize=True, doComponents=doComponents)
                   for k in ("exp", "lux")]
-        z[0,j][0:0] = [exact.exp(r[j])[numpy.newaxis,:], sdss.exp(r[j])[numpy.newaxis,:]]
+        z[0,j][0:0] = [profiles[k].evaluate(r[j])[numpy.newaxis,:] for k in ("exp", "lux")]
         z[0,j+2] = [evaluateRadial(basis[k], r[j], sbNormalize=True, doComponents=doComponents)
                     for k in ("dev", "luv")]
-        z[0,j+2][0:0] = [exact.dev(r[j])[numpy.newaxis,:], sdss.dev(r[j])[numpy.newaxis,:]]
+        z[0,j+2][0:0] = [profiles[k].evaluate(r[j])[numpy.newaxis,:] for k in ("dev", "luv")]
     methodNames = [["loglog", "semilogy"], ["semilogx", "plot"]]
     for j in range(0,4):
         z[1,j] = [(z[0,j][0][0,:] - z[0,j][i][0,:])/z[0,j][0][0,:] for i in range(0,4)]
