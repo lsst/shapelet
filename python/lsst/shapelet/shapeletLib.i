@@ -55,6 +55,9 @@ Python interface to lsst::shapelet classes and functions
 %init %{
     import_array();
 %}
+%pythoncode %{
+    import numpy
+%}
 
 %include "ndarray.i"
 
@@ -124,3 +127,14 @@ def __reduce__(self):
 %}
 
 }
+
+%extend lsst::shapelet::RadialProfile {
+    %feature("shadow") evaluate %{
+    def evaluate(self, r):
+        if isinstance(r, numpy.ndarray):
+            return $action(self, r.ravel()).reshape(r.shape)
+        else:
+            return $action(self, r)
+    %}
+}
+%include "lsst/shapelet/RadialProfile.h"

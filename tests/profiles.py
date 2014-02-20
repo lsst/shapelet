@@ -41,8 +41,8 @@ E1 = 0.3
 E2 = -0.2
 PROFILES = [
     ("exp", 9, 8),
-    ("ser2", 9, 8),
-    ("ser3", 9, 8),
+    #("ser2", 9, 8),
+    #("ser3", 9, 8),
     ("dev", 9, 8),
     ]
 
@@ -50,23 +50,49 @@ CHECK_COMPONENT_IMAGES = False
 
 class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
-    def testProfiles(self):
+    def testRadii(self):
+        """Check RadialProfile definitions of moments and half-light radii.
+        """
+        s = numpy.linspace(-20.0, 20.0, 1000)
+        x, y = numpy.meshgrid(s, s)
+        r = (x**2 + y**2)**0.5
+        dxdy = (s[1] - s[0])**2
+        for name in ["gaussian", "exp", "ser2", "luv", "lux"]:
+            profile = lsst.shapelet.RadialProfile.get(name)
+            z = profile.evaluate(r) * dxdy
+            # lux and luv don't use the true half-light radius; instead they use the half-light radius
+            # of the exp and dev profiles they approximate
+            if not name.startswith("lu"):
+                self.assertClose(z[r < 1].sum(), 0.5*z.sum(), rtol=0.01)
+            self.assertClose(((z*x**2).sum() / z.sum())**0.5, profile.getMomentsRadiusFactor(), rtol=0.01)
+
+    def testGaussian(self):
+        """Test that the Gaussian profile's shapelet 'approximation' is actually exact.
+        """
+        profile = lsst.shapelet.RadialProfile.get("gaussian")
+        r = numpy.linspace(0.0, 4.0, 100)
+        z1 = profile.evaluate(r)
+        basis = profile.getBasis(1)
+        z2 = lsst.shapelet.tractor.evaluateRadial(basis, r, sbNormalize=True)[0,:]
+        self.assertClose(z1, z2, rtol=1E-8)
+
+    def testShapeletApproximations(self):
         psf0 = lsst.shapelet.ShapeletFunction(0, lsst.shapelet.HERMITE, PSF_SIGMA)
         psf0.getCoefficients()[:] = 1.0 / lsst.shapelet.ShapeletFunction.FLUX_FACTOR
         psf = lsst.shapelet.MultiShapeletFunction()
         psf.getElements().push_back(psf0)
         psf.normalize()
         ellipse = el.Separable[el.Distortion, el.DeterminantRadius](E1, E2, GALAXY_RADIUS)
-        for profile, nComponents, maxRadius in PROFILES:
+        for name, nComponents, maxRadius in PROFILES:
             # check1 is the multi-Gaussian approximation, as convolved and evaluated by GalSim,
-            check1 = lsst.afw.image.ImageD(os.path.join("tests", "data", profile + "-approx.fits")).getArray()
+            check1 = lsst.afw.image.ImageD(os.path.join("tests", "data", name + "-approx.fits")).getArray()
             xc = check1.shape[1] // 2
             yc = check1.shape[0] // 2
             xb = numpy.arange(check1.shape[1], dtype=float) - xc
             yb = numpy.arange(check1.shape[0], dtype=float) - yc
             xg, yg = numpy.meshgrid(xb, yb)
 
-            basis = lsst.shapelet.tractor.loadBasis(profile, nComponents, maxRadius)
+            basis = lsst.shapelet.RadialProfile.get(name).getBasis(nComponents, maxRadius)
             builder = lsst.shapelet.MultiShapeletMatrixBuilderD(basis, psf, xg.ravel(), yg.ravel())
             image1 = numpy.zeros(check1.shape, dtype=float)
             matrix = image1.reshape(check1.size, 1)
@@ -79,13 +105,13 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
             msf.evaluate().addToImage(lsst.afw.image.ImageD(image2, False))
             self.assertClose(check1, image2, plotOnFailure=True, rtol=5E-5, relTo=check1.max())
 
-            if profile == 'exp':
+            if name == 'exp':
                 # check2 is the exact profile, again by GalSim.
                 # We only check exp against the exact profile.  The other approximations are less
                 # accurate, and we only really need to test one.  The real measure of whether these
                 # profiles are good enough is more complicated than what we can do in a unit test.
                 check2 = lsst.afw.image.ImageD(
-                    os.path.join("tests", "data", profile + "-exact.fits")
+                    os.path.join("tests", "data", name + "-exact.fits")
                 ).getArray()
                 self.assertClose(check2, image1, plotOnFailure=True, rtol=1E-3, relTo=check2.max())
 
@@ -95,7 +121,7 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
                 # it's disabled by default.
                 for n, sf in enumerate(msf.getElements()):
                     check = lsst.afw.image.ImageD(
-                        os.path.join("tests", "data", "%s-approx-%0d.fits" % (profile, n))
+                        os.path.join("tests", "data", "%s-approx-%0d.fits" % (name, n))
                     ).getArray()
                     image = numpy.zeros(check1.shape, dtype=float)
                     sf.evaluate().addToImage(lsst.afw.image.ImageD(image, False))
