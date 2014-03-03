@@ -170,7 +170,12 @@ void MultiShapeletMatrixBuilder<T>::build(
         }
         itemEllipse.getCore().scale(i->getRadius());
         ndarray::Array<double const,2,2> convolution = i->convolution->evaluate(itemEllipse);
-        assert(!utils::isnan(itemEllipse.getCore().getDeterminantRadius()));
+        if (!(itemEllipse.getCore().getDeterminantRadius() >= 0.0)) {
+            throw LSST_EXCEPT(
+                pex::exceptions::UnderflowErrorException,
+                "Underflow error in ellipse scaling/convolution"
+            );
+        }
         i->workspace.asEigen().setZero();
         _impl->modelBuilder.update(itemEllipse);
         _impl->modelBuilder.addModelMatrix(i->convolution->getRowOrder(), i->workspace);
