@@ -26,7 +26,7 @@
 #define LSST_AFW_MATH_SHAPELETS_MULTISHAPELETFUNCTION_H
 
 #include "lsst/shapelet/ShapeletFunction.h"
-#include <list>
+#include <vector>
 
 namespace lsst { namespace shapelet {
 
@@ -45,7 +45,7 @@ public:
 
     typedef ShapeletFunction Element;
 
-    typedef std::list<Element> ElementList;
+    typedef std::vector<Element> ElementList;
 
     ElementList & getElements() { return _elements; }
 
