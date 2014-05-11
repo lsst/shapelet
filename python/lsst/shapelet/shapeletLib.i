@@ -41,7 +41,7 @@ Python interface to lsst::shapelet classes and functions
 %}
 
 %include "lsst/p_lsstSwig.i"
-%include "std_list.i"
+%include "std_vector.i"
 
 %{
 #include "lsst/afw/geom.h"
@@ -77,7 +77,7 @@ Python interface to lsst::shapelet classes and functions
 %feature(valuewrapper) lsst::shapelet::MultiShapeletFunction;
 %feature(valuewrapper) lsst::shapelet::ModelBuilder;
 
-%template(MultiShapeletElementList) std::list<lsst::shapelet::ShapeletFunction>;
+%template(MultiShapeletElementList) std::vector<lsst::shapelet::ShapeletFunction>;
 
 %import "lsst/afw/geom/geomLib.i"
 %import "lsst/afw/geom/ellipses/ellipsesLib.i"
