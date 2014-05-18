@@ -85,18 +85,18 @@ ndarray::Array<double,3,3>
 TripleProductIntegral::make1d(int order1, int order2, int order3) {
     ndarray::Array<double,3,3> array = ndarray::allocate(ndarray::makeVector(order1+1, order2+1, order3+1));
     array.deep() = 0.0;
-    double first = array[ndarray::makeVector(0,0,0)] = BASIS_NORMALIZATION * M_SQRT1_2;
+    double first = array[ndarray::makeVector(0, 0, 0)] = BASIS_NORMALIZATION * M_SQRT1_2;
     if (order1 < 1) {
         if (order3 < 1) return array;
         // n1=0, n2=0, n3=even
         double previous = first;
         for (int n3 = 2; n3 <= order3; n3 += 2) {
-            previous = array[ndarray::makeVector(0,0,n3)] = -0.5*rationalSqrt(n3 - 1, n3)*previous;
+            previous = array[ndarray::makeVector(0, 0, n3)] = -0.5*rationalSqrt(n3 - 1, n3)*previous;
         }
         // n1=0, n2>0, n3>0
         for (int n2 = 1; n2 <= order2; ++n2) {
             for (int n3 = n2; n3 <= order3; n3 += 2) {
-                array[ndarray::makeVector(0,n2,n3)]
+                array[ndarray::makeVector(0, n2, n3)]
                     = rationalSqrt(n3, 2*n2) * array[ndarray::makeVector(0, n2-1, n3-1)];
             }
         }
@@ -107,12 +107,12 @@ TripleProductIntegral::make1d(int order1, int order2, int order3) {
         // n1=even, n2=0, n3=even
         double previous = first;
         for (int n1 = 2; n1 <= order1; n1 += 2) {
-            previous = array[ndarray::makeVector(0,0,n1)] = -0.5*rationalSqrt(n1 - 1, n1)*previous;
+            previous = array[ndarray::makeVector(0, 0, n1)] = -0.5*rationalSqrt(n1 - 1, n1)*previous;
         }
         // n1=0, n2>0, n3>0
         for (int n2 = 1; n2 <= order2; ++n2) {
             for (int n1 = n2; n1 <= order1; n1 += 2) {
-                array[ndarray::makeVector(n1,n2,0)]
+                array[ndarray::makeVector(n1, n2, 0)]
                     = rationalSqrt(n1, 2*n2) * array[ndarray::makeVector(n1-1, n2-1, 0)];
             }
         }
@@ -147,7 +147,7 @@ TripleProductIntegral::make1d(int order1, int order2, int order3) {
     for (int n1 = 2; n1 <= order1; ++n1) {
         double f1 = -0.5*rationalSqrt(n1 - 1, n1);
         for (int n3 = (n1 % 2) ? 3:2; n3 <= order3; n3 += 2) {
-            array[ndarray::makeVector(n1,0,n3)]
+            array[ndarray::makeVector(n1, 0, n3)]
                 = f1 * array[ndarray::makeVector(n1-2, 0, n3)]
                 + 0.5*rationalSqrt(n3, n1) * array[ndarray::makeVector(n1-1, 0, n3-1)];
         }
@@ -156,18 +156,18 @@ TripleProductIntegral::make1d(int order1, int order2, int order3) {
     for (int n2 = 1; n2 <= order2; ++n2) {
         // n1>=n2, n3=0
         for (int n1 = n2; n1 <= order1; n1 += 2) {
-            array[ndarray::makeVector(n1,n2,0)]
+            array[ndarray::makeVector(n1, n2, 0)]
                 = rationalSqrt(n1, 2*n2) * array[ndarray::makeVector(n1-1, n2-1, 0)];
         }
         // n1=0, n3>=n2
         for (int n3 = n2; n3 <= order3; n3 += 2) {
-            array[ndarray::makeVector(0,n2,n3)]
+            array[ndarray::makeVector(0, n2, n3)]
                 = rationalSqrt(n3, 2*n2) * array[ndarray::makeVector(0, n2-1, n3-1)];
         }
         // n1>0, n3>0
         for (int n1 = 1; n1 <= order1; ++n1) {
             for (int n3 = ((n1+n2) % 2) ? 1:2; n3 <= order3; n3 += 2) {
-                array[ndarray::makeVector(n1,n2,n3)]
+                array[ndarray::makeVector(n1, n2, n3)]
                     = rationalSqrt(n1, 2*n2) * array[ndarray::makeVector(n1-1, n2-1, n3)]
                     + rationalSqrt(n3, 2*n2) * array[ndarray::makeVector(n1, n2-1, n3-1)];
             }

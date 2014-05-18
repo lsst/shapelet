@@ -79,11 +79,11 @@ HermiteTransformMatrix::HermiteTransformMatrix(int order) :
         _coeffFwd(1, 1) = _coeffFwd(0, 0) * M_SQRT2;
     }
     for (int n = 2; n <= _order; ++n) {
-        _coeffFwd(n, 0) = -_coeffFwd(n-2, 0) * rationalSqrt(n - 1, n);
+        _coeffFwd(n, 0) = -_coeffFwd(n-2, 0) * rationalSqrt(n-1, n);
         for (int m = (n % 2) ? 1:2; m <= n; m += 2) {
             _coeffFwd(n, m)
                 = _coeffFwd(n-1, m-1) * rationalSqrt(2, n)
-                - _coeffFwd(n-2, m) * rationalSqrt(n - 1, n);
+                - _coeffFwd(n-2, m) * rationalSqrt(n-1, n);
         }
     }
     _coeffFwd.triangularView<Eigen::Lower>().solveInPlace(_coeffInv);
