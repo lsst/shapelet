@@ -33,14 +33,14 @@ Eigen::MatrixXd GaussHermiteProjection::compute(
         throw LSST_EXCEPT(
             pex::exceptions::LengthErrorException,
             (boost::format("inputOrder %d exceeds max order set on construction %d")
-             % inputOrder % getMaxOrder())
+             % inputOrder % getMaxOrder()).str()
         );
     }
     if (outputOrder > getMaxOrder()) {
         throw LSST_EXCEPT(
             pex::exceptions::LengthErrorException,
             (boost::format("outputOrder %d exceeds max order set on construction %d")
-             % outputOrder % getMaxOrder())
+             % outputOrder % getMaxOrder()).str()
         );
     }
     int fullOrder = std::max(inputOrder, outputOrder);
