@@ -86,7 +86,11 @@ ModelBuilder<T>::ModelBuilder(
     _ellipseFactor(1.0), _x(x), _y(y),
     _xt(_x.size()), _yt(_y.size()), _expWorkspace(_x.size())
 {
-    assert(_x.size() == _y.size());
+    LSST_THROW_IF_NE(
+        _x.size(), _y.size(),
+        pex::exceptions::LengthErrorException,
+        "x (%d) and y (%d) array sizes do not match"
+    );
 }
 
 template <typename T>

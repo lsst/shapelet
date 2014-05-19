@@ -77,7 +77,11 @@ void fillEvaluation1d(
         *i = r();
     }
     if (!dx.isEmpty() && dx.getSize<0>() > 0) {
-        assert(dx.getSize<0>() == result.getSize<0>());
+        LSST_THROW_IF_NE(
+            dx.getSize<0>(), result.getSize<0>(),
+            pex::exceptions::LengthErrorException,
+            "Derivative output size (%d) does not match main output side (%d)"
+        );
         dx[0] = -x * result[0];
         for (int n = 1; n < result.getSize<0>(); ++n) {
             dx[n] = -x * result[n] + intSqrt(2*n) * result[n - 1];
