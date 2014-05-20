@@ -145,9 +145,12 @@ public:
     Impl(
         ndarray::Array<T const,1,1> const & x,
         ndarray::Array<T const,1,1> const & y,
+        int basisSize_,
         bool useApproximateExp
-    ) : modelBuilder(x, y, useApproximateExp) {}
+    ) : basisSize(basisSize_), dataSize(x.template getSize<0>()), modelBuilder(x, y, useApproximateExp) {}
 
+    int basisSize;
+    int dataSize;
     ModelBuilder<T> modelBuilder;
     ItemVector items;
 };
@@ -167,7 +170,12 @@ void MultiShapeletMatrixBuilder<T>::build(
         }
         itemEllipse.getCore().scale(i->getRadius());
         ndarray::Array<double const,2,2> convolution = i->convolution->evaluate(itemEllipse);
-        assert(!utils::isnan(itemEllipse.getCore().getDeterminantRadius()));
+        if (!(itemEllipse.getCore().getDeterminantRadius() >= 0.0)) {
+            throw LSST_EXCEPT(
+                pex::exceptions::UnderflowErrorException,
+                "Underflow error in ellipse scaling/convolution"
+            );
+        }
         i->workspace.asEigen().setZero();
         _impl->modelBuilder.update(itemEllipse);
         _impl->modelBuilder.addModelMatrix(i->convolution->getRowOrder(), i->workspace);
@@ -184,7 +192,7 @@ MultiShapeletMatrixBuilder<T>::MultiShapeletMatrixBuilder(
     ndarray::Array<T const,1,1> const & x,
     ndarray::Array<T const,1,1> const & y,
     bool useApproximateExp
-) : _impl(new Impl(x, y, useApproximateExp))
+) : _impl(new Impl(x, y, basis.getSize(), useApproximateExp))
 {
     // Add the cartesian product of (basis components) x (PSF elements) to the ItemVector
     int maxConvolvedOrder = 0;
@@ -222,6 +230,12 @@ MultiShapeletMatrixBuilder<T>::MultiShapeletMatrixBuilder(
         ];
     }
 }
+
+template <typename T>
+int MultiShapeletMatrixBuilder<T>::getDataSize() const { return _impl->dataSize; }
+
+template <typename T>
+int MultiShapeletMatrixBuilder<T>::getBasisSize() const { return _impl->basisSize; }
 
 template class MultiShapeletMatrixBuilder<float>;
 template class MultiShapeletMatrixBuilder<double>;

@@ -37,17 +37,18 @@ namespace lsst { namespace shapelet {
  *
  *  Let
  *  @f[
- *      Z_{\bm{n}}\!(\bm{x}) \equiv \mathcal{H}_{n_0}\!(x_0)\;\mathcal{H}_{n_1}\!(x_1)
+ *      Z_{\boldsymbol{n}}\!(\boldsymbol{x}) \equiv \mathcal{H}_{n_0}\!(x_0)\;\mathcal{H}_{n_1}\!(x_1)
  *  @f]
  *  where
  *  @f[
  *      \mathcal{H}_n(x)=(2^n \pi^{1/2} n!)^{-1/2}H_n(x)
  *  @f]
  *  is the @f$i@f$th "alternate" Hermite
- *  polynomial.  This function computes the matrix @f$\bm{Q}(\bm{U})@f$ given a linear
- *  transform @f$\bm{U}@f$ such that
+ *  polynomial.  This function computes the matrix @f$\boldsymbol{Q}(\boldsymbol{U})@f$ given a linear
+ *  transform @f$\boldsymbol{U}@f$ such that
  *  @f[
- *      Z_{\bm{m}}\!(\bm{U}\bm{x}) = \sum_{\bm{n}}Q_{\bm{m},\bm{n}}\!(\bm{U})\,Z_{\bm{n}}\!(\bm{x})
+ *      Z_{\boldsymbol{m}}\!(\boldsymbol{U}\boldsymbol{x}) = \sum_{\boldsymbol{n}}
+ *          Q_{\boldsymbol{m},\boldsymbol{n}}\!(\boldsymbol{U})\,Z_{\boldsymbol{n}}\!(\boldsymbol{x})
  *  @f]
  */
 class HermiteTransformMatrix {

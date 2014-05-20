@@ -65,8 +65,11 @@ public:
     // Must be defined in .cc file so it can see Impl dtor.
     ~GaussHermiteConvolution();
 
-private:
+#ifndef SWIG
     class Impl;
+#endif
+
+private:
 
     boost::scoped_ptr<Impl> _impl;
 };

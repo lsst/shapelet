@@ -29,8 +29,20 @@ Eigen::MatrixXd GaussHermiteProjection::compute(
     Eigen::Matrix2d const & inputTransform, int inputOrder,
     Eigen::Matrix2d const & outputTransform, int outputOrder
 ) const {
-    assert(inputOrder <= getMaxOrder());
-    assert(outputOrder <= getMaxOrder());
+    if (inputOrder > getMaxOrder()) {
+        throw LSST_EXCEPT(
+            pex::exceptions::LengthErrorException,
+            (boost::format("inputOrder %d exceeds max order set on construction %d")
+             % inputOrder % getMaxOrder()).str()
+        );
+    }
+    if (outputOrder > getMaxOrder()) {
+        throw LSST_EXCEPT(
+            pex::exceptions::LengthErrorException,
+            (boost::format("outputOrder %d exceeds max order set on construction %d")
+             % outputOrder % getMaxOrder()).str()
+        );
+    }
     int fullOrder = std::max(inputOrder, outputOrder);
     int inputSize = computeSize(inputOrder);
     int outputSize = computeSize(outputOrder);
@@ -42,7 +54,7 @@ Eigen::MatrixXd GaussHermiteProjection::compute(
     Eigen::Matrix2d w = eig.operatorInverseSqrt();
     Eigen::MatrixXd q1 = _htm.compute(outputTransform * w, fullOrder);
     Eigen::MatrixXd q2 = _htm.compute(inputTransform * w, fullOrder);
-    Eigen::MatrixXd result = q1.adjoint().topRows(outputSize) * q2.leftCols(inputSize);
+    Eigen::MatrixXd result = q1.topRows(outputSize) * q2.adjoint().leftCols(inputSize);
     result *= outputTransform.determinant() / std::sqrt(eig.eigenvalues().prod());
     return result;
 }

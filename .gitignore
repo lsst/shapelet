@@ -15,3 +15,4 @@ doc/*.inc
 doc/doxygen.conf
 tests/.tests
 version.py
+examples/timeModels.py
