@@ -79,7 +79,7 @@ void fillEvaluation1d(
     if (!dx.isEmpty() && dx.getSize<0>() > 0) {
         LSST_THROW_IF_NE(
             dx.getSize<0>(), result.getSize<0>(),
-            pex::exceptions::LengthErrorException,
+            pex::exceptions::LengthError,
             "Derivative output size (%d) does not match main output side (%d)"
         );
         dx[0] = -x * result[0];

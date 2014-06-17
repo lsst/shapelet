@@ -37,7 +37,7 @@ namespace {
 static inline void validateSize(int expected, int actual) {
     if (expected != actual) {
         throw LSST_EXCEPT(
-            pex::exceptions::LengthErrorException,
+            pex::exceptions::LengthError,
             (boost::format(
                 "Coefficient vector for ShapeletFunction has incorrect size (%n, should be %n)."
             ) % actual % expected).str()

@@ -170,7 +170,7 @@ void ConversionMatrix::multiplyOnLeft(
     ndarray::Array<double,1> const & array) const {
     if (array.getSize<0>() != computeSize(_order)) {
         throw LSST_EXCEPT(
-            lsst::pex::exceptions::LengthErrorException,
+            lsst::pex::exceptions::LengthError,
             (boost::format(
                 "Array for multiplyOnLeft has incorrect size (%n, should be %n)."
             ) % array.getSize<0>() % computeSize(_order)).str()
@@ -194,7 +194,7 @@ void ConversionMatrix::multiplyOnRight(
     ndarray::Array<double,1> const & array) const {
     if (array.getSize<0>() != computeSize(_order)) {
         throw LSST_EXCEPT(
-            lsst::pex::exceptions::LengthErrorException,
+            lsst::pex::exceptions::LengthError,
             (boost::format(
                 "Array for multiplyOnRight has incorrect size (%n, should be %n)."
             ) % array.getSize<0>() % computeSize(_order)).str()
