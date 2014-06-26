@@ -88,7 +88,7 @@ ModelBuilder<T>::ModelBuilder(
 {
     LSST_THROW_IF_NE(
         _x.size(), _y.size(),
-        pex::exceptions::LengthErrorException,
+        pex::exceptions::LengthError,
         "x (%d) and y (%d) array sizes do not match"
     );
 }
@@ -121,14 +121,14 @@ template <typename T>
 void ModelBuilder<T>::addModelMatrix(int order, ndarray::Array<T,2,-1> const & output) {
     if (output.template getSize<1>() != computeSize(order)) {
         throw LSST_EXCEPT(
-            pex::exceptions::LengthErrorException,
+            pex::exceptions::LengthError,
             (boost::format("Number of columns of output matrix (%d) does not match shapelet order (%d->%d)")
              % output.template getSize<1>() % order % computeSize(order)).str()
         );
     }
     if (output.template getSize<0>() != _x.size()) {
         throw LSST_EXCEPT(
-            pex::exceptions::LengthErrorException,
+            pex::exceptions::LengthError,
             (boost::format("Number of rows of output matrix (%d) does not match coordinate array (%d)")
              % output.template getSize<0>() % _x.size()).str()
         );
@@ -153,14 +153,14 @@ void ModelBuilder<T>::addModelVector(
 ) {
     if (coefficients.template getSize<0>() != computeSize(order)) {
         throw LSST_EXCEPT(
-            pex::exceptions::LengthErrorException,
+            pex::exceptions::LengthError,
             (boost::format("Number of coefficients (%d) does not match shapelet order (%d->%d)")
              % coefficients.template getSize<0>() % order % computeSize(order)).str()
         );
     }
     if (output.template getSize<0>() != _x.size()) {
         throw LSST_EXCEPT(
-            pex::exceptions::LengthErrorException,
+            pex::exceptions::LengthError,
             (boost::format("Number of rows of output matrix (%d) does not match coordinate array (%d)")
              % output.template getSize<0>() % _x.size()).str()
         );

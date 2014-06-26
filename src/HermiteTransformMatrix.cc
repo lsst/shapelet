@@ -92,7 +92,7 @@ HermiteTransformMatrix::HermiteTransformMatrix(int order) :
 Eigen::MatrixXd HermiteTransformMatrix::compute(Eigen::Matrix2d const & transform, int order) const {
     if (order > _order) {
         throw LSST_EXCEPT(
-            pex::exceptions::InvalidParameterException,
+            pex::exceptions::InvalidParameterError,
             boost::str(
                 boost::format("order passed to compute() (%d) is larger than construction order (%d)")
                 % order % _order

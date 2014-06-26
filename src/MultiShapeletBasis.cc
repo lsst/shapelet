@@ -38,7 +38,7 @@ MultiShapeletBasisComponent::MultiShapeletBasisComponent(
 ) : _radius(radius), _order(order), _matrix(ndarray::copy(matrix)) {
     if (_matrix.getSize<0>() != computeSize(order)) {
         throw LSST_EXCEPT(
-            pex::exceptions::LengthErrorException,
+            pex::exceptions::LengthError,
             (boost::format("MultiShapeletBasisComponent matrix has %d rows; expected %d for order=%d")
              % _matrix.getSize<0>() % computeSize(order) % order).str()
         );
@@ -54,7 +54,7 @@ void MultiShapeletBasis::addComponent(
 ) {
     if (matrix.getSize<1>() != _size) {
         throw LSST_EXCEPT(
-            pex::exceptions::LengthErrorException,
+            pex::exceptions::LengthError,
             (boost::format("Component matrix has %d columns; basis size is %d")
              % matrix.getSize<1>() % _size).str()
         );
@@ -172,7 +172,7 @@ void MultiShapeletMatrixBuilder<T>::build(
         ndarray::Array<double const,2,2> convolution = i->convolution->evaluate(itemEllipse);
         if (!(itemEllipse.getCore().getDeterminantRadius() >= 0.0)) {
             throw LSST_EXCEPT(
-                pex::exceptions::UnderflowErrorException,
+                pex::exceptions::UnderflowError,
                 "Underflow error in ellipse scaling/convolution"
             );
         }
