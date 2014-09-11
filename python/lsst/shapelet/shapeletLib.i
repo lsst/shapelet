@@ -68,6 +68,8 @@ Python interface to lsst::shapelet classes and functions
 %declareNumPyConverters(ndarray::Array<double,2,1>);
 %declareNumPyConverters(ndarray::Array<float,2,-1>);
 %declareNumPyConverters(ndarray::Array<double,2,-1>);
+%declareNumPyConverters(ndarray::Array<float,2,-2>);
+%declareNumPyConverters(ndarray::Array<double,2,-2>);
 %declareNumPyConverters(ndarray::Array<float const,1,1>);
 %declareNumPyConverters(ndarray::Array<double const,1,1>);
 %declareNumPyConverters(ndarray::Array<double const,2,-2>);
@@ -106,6 +108,21 @@ Python interface to lsst::shapelet classes and functions
 %template(ModelBuilderD) lsst::shapelet::ModelBuilder<double>;
 %template(MultiShapeletMatrixBuilderF) lsst::shapelet::MultiShapeletMatrixBuilder<float>;
 %template(MultiShapeletMatrixBuilderD) lsst::shapelet::MultiShapeletMatrixBuilder<double>;
+
+%include "lsst/shapelet/MatrixBuilder.h"
+%define %instantiateMatrixBuilder(T, SUFFIX)
+%template(MatrixBuilder##SUFFIX) lsst::shapelet::MatrixBuilder<T>;
+%template(MatrixBuilderFactory##SUFFIX) lsst::shapelet::MatrixBuilderFactory<T>;
+%template(MatrixBuilderWorkspace##SUFFIX) lsst::shapelet::MatrixBuilderWorkspace<T>;
+%pythoncode %{
+MatrixBuilder##SUFFIX.Factory = MatrixBuilderFactory##SUFFIX
+MatrixBuilder##SUFFIX.Workspace = MatrixBuilderWorkspace##SUFFIX
+MatrixBuilderFactory##SUFFIX.Workspace = MatrixBuilderWorkspace##SUFFIX
+%}
+%enddef
+
+%instantiateMatrixBuilder(float, F)
+%instantiateMatrixBuilder(double, D)
 
 %extend lsst::shapelet::ShapeletFunction {
 
