@@ -34,27 +34,58 @@ namespace lsst { namespace shapelet {
 namespace {
 
 template <typename T>
+Eigen::Map< Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> > makeView(
+    T * & workspace, int rows, int cols
+) {
+    Eigen::Map< Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> > v(workspace, rows, cols);
+    workspace += rows*cols;
+    return v;
+}
+
+template <typename T>
+Eigen::Map< Eigen::Array<T,Eigen::Dynamic,1> > makeView(
+    T * & workspace, int size
+) {
+    Eigen::Map< Eigen::Array<T,Eigen::Dynamic,1> > v(workspace, size);
+    workspace += size;
+    return v;
+}
+
+template <typename T>
 class EllipseHelper {
 public:
 
-    explicit EllipseHelper(int dataSize) : detFactor(1.0), xyt(dataSize, 0) {}
+    static int computeWorkspace(int dataSize) { return sizeof(T) * dataSize * 2; }
+
+    explicit EllipseHelper(T * & workspace, int dataSize) :
+        detFactor(1.0),
+        xt(makeView(workspace, dataSize)),
+        yt(makeView(workspace, dataSize))
+    {}
 
     void readEllipse(
-        Eigen::Matrix<T,Eigen::Dynamic,2> const & xy,
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
         afw::geom::ellipses::Ellipse const & ellipse
     ) {
         afw::geom::AffineTransform transform = ellipse.getGridTransform();
-        xyt.transpose() = xy.transpose() * transform.getLinear().getMatrix().transpose().cast<T>();
-        xyt.rowwise() += transform.getTranslation().asEigen().transpose().cast<T>();
+        xt = transform[afw::geom::AffineTransform::XX] * x.asEigen<Eigen::ArrayXpr>()
+            + transform[afw::geom::AffineTransform::XY] * y.asEigen<Eigen::ArrayXpr>()
+            + transform[afw::geom::AffineTransform::X];
+        yt = transform[afw::geom::AffineTransform::YX] * x.asEigen<Eigen::ArrayXpr>()
+            + transform[afw::geom::AffineTransform::YY] * y.asEigen<Eigen::ArrayXpr>()
+            + transform[afw::geom::AffineTransform::Y];
         detFactor = transform.getLinear().computeDeterminant();
     }
 
     void scale(double factor) {
-        xyt /= factor;
+        xt.asEigen() /= factor;
+        yt.asEigen() /= factor;
     }
 
     T detFactor;
-    Eigen::Matrix<T,Eigen::Dynamic,2> xyt;
+    Eigen::Map< Eigen::Array<T,Eigen::Dynamic,1> > xt;
+    Eigen::Map< Eigen::Array<T,Eigen::Dynamic,1> > yt;
 };
 
 template <typename T>
@@ -80,27 +111,27 @@ template <typename T>
 class ShapeletHelper {
 public:
 
-    explicit ShapeletHelper(int dataSize, int maxOrder) :
-        _maxOrder(maxOrder),
-        _expWorkspace(dataSize),
-        _xWorkspace(maxOrder + 1, dataSize),
-        _yWorkspace(maxOrder + 1, dataSize)
-    {}
+    static int computeWorkspace(int dataSize, int order) {
+        return sizeof(T) * dataSize * (1 + 2*(order + 1));
+    }
 
-    ShapeletHelper() : _maxOrder(-1) {}
+    explicit ShapeletHelper(T *& workspace, int dataSize, int order) :
+        _order(order),
+        _expWorkspace(makeView(workspace, dataSize)),
+        _xWorkspace(makeView(workspace, maxOrder + 1, dataSize)),
+        _yWorkspace(makeView(workspace, maxOrder + 1, dataSize))
+    {}
 
     void apply(
         EllipseHelper<T> const & ellipseHelper,
-        ndarray::Array<T,2,-1> const & output,
-        int order
+        ndarray::Array<T,2,-1> const & output
     ) {
-        assert(order <= _maxOrder);
         _expWorkspace =
             (-0.5*ellipseHelper.xyt.rowwise().squaredNorm()).array().exp() * ellipseHelper.detFactor;
-        _fillHermite1d(order, _xWorkspace, ellipseHelper.xyt.col(0).array());
-        _fillHermite1d(order, _yWorkspace, ellipseHelper.xyt.col(1).array());
+        _fillHermite1d(_xWorkspace, ellipseHelper.xyt.col(0).array());
+        _fillHermite1d(_yWorkspace, ellipseHelper.xyt.col(1).array());
         ndarray::EigenView<T,2,-1,Eigen::ArrayXpr> view(output);
-        for (PackedIndex i; i.getOrder() <= order; ++i) {
+        for (PackedIndex i; i.getOrder() <= _order; ++i) {
             view.col(i.getIndex()) += _expWorkspace*_xWorkspace.col(i.getX())*_yWorkspace.col(i.getY());
         }
     }
@@ -111,8 +142,7 @@ private:
 
     template <typename CoordArray>
     void _fillHermite1d(
-        int order,
-        Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> & workspace,
+        Eigen::Map<Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> > & workspace,
         CoordArray const & coord
     ) {
         if (workspace.cols() > 0) {
@@ -121,16 +151,16 @@ private:
         if (workspace.cols() > 1) {
             workspace.col(1) = intSqrt(2) * coord * workspace.col(0);
         }
-        for (int j = 2; j <= order; ++j) {
+        for (int j = 2; j <= _order; ++j) {
             workspace.col(j) = rationalSqrt(2, j) * coord * workspace.col(j-1)
                 - rationalSqrt(j - 1, j) * workspace.col(j-2);
         }
     }
 
     int _maxOrder;
-    Eigen::Array<T,Eigen::Dynamic,1> _expWorkspace;
-    Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> _xWorkspace;
-    Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> _yWorkspace;
+    Eigen::Map< Eigen::Array<T,Eigen::Dynamic,1> > _expWorkspace;
+    Eigen::Map< Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> > _xWorkspace;
+    Eigen::Map< Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> > _yWorkspace;
 };
 
 template <typename T>

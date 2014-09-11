@@ -23,7 +23,7 @@
 #ifndef LSST_SHAPELET_MatrixBuilder_h_INCLUDED
 #define LSST_SHAPELET_MatrixBuilder_h_INCLUDED
 
-#include "Eigen/Core"
+#include "ndarray.h"
 
 #include "lsst/shapelet/constants.h"
 #include "lsst/shapelet/ShapeletFunction.h"
@@ -49,7 +49,7 @@ class MatrixBuilder {
 public:
 
     /// Return the number of data points
-    int getDataSize() const { return _xy.rows(); }
+    int getDataSize() const { return _x.size(); }
 
     /// Return the number of basis elements
     int getBasisSize() const { return _basisSize; }
@@ -78,7 +78,8 @@ protected:
     );
 
     int const _basisSize;
-    Eigen::Matrix<T,Eigen::Dynamic,2> _xy; // TODO: check if transposing this is faster
+    ndarray::Array<T const,1,1> _x;
+    ndarray::Array<T const,1,1> _y;
 };
 
 /**
