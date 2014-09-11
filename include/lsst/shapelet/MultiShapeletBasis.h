@@ -99,8 +99,11 @@ public:
     /// Construct a MultiShapeletBasis with the given number of elements (i.e. free amplitudes).
     explicit MultiShapeletBasis(int size);
 
-    /// Return the number of elements in the MultiShapeletBasis
+    /// Return the number of elements (i.e. free amplitudes) in the MultiShapeletBasis
     int getSize() const { return _size; }
+
+    /// Return the number of components (distinct shapelet bases) in the MultiShapeletBasis
+    int getComponentCount() const { return _components.size(); }
 
     //@{
     /// Iterator over the components (distinct shapelet bases) of the MultiShapeletBasis
