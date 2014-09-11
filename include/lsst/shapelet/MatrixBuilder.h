@@ -65,7 +65,7 @@ public:
     virtual void apply(
         ndarray::Array<T,2,-1> const & output,
         afw::geom::ellipses::Ellipse const & ellipse
-    ) const;
+    ) const = 0;
 
     virtual ~MatrixBuilder() {}
 

@@ -80,12 +80,14 @@ template <typename T>
 class ShapeletHelper {
 public:
 
-    explicit ShapeletHelper(int maxOrder, int dataSize) :
+    explicit ShapeletHelper(int dataSize, int maxOrder) :
         _maxOrder(maxOrder),
         _expWorkspace(dataSize),
         _xWorkspace(maxOrder + 1, dataSize),
         _yWorkspace(maxOrder + 1, dataSize)
     {}
+
+    ShapeletHelper() : _maxOrder(-1) {}
 
     void apply(
         EllipseHelper<T> const & ellipseHelper,
@@ -199,7 +201,7 @@ public:
     ) : MatrixBuilder<T>(x, y, computeSize(order)),
         _order(order),
         _ellipseHelper(this->getDataSize()),
-        _shapeletHelper(order, this->getDataSize())
+        _shapeletHelper(this->getDataSize(), order)
     {}
 
     virtual void apply(
@@ -230,7 +232,7 @@ public:
         _convolution(order, psf),
         _convolutionWorkspace(ndarray::allocate(this->getDataSize(), _convolution.getRowOrder())),
         _ellipseHelper(this->getDataSize()),
-        _shapeletHelper(_convolution.getRowOrder(), this->getDataSize())
+        _shapeletHelper(this->getDataSize(), _convolution.getRowOrder())
     {}
 
     virtual void apply(
@@ -263,7 +265,7 @@ public:
     ) : MatrixBuilder<T>(x, y, basis.getSize()),
         _basis(basis),
         _ellipseHelper(this->getDataSize()),
-        _shapeletHelper(_computeMaxOrder(), this->getDataSize()),
+        _shapeletHelper(this->getDataSize(), _computeMaxOrder()),
         _basisWorkspace(ndarray::allocate(this->getDataSize(), computeSize(_shapeletHelper.getMaxOrder())))
     {}
 
@@ -298,30 +300,119 @@ private:
     mutable EllipseHelper<T> _ellipseHelper;
     mutable ShapeletHelper<T> _shapeletHelper;
     ndarray::Array<T,2,-1> _basisWorkspace;
+    mutable Eigen::Matrix<T,Eigen::Dynamic,Eigen::Dynamic> _convolutionWorkspace;
+};
+
+class ConvolvedMultiShapeletMatrixBuilderComponent {
+public:
+
+    explicit ConvolvedMultiShapeletMatrixBuilderComponent(
+        MultiShapeletBasisComponent const & component,
+        ShapeletFunction const & psf
+    ) : convolution(component.getOrder(), psf),
+        radius(component.getRadius()),
+        matrix(component.getMatrix())
+    {}
+
+    int getRowSize() const { return computeSize(convolution.getRowOrder()); }
+
+    int getColSize() const { return computeSize(convolution.getColOrder()); }
+
+    GaussHermiteConvolution convolution;
+    double radius;
+    ndarray::Array<double const,2,2> matrix;
 };
 
 template <typename T>
 class ConvolvedMultiShapeletMatrixBuilder : public MatrixBuilder<T> {
+public:
 
-    class Component {
-    public:
+    typedef ConvolvedMultiShapeletMatrixBuilderComponent Component;
 
-        explicit Component(
-            MultiShapeletBasisComponent const & component,
-            ShapeletFunction const & psf
-        ) : convolution(component.getOrder(), psf),
-            radius(component.getRadius()),
-            matrix(component.getMatrix())
-        {}
+    ConvolvedMultiShapeletMatrixBuilder(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        MultiShapeletFunction const & psf,
+        MultiShapeletBasis const & basis
+    ) : MatrixBuilder<T>(x, y, basis.getSize()),
+        _ellipseHelper(this->getDataSize()),
+        _shapeletHelper() // need to wait until after we initialize components to truly initialize this
+    {
+        int maxRowOrder = 0;
+        int maxColOrder = 0;
+        _components.reserve(psf.getElements().size() * basis.getComponentCount());
+        for (MultiShapeletBasis::Iterator basisIter = basis.begin(); basisIter != basis.end(); ++basisIter) {
+            for (
+                MultiShapeletFunction::ElementList::const_iterator psfIter = psf.getElements().begin();
+                psfIter != psf.getElements().end();
+                ++psfIter
+            ) {
+                _components.push_back(Component(*basisIter, *psfIter));
+                maxRowOrder = std::max(maxRowOrder, _components.back().convolution.getRowOrder());
+                maxColOrder = std::max(maxColOrder, _components.back().convolution.getColOrder());
+            }
+        }
+        _shapeletHelper = ShapeletHelper<T>(this->getDataSize(), maxRowOrder);
+        _basisWorkspace = ndarray::allocate(this->getDataSize(), maxRowOrder);
+        _convolutionWorkspace = ndarray::allocate(maxRowOrder, maxColOrder);
+    }
 
-        GaussHermiteConvolution convolution;
-        double radius;
-        ndarray::Array<double const,2,2> matrix;
-    };
+    virtual void apply(
+        ndarray::Array<T,2,-1> const & output,
+        afw::geom::ellipses::Ellipse const & ellipse
+    ) const {
+        output.deep() = 0.0;
+        for (
+            std::vector<Component>::const_iterator iter = _components.begin();
+            iter != _components.end();
+            ++iter
+        ) {
+            afw::geom::ellipses::Ellipse tmpEllipse(ellipse);
+            tmpEllipse.getCore().scale(iter->radius);
 
+            // convolve the ellipse and create a matrix which convolves  coefficients
+            ndarray::Array<double const,2,2> convolutionMatrix = iter->convolution.evaluate(tmpEllipse);
+            _ellipseHelper.readEllipse(this->_xy, tmpEllipse);
+
+            // evaluate simple shapelet basis
+            ndarray::Array<T,2,-1> basisView = _basisWorkspace[ndarray::view()(0, iter->getRowSize())];
+            basisView.deep() = 0.0;
+            _shapeletHelper.apply(_ellipseHelper, basisView, iter->convolution.getColOrder());
+
+            // compute the product of the convolution matrix with the basis matrix
+            ndarray::Array<T,2,-1> convolutionView
+                = _convolutionWorkspace[ndarray::view(0, iter->getRowSize())];
+            convolutionView.asEigen() = (convolutionMatrix.asEigen()*iter->matrix.asEigen()).cast<T>();
+
+            output.asEigen() += basisView.asEigen() * convolutionView.asEigen();
+        }
+    }
+
+private:
+
+
+    mutable EllipseHelper<T> _ellipseHelper;
+    mutable ShapeletHelper<T> _shapeletHelper;
+    std::vector<Component> _components;
+    ndarray::Array<T,2,-1> _basisWorkspace;
+    ndarray::Array<T,2,-1> _convolutionWorkspace;
 };
 
 } // anonymous
+
+template <typename T>
+MatrixBuilder<T>::MatrixBuilder(
+    ndarray::Array<T const,1,1> const & x,
+    ndarray::Array<T const,1,1> const & y,
+    int basisSize
+) : _basisSize(basisSize), _xy(x.template getSize<0>(), 2) {
+    LSST_THROW_IF_NE(
+        x.template getSize<0>(), y.template getSize<0>(), pex::exceptions::LengthError,
+        "Size of x array (%d) does not match size of y array (%d)"
+    );
+    _xy.col(0) = x.asEigen();
+    _xy.col(1) = y.asEigen();
+}
 
 template <typename T>
 PTR(MatrixBuilder<T>) makeMatrixBuilder(
@@ -386,6 +477,12 @@ PTR(MatrixBuilder<T>) makeMatrixBuilder(
 
 #define INSTANTIATE(T)                                      \
     template class MatrixBuilder<T>;                        \
+    template class GaussianMatrixBuilder<T>;                \
+    template class ConvolvedGaussianMatrixBuilder<T>;       \
+    template class ShapeletMatrixBuilder<T>;                \
+    template class ConvolvedShapeletMatrixBuilder<T>;       \
+    template class MultiShapeletMatrixBuilder0<T>;          \
+    template class ConvolvedMultiShapeletMatrixBuilder<T>;  \
     template PTR(MatrixBuilder<T>) makeMatrixBuilder(       \
         ndarray::Array<T const,1,1> const &,                \
         ndarray::Array<T const,1,1> const &,                \
