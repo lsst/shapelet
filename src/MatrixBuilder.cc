@@ -51,11 +51,53 @@ Eigen::Map< Eigen::Array<T,Eigen::Dynamic,1> > makeView(
     return v;
 }
 
+class NullRemapper {
+public:
+
+    int computeWorkspace(int dataSize, int order) { return 0.0; }
+
+    MatrixRemapper(T * & workspace, int dataSize, int order, void *) {}
+
+    template <typename ArrayT>
+    ArrayT & getLhs(ArrayT & output) { return output; }
+
+    template <typename ArrayT>
+    void finish(ArrayT & output) {}
+
+};
+
+template <typename T>
+class MatrixRemapper {
+public:
+
+    int computeWorkspace(int dataSize, int order) { return dataSize * computeSize(order); }
+
+    MatrixRemapper(
+        T * & workspace, int dataSize, int order,
+        ndarray::Array<double const,2,2> const & remapMatrix
+    ) : _remapMatrix(remapMatrix.asEigen().transpose().cast<T>),
+        _lhs(makeView(workspace, dataSize, computeSize(order)))
+    {}
+
+    template <typename ArrayT>
+    ArrayT & getLhs(ArrayT & output) { return _lhs; }
+
+    template <typename ArrayT>
+    void finish(ArrayT & output) { output.matrix() = _lhs.matrix() * _remapMatrix; }
+
+private:
+    Eigen::Matrix<T,Eigen::Dynamic,Eigen::Dynamic> _remapMatrix;
+    Eigen::Map< Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> > _lhs;
+};
+
+
 template <typename T>
 class EllipseHelper {
 public:
 
-    static int computeWorkspace(int dataSize) { return sizeof(T) * dataSize * 2; }
+    static int computeWorkspace(int dataSize) {
+        return dataSize * 2;
+    }
 
     explicit EllipseHelper(T * & workspace, int dataSize) :
         detFactor(1.0),
@@ -78,9 +120,9 @@ public:
         detFactor = transform.getLinear().computeDeterminant();
     }
 
-    void scale(double factor) {
-        xt.asEigen() /= factor;
-        yt.asEigen() /= factor;
+    template <typename ArrayT>
+    void computeGaussian(ArrayT & output) const {
+        output = (-0.5*(_xt.square() + _yt.square())).exp();
     }
 
     T detFactor;
@@ -88,55 +130,115 @@ public:
     Eigen::Map< Eigen::Array<T,Eigen::Dynamic,1> > yt;
 };
 
-template <typename T>
+template <typename T, typename Remapper>
 class GaussianHelper {
 public:
 
-    void apply(
-        EllipseHelper<T> const & ellipseHelper,
-        ndarray::Array<T,1,1> const & output
-    ) {
-        static T const NORM = 1.0 / std::sqrt(M_PI); // normalization to match shapelets
-        // TODO: check that rowwise().squaredNorm() is optimized as well as explicitly writing it as
-        // coeffwise array operations (may depend on whether we transpose xy).
-        output.template asEigen<Eigen::ArrayXpr>() +=
-            (-0.5*ellipseHelper.xyt.rowwise().squaredNorm()).array().exp()
-            * ellipseHelper.detFactor
-            * NORM;
+    static int computeWorkspace(int dataSize) {
+        return EllipseHelper<T>::computeSize(dataSize) + Remapper::computeWorkspace(dataSize, 0);
     }
 
+    template <typename U>
+    explicit GaussianHelper(T * & workspace, int dataSize, U remapperArg) :
+        _ellipseHelper(workspace, dataSize),
+        _remapper(workspace, dataSize, 0, remapperArg)
+    {}
+
+    template <typename ArrayT>
+    void apply(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        afw::geom::ellipses::Ellipse const & ellipse,
+        ArrayT & output
+    ) {
+        static T const NORM = 1.0 / std::sqrt(M_PI); // normalization to match shapelets
+        _ellipseHelper.readEllipse(x, y, ellipse);
+        _ellipseHelper.computeGaussian(_remapper.getLhs(output).col(0));
+        _remapper.getLhs(output) *= _ellipseHelper.detFactor * NORM;
+        _remapper.finish(output);
+    }
+
+private:
+    EllipseHelper<T> _ellipseHelper;
+    Remapper _remapper;
 };
 
-template <typename T>
+template <typename T, typename Remapper>
+class ConvolvedGaussianHelper {
+public:
+
+    static int computeWorkspace(int dataSize) {
+        return GaussianHelper<T,Remapper>::computeSize(dataSize);
+    }
+
+    template <typename U>
+    explicit ConvolvedGaussianHelper(
+        T * & workspace, int dataSize
+        afw::geom::ellipses::Ellipse const & psfEllipse,
+        double psfCoefficient,
+        U remapperArg
+    ) : _gaussianHelper(workspace, dataSize, remapperArg),
+        _psfEllipse(psfEllipse),
+        _psfCoefficient(psfCoefficeint),
+    {}
+
+    template <typename ArrayT>
+    void apply(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        afw::geom::ellipses::Ellipse const & ellipse,
+        ArrayT & output
+    ) {
+        afw::geom::ellipses::Ellipse tmpEllipse(ellipse.convolve(_psfEllipse));
+        _helper.apply(x, y, tmpEllipse, output);
+        output *= _psfCoefficient / ShapeletFunction::FLUX_FACTOR;
+    }
+
+private:
+    GaussianHelper<T,Remapper> _helper;
+    afw::geom::ellipses::Ellipse _psfEllipse;
+    double _psfCoefficient;
+};
+
+template <typename T, typename Remapper>
 class ShapeletHelper {
 public:
 
     static int computeWorkspace(int dataSize, int order) {
-        return sizeof(T) * dataSize * (1 + 2*(order + 1));
+        return dataSize * (1 + 2*(order + 1))
+            + EllipseHelper<T>::computeWorkspace(dataSize)
+            + Remapper::computeWorkspace(dataSize, order);
     }
 
-    explicit ShapeletHelper(T *& workspace, int dataSize, int order) :
+    template <typename U>
+    explicit ShapeletHelper(T * & workspace, int dataSize, int order, U remapperArg) :
         _order(order),
         _expWorkspace(makeView(workspace, dataSize)),
-        _xWorkspace(makeView(workspace, maxOrder + 1, dataSize)),
-        _yWorkspace(makeView(workspace, maxOrder + 1, dataSize))
+        _xWorkspace(makeView(workspace, order + 1, dataSize)),
+        _yWorkspace(makeView(workspace, order + 1, dataSize)),
+        _ellipseHelper(workspace, dataSize),
+        _remapper(workspace, dataSize, order, remapperArg)
     {}
 
+    template <typename ArrayT>
     void apply(
-        EllipseHelper<T> const & ellipseHelper,
-        ndarray::Array<T,2,-1> const & output
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        afw::geom::ellipses::Ellipse const & ellipse,
+        ArrayT & output
     ) {
-        _expWorkspace =
-            (-0.5*ellipseHelper.xyt.rowwise().squaredNorm()).array().exp() * ellipseHelper.detFactor;
-        _fillHermite1d(_xWorkspace, ellipseHelper.xyt.col(0).array());
-        _fillHermite1d(_yWorkspace, ellipseHelper.xyt.col(1).array());
-        ndarray::EigenView<T,2,-1,Eigen::ArrayXpr> view(output);
+        _ellipseHelper.readEllipse(x, y, ellipse);
+        _ellipseHelper.computeGaussian(_expWorkspace);
+        _expWorkspace *= _ellipseHelper.detFactor;
+        _fillHermite1d(_xWorkspace, ellipseHelper._xt);
+        _fillHermite1d(_yWorkspace, ellipseHelper._yt);
+        _remapper.getLhs(output).setZero();
         for (PackedIndex i; i.getOrder() <= _order; ++i) {
-            view.col(i.getIndex()) += _expWorkspace*_xWorkspace.col(i.getX())*_yWorkspace.col(i.getY());
+            _remapper.getLhs(output).col(i.getIndex())
+                += _expWorkspace*_xWorkspace.col(i.getX())*_yWorkspace.col(i.getY());
         }
+        _remapper.finish(output);
     }
-
-    int getMaxOrder() const { return _maxOrder; }
 
 private:
 
@@ -157,10 +259,52 @@ private:
         }
     }
 
-    int _maxOrder;
+    int _order;
     Eigen::Map< Eigen::Array<T,Eigen::Dynamic,1> > _expWorkspace;
     Eigen::Map< Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> > _xWorkspace;
     Eigen::Map< Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> > _yWorkspace;
+    EllipseHelper<T> _ellipseHelper;
+    Remapper _remapper;
+};
+
+template <typename T>
+class ConvolvedShapeletHelper {
+public:
+
+    static int computeWorkspace(int dataSize, int order, int psfOrder) {
+        int rowOrder = GaussHermiteConvolution::computeRowOrder(order, psfOrder);
+        return ShapeletHelper<T>::computeWorkspace(dataSize, rowOrder)
+            + dataSize*rowOrder;
+    }
+
+    explicit ConvolvedShapeletHelper(T *& workspace, int dataSize, int order, ShapeletFunction const & psf) :
+        _convolution(order, psf),
+        _shapeletHelper(workspace, dataSize, _convolution.getRowOrder()),
+        _lhs(makeView(workspace, dataSize, computeSize(_convolution.getRowOrder()))),
+        _rhs(makeView(workspace, computeSize(_convolution.getColOrder()), _lhs.cols()))
+    {}
+
+    template <typename ArrayT>
+    void apply(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        afw::geom::ellipses::Ellipse const & ellipse,
+        ArrayT & output
+    ) {
+        afw::geom::ellipses::Ellipse tmpEllipse(ellipse);
+        // n.b. calling evaluate() modifies the ellipse, turning the pre-convolution ellipse into
+        // the post-convolution ellipse
+        _rhs = _convolution.evaluate(tmpEllipse).asEigen<Eigen::ArrayXpr>().transpose().cast<T>();
+        _shapeletHelper.apply(x, y, tmpEllipse, _lhs);
+        output.matrix() = _lhs.matrix() * _rhs.matrix().transpose();
+    }
+
+private:
+    GaussHermiteConvolution _convolution;
+    ShapeletHelper _shapeletHelper;
+    EllipseHelper _ellipseHelper;
+    Eigen::Map< Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> > _lhs;
+    Eigen::Map< Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> > _rhs;
 };
 
 template <typename T>
@@ -171,7 +315,11 @@ public:
         ndarray::Array<T const,1,1> const & x,
         ndarray::Array<T const,1,1> const & y
     ) : MatrixBuilder<T>(x, y, 1),
-        _ellipseHelper(this->getDataSize())
+        _workspace(
+            ndarray::SimpleManager<T>::allocate(EllipseHelper<T>::computeWorkspace(this->getDataSize()))
+        ),
+        _ellipseHelper(_workspace.second, this->getDataSize()),
+        _gaussianHelper()
     {}
 
     virtual void apply(
@@ -179,11 +327,11 @@ public:
         afw::geom::ellipses::Ellipse const & ellipse
     ) const {
         output.deep() = 0.0;
-        _ellipseHelper.readEllipse(this->_xy, ellipse);
-        _gaussianHelper.apply(_ellipseHelper, output.transpose()[0]);
+        _gaussianHelper.apply(this->_x, this->_y, ellipse, output.asEigen<Eigen::ArrayXpr>());
     }
 
 private:
+    std::pair<ndarray::Manager::Ptr,T*> _workspace;
     mutable EllipseHelper<T> _ellipseHelper;
     mutable GaussianHelper<T> _gaussianHelper;
 };
@@ -198,9 +346,12 @@ public:
         afw::geom::ellipses::Ellipse const & psfEllipse,
         double psfCoefficient
     ) : MatrixBuilder<T>(x, y, 1),
-        _ellipseHelper(this->getDataSize()),
-        _psfEllipse(psfEllipse),
-        _psfCoefficient(psfCoefficient)
+        _workspace(
+            ndarray::SimpleManager<T>::allocate(
+                ConvolvedGaussianHelper<T>::computeWorkspace(this->getDataSize())
+            )
+        ),
+        _helper(_workspace.second, this->getDataSize(), psfEllipse, psfCoefficient)
     {}
 
     virtual void apply(
@@ -209,15 +360,12 @@ public:
     ) const {
         output.deep() = 0.0;
         _ellipseHelper.readEllipse(this->_xy, ellipse.convolve(_psfEllipse));
-        _gaussianHelper.apply(_ellipseHelper, output.transpose()[0]);
-        output.asEigen() *= _psfCoefficient / ShapeletFunction::FLUX_FACTOR;
     }
 
 private:
+    std::pair<ndarray::Manager::Ptr,T*> _workspace;
     mutable EllipseHelper<T> _ellipseHelper;
     mutable GaussianHelper<T> _gaussianHelper;
-    afw::geom::ellipses::Ellipse _psfEllipse;
-    double _psfCoefficient;
 };
 
 template <typename T>
@@ -229,9 +377,14 @@ public:
         ndarray::Array<T const,1,1> const & y,
         int order
     ) : MatrixBuilder<T>(x, y, computeSize(order)),
-        _order(order),
-        _ellipseHelper(this->getDataSize()),
-        _shapeletHelper(this->getDataSize(), order)
+        _workspace(
+            ndarray::SimpleManager<T>::allocate(
+                EllipseHelper<T>::computeWorkspace(this->getDataSize())
+                + ShapeletHelper<T>::computeWorkspace(this->getDataSize(), order)
+            )
+        ),
+        _ellipseHelper(_workspace.second, this->getDataSize()),
+        _shapeletHelper(_workspace.second, this->getDataSize(), order)
     {}
 
     virtual void apply(
@@ -240,11 +393,11 @@ public:
     ) const {
         output.deep() = 0.0;
         _ellipseHelper.readEllipse(this->_xy, ellipse);
-        _shapeletHelper.apply(_ellipseHelper, output, _order);
+        _shapeletHelper.apply(_ellipseHelper, output.asEigen<Eigen::ArraXpr>());
     }
 
 private:
-    int const _order;
+    std::pair<ndarray::Manager::Ptr,T*> _workspace;
     mutable EllipseHelper<T> _ellipseHelper;
     mutable ShapeletHelper<T> _shapeletHelper;
 };
@@ -259,29 +412,24 @@ public:
         ShapeletFunction const & psf,
         int order
     ) : MatrixBuilder<T>(x, y, computeSize(order)),
-        _convolution(order, psf),
-        _convolutionWorkspace(ndarray::allocate(this->getDataSize(), _convolution.getRowOrder())),
-        _ellipseHelper(this->getDataSize()),
-        _shapeletHelper(this->getDataSize(), _convolution.getRowOrder())
+        _workspace(
+            ndarray::SimpleManager<T>::allocate(
+                ConvolvedShapeletHelper<T>::computeWorkspace(this->getDataSize(), order, psf.getOrder())
+            )
+        ),
+        _helper(_workspace.second, this->getDataSize(), order, psf)
     {}
 
     virtual void apply(
         ndarray::Array<T,2,-1> const & output,
         afw::geom::ellipses::Ellipse const & ellipse
     ) const {
-        _convolutionWorkspace.deep() = 0.0;
-        afw::geom::ellipses::Ellipse convolvedEllipse(ellipse);
-        ndarray::Array<double const,2,2> convolutionMatrix = _convolution.evaluate(convolvedEllipse);
-        _ellipseHelper.readEllipse(this->_xy, convolvedEllipse);
-        _shapeletHelper.apply(_ellipseHelper, _convolutionWorkspace, _convolution.getColOrder());
-        output.asEigen() = _convolutionWorkspace.asEigen() * convolutionMatrix.asEigen().cast<T>();
+        afw::geom::ellipses::Ellipse ellipseCopy(ellipse);
+        _helper.apply(ellipseCopy, output.asEigen<Eigen::ArrayXpr>());
     }
 
 private:
-    GaussHermiteConvolution _convolution;
-    ndarray::Array<T,2,-1> _convolutionWorkspace;
-    mutable EllipseHelper<T> _ellipseHelper;
-    mutable ShapeletHelper<T> _shapeletHelper;
+    mutable ConvolvedShapeletHelper<T> _helper;
 };
 
 template <typename T>
