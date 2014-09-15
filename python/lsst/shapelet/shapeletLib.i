@@ -62,6 +62,7 @@ Python interface to lsst::shapelet classes and functions
 %declareNumPyConverters(Eigen::MatrixXd);
 %declareNumPyConverters(Eigen::Matrix2d);
 %declareNumPyConverters(ndarray::Array<double,1>);
+%declareNumPyConverters(ndarray::Array<double const,1>);
 %declareNumPyConverters(ndarray::Array<float,1,1>);
 %declareNumPyConverters(ndarray::Array<double,1,1>);
 %declareNumPyConverters(ndarray::Array<double,2,1>);
