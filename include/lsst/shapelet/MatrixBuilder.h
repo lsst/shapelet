@@ -55,6 +55,9 @@ public:
     /// Return the number of basis elements
     int getBasisSize() const;
 
+    /// Return a matrix appropriate for use as an output for operator().
+    ndarray::Array<T,2,-2> allocateOutput() const;
+
     /**
      *  @brief Fill an array with the model matrix.
      *
@@ -67,6 +70,18 @@ public:
         ndarray::Array<T,2,-1> const & output,
         afw::geom::ellipses::Ellipse const & ellipse
     ) const;
+
+    /**
+     *  @brief Return a newly-allocated model matrix.
+     *
+     *  @param[in]   ellipse  Ellipse parameters of the model, with center relative to the x and y
+     *                        arrays passed at construction.
+     */
+    ndarray::Array<T,2,-2> operator()(afw::geom::ellipses::Ellipse const & ellipse) const {
+        ndarray::Array<T,2,-2> output = allocateOutput();
+        (*this)(output, ellipse);
+        return output;
+    }
 
 private:
 
@@ -86,21 +101,16 @@ public:
 
     explicit MatrixBuilderWorkspace(int size);
 
-    bool check(T const * end) const { return end == _end; }
+    int getRemaining() const { return _end - _current; }
 
-    Matrix makeMatrix(int rows, int cols) {
-        Matrix m(_current, rows, cols);
-        _current += rows*cols;
-        return m;
-    }
+#ifndef SWIG
 
-    Vector makeVector(int size) {
-        Vector v(_current, size);
-        _current += size;
-        return v;
-    }
+    Matrix makeMatrix(int rows, int cols);
+    Vector makeVector(int size);
 
     ndarray::Manager::Ptr getManager() const { return _manager; }
+
+#endif
 
 private:
     T * _current;

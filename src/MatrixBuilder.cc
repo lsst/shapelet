@@ -135,6 +135,8 @@ public:
 
     virtual int getDataSize() const { return _x.template getSize<0>(); }
 
+    virtual int computeWorkspace() const { return 2*_x.template getSize<0>(); }
+
     SimpleMatrixBuilderFactoryImpl(
         ndarray::Array<T const,1,1> const & x,
         ndarray::Array<T const,1,1> const & y
@@ -168,8 +170,8 @@ public:
     ) : SimpleMatrixBuilderImpl<T>(x, y, workspace, manager),
         _order(order),
         _gaussian(workspace->makeVector(x.template getSize<0>())),
-        _xHermite(workspace->makeMatrix(order + 1, x.template getSize<0>())),
-        _yHermite(workspace->makeMatrix(order + 1, y.template getSize<0>()))
+        _xHermite(workspace->makeMatrix(x.template getSize<0>(), order + 1)),
+        _yHermite(workspace->makeMatrix(y.template getSize<0>(), order + 1))
     {}
 
     virtual int getBasisSize() const { return computeSize(_order); }
@@ -231,7 +233,10 @@ public:
 
     virtual int getBasisSize() const { return _basisSize; }
 
-    virtual int computeWorkspace() const { return this->getDataSize()*(1 + 2*(_order + 1)); }
+    virtual int computeWorkspace() const {
+        return this->getDataSize()*(1 + 2*(_order + 1))
+            + SimpleMatrixBuilderFactoryImpl<T>::computeWorkspace();
+    }
 
     virtual PTR(typename MatrixBuilder<T>::Impl) apply(
         Workspace & workspace,
@@ -301,6 +306,13 @@ int MatrixBuilder<T>::getBasisSize() const {
 }
 
 template <typename T>
+ndarray::Array<T,2,-2> MatrixBuilder<T>::allocateOutput() const {
+    ndarray::Array<T,2,2> t = ndarray::allocate(getBasisSize(), getDataSize());
+    t.deep() = 0.0;
+    return t.transpose();
+}
+
+template <typename T>
 void MatrixBuilder<T>::operator()(
     ndarray::Array<T,2,-1> const & output,
     afw::geom::ellipses::Ellipse const & ellipse
@@ -327,6 +339,32 @@ MatrixBuilderWorkspace<T>::MatrixBuilderWorkspace(int size) {
 }
 
 
+template <typename T>
+typename MatrixBuilderWorkspace<T>::Matrix MatrixBuilderWorkspace<T>::makeMatrix(int rows, int cols) {
+    Matrix m(_current, rows, cols);
+    _current += rows*cols;
+    if (_current > _end) {
+        throw LSST_EXCEPT(
+            pex::exceptions::LengthError,
+            "Allocated workspace is too small"
+        );
+    }
+    return m;
+}
+
+template <typename T>
+typename MatrixBuilderWorkspace<T>::Vector MatrixBuilderWorkspace<T>::makeVector(int size) {
+    Vector v(_current, size);
+    _current += size;
+    if (_current > _end) {
+        throw LSST_EXCEPT(
+            pex::exceptions::LengthError,
+            "Allocated workspace is too small"
+        );
+    }
+    return v;
+}
+
 //===========================================================================================================
 //================== MatrixBuilderFactory ===================================================================
 //===========================================================================================================
@@ -338,6 +376,45 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
     int order
 ) : _impl(boost::make_shared< ShapeletMatrixBuilderFactoryImpl<T> >(x, y, order))
 {}
+
+template <typename T>
+MatrixBuilderFactory<T>::MatrixBuilderFactory(
+    ndarray::Array<T const,1,1> const & x,
+    ndarray::Array<T const,1,1> const & y,
+    int order,
+    ShapeletFunction const & psf
+) {
+    throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
+}
+
+template <typename T>
+MatrixBuilderFactory<T>::MatrixBuilderFactory(
+    ndarray::Array<T const,1,1> const & x,
+    ndarray::Array<T const,1,1> const & y,
+    int order,
+    MultiShapeletFunction const & psf
+) {
+    throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
+}
+
+template <typename T>
+MatrixBuilderFactory<T>::MatrixBuilderFactory(
+    ndarray::Array<T const,1,1> const & x,
+    ndarray::Array<T const,1,1> const & y,
+    MultiShapeletBasis const & basis
+) {
+    throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
+}
+
+template <typename T>
+MatrixBuilderFactory<T>::MatrixBuilderFactory(
+    ndarray::Array<T const,1,1> const & x,
+    ndarray::Array<T const,1,1> const & y,
+    MultiShapeletFunction const & psf,
+    MultiShapeletBasis const & basis
+) {
+    throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
+}
 
 template <typename T>
 int MatrixBuilderFactory<T>::getDataSize() const { return _impl->getDataSize(); }
@@ -365,6 +442,7 @@ MatrixBuilder<T> MatrixBuilderFactory<T>::operator()(Workspace & workspace) cons
 #define INSTANTIATE(T)                                  \
     template class MatrixBuilder<T>;                    \
     template class MatrixBuilderFactory<T>;             \
+    template class MatrixBuilderWorkspace<T>;           \
     template class SimpleMatrixBuilderImpl<T>;          \
     template class SimpleMatrixBuilderFactoryImpl<T>;   \
     template class ShapeletMatrixBuilderImpl<T>;        \
