@@ -94,6 +94,17 @@ double MultiShapeletFunctionEvaluator::operator()(afw::geom::Extent2D const & po
     return r;
 }
 
+ndarray::Array<double,1,1> MultiShapeletFunctionEvaluator::operator()(
+    ndarray::Array<double const,1> const & x,
+    ndarray::Array<double const,1> const & y
+) const {
+    ndarray::Array<double,1,1> output = ndarray::allocate(x.getSize<0>());
+    for (int i = 0, n = x.getSize<0>(); i < n; ++i) {
+        output[i] = (*this)(x[i], y[i]);
+    }
+    return output;
+}
+
 void MultiShapeletFunctionEvaluator::addToImage(
     ndarray::Array<double,2,1> const & array,
     afw::geom::Point2I const & xy0
