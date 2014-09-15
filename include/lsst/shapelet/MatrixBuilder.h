@@ -33,134 +33,178 @@ namespace lsst { namespace shapelet {
 
 class MultiShapeletBasis;
 
+template <typename T>
+class MatrixBuilderFactory;
+
 /**
- *  @brief Base class that evaluates a (multi-)shapelet basis at predefined points
+ *  @brief Class that evaluates a (multi-)shapelet basis at predefined points
  *
  *  The output "matrix" has pixels along the rows, and basis elements along columns;
  *  this is the design matrix involved in a linear least squares fit for the basis
  *  coefficients.
- *
- *  MatrixBuilder is an abstract base class; derived classes represent implementations for
- *  different kinds of bases.  Several private implementations are provided, and can be
- *  accessed via the makeMatrixBuilder free functions.
  */
 template <typename T>
 class MatrixBuilder {
 public:
 
+    class Impl;
+
     /// Return the number of data points
-    int getDataSize() const { return _x.size(); }
+    int getDataSize() const;
 
     /// Return the number of basis elements
-    int getBasisSize() const { return _basisSize; }
+    int getBasisSize() const;
 
     /**
-     *  @brief Add the model matrix to an array.
+     *  @brief Fill an array with the model matrix.
      *
      *  @param[out]  output   Matrix to fill, with dimensions (getDataSize(), getBasisSize()).
      *                        Will be zeroed before filling.
      *  @param[in]   ellipse  Ellipse parameters of the model, with center relative to the x and y
      *                        arrays passed at construction.
      */
-    virtual void apply(
+    void operator()(
         ndarray::Array<T,2,-1> const & output,
         afw::geom::ellipses::Ellipse const & ellipse
-    ) const = 0;
+    ) const;
 
-    virtual ~MatrixBuilder() {}
+private:
 
-protected:
+    template <typename U> friend class MatrixBuilderFactory;
 
-    MatrixBuilder(
-        ndarray::Array<T const,1,1> const & x,
-        ndarray::Array<T const,1,1> const & y,
-        int basisSize
-    );
+    explicit MatrixBuilder(PTR(Impl) impl);
 
-    int const _basisSize;
-    ndarray::Array<T const,1,1> _x;
-    ndarray::Array<T const,1,1> _y;
+    PTR(Impl) _impl;
 };
 
-/**
- *  Create a MatrixBuilder that evaluates a simple non-compound shapelet basis.
- *
- *  @param[in] x          column positions at which the basis should be evaluated.
- *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
- *  @param[in] order      order of the shapelet basis
- */
 template <typename T>
-PTR(MatrixBuilder<T>) makeMatrixBuilder(
-    ndarray::Array<T const,1,1> const & x,
-    ndarray::Array<T const,1,1> const & y,
-    int order
-);
+class MatrixBuilderWorkspace {
+public:
 
-/**
- *  Create a MatrixBuilder that evaluates a simple non-compound shapelet basis after convolving it
- *  with a ShapeletFunction.
- *
- *  @param[in] x          column positions at which the basis should be evaluated.
- *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
- *  @param[in] psf        function to convolve the basis with
- *  @param[in] order      order of the shapelet basis
- */
-template <typename T>
-PTR(MatrixBuilder<T>) makeMatrixBuilder(
-    ndarray::Array<T const,1,1> const & x,
-    ndarray::Array<T const,1,1> const & y,
-    ShapeletFunction const & psf,
-    int order
-);
+    typedef Eigen::Map< Eigen::Array<T,Eigen::Dynamic,Eigen::Dynamic> > Matrix;
+    typedef Eigen::Map< Eigen::Array<T,Eigen::Dynamic,1> > Vector;
 
-/**
- *  Create a MatrixBuilder that evaluates a simple non-compound shapelet basis after convolving it
- *  with a MultiShapeletFunction.
- *
- *  @param[in] x          column positions at which the basis should be evaluated.
- *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
- *  @param[in] psf        function to convolve the basis with
- *  @param[in] order      order of the shapelet basis
- */
-template <typename T>
-PTR(MatrixBuilder<T>) makeMatrixBuilder(
-    ndarray::Array<T const,1,1> const & x,
-    ndarray::Array<T const,1,1> const & y,
-    MultiShapeletFunction const & psf,
-    int order
-);
+    explicit MatrixBuilderWorkspace(int size);
 
-/**
- *  Create a MatrixBuilder that evaluates a MultiShapeletBasis object.
- *
- *  @param[in] x          column positions at which the basis should be evaluated.
- *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
- *  @param[in] order      order of the shapelet basis
- *  @param[in] basis      basis object defining the functions the matrix evaluates
- */
-template <typename T>
-PTR(MatrixBuilder<T>) makeMatrixBuilder(
-    ndarray::Array<T const,1,1> const & x,
-    ndarray::Array<T const,1,1> const & y,
-    MultiShapeletBasis const & basis
-);
+    bool check(T const * end) const { return end == _end; }
 
-/**
- *  Create a MatrixBuilder that evaluates a MultiShapeletBasis object after convolving it with
- *  a MultiShapeletFunction.
- *
- *  @param[in] x          column positions at which the basis should be evaluated.
- *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
- *  @param[in] psf        function to convolve the basis with
- *  @param[in] basis      basis object defining the functions the matrix evaluates
- */
+    Matrix makeMatrix(int rows, int cols) {
+        Matrix m(_current, rows, cols);
+        _current += rows*cols;
+        return m;
+    }
+
+    Vector makeVector(int size) {
+        Vector v(_current, size);
+        _current += size;
+        return v;
+    }
+
+    ndarray::Manager::Ptr getManager() const { return _manager; }
+
+private:
+    T * _current;
+    T * _end;
+    ndarray::Manager::Ptr _manager;
+};
+
 template <typename T>
-PTR(MatrixBuilder<T>) makeMatrixBuilder(
-    ndarray::Array<T const,1,1> const & x,
-    ndarray::Array<T const,1,1> const & y,
-    MultiShapeletFunction const & psf,
-    MultiShapeletBasis const & basis
-);
+class MatrixBuilderFactory {
+public:
+
+    typedef MatrixBuilderWorkspace<T> Workspace;
+
+    class Impl;
+
+    /**
+     *  Create a MatrixBuilder that evaluates a simple non-compound shapelet basis.
+     *
+     *  @param[in] x          column positions at which the basis should be evaluated.
+     *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
+     *  @param[in] order      order of the shapelet basis
+     */
+    MatrixBuilderFactory(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        int order
+    );
+
+    /**
+     *  Create a MatrixBuilder that evaluates a simple non-compound shapelet basis after convolving it
+     *  with a ShapeletFunction.
+     *
+     *  @param[in] x          column positions at which the basis should be evaluated.
+     *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
+     *  @param[in] order      order of the shapelet basis
+     *  @param[in] psf        function to convolve the basis with
+     */
+    MatrixBuilderFactory(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        int order,
+        ShapeletFunction const & psf
+    );
+
+    /**
+     *  Create a MatrixBuilder that evaluates a simple non-compound shapelet basis after convolving it
+     *  with a MultiShapeletFunction.
+     *
+     *  @param[in] x          column positions at which the basis should be evaluated.
+     *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
+     *  @param[in] order      order of the shapelet basis
+     *  @param[in] psf        function to convolve the basis with
+     */
+    MatrixBuilderFactory(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        int order,
+        MultiShapeletFunction const & psf
+    );
+
+    /**
+     *  Create a MatrixBuilder that evaluates a MultiShapeletBasis object.
+     *
+     *  @param[in] x          column positions at which the basis should be evaluated.
+     *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
+     *  @param[in] basis      basis object defining the functions the matrix evaluates
+     */
+    MatrixBuilderFactory(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        MultiShapeletBasis const & basis
+    );
+
+    /**
+     *  Create a MatrixBuilder that evaluates a MultiShapeletBasis object after convolving it with
+     *  a MultiShapeletFunction.
+     *
+     *  @param[in] x          column positions at which the basis should be evaluated.
+     *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
+     *  @param[in] psf        function to convolve the basis with
+     *  @param[in] basis      basis object defining the functions the matrix evaluates
+     */
+    MatrixBuilderFactory(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        MultiShapeletFunction const & psf,
+        MultiShapeletBasis const & basis
+    );
+
+    /// Return the number of data points
+    int getDataSize() const;
+
+    /// Return the number of basis elements
+    int getBasisSize() const;
+
+    int computeWorkspace() const;
+
+    MatrixBuilder<T> operator()() const;
+
+    MatrixBuilder<T> operator()(Workspace & workspace) const;
+
+private:
+    PTR(Impl) _impl;
+};
 
 }} // namespace lsst::shapelet
 
