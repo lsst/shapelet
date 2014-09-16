@@ -520,6 +520,11 @@ typename MatrixBuilderWorkspace<T>::Vector MatrixBuilderWorkspace<T>::makeVector
     return v;
 }
 
+template <typename T>
+void MatrixBuilderWorkspace<T>::increment(int size) {
+    _current += size;
+}
+
 //===========================================================================================================
 //================== MatrixBuilderFactory ===================================================================
 //===========================================================================================================

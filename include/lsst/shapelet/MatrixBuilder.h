@@ -101,6 +101,12 @@ public:
 
     explicit MatrixBuilderWorkspace(int size);
 
+    MatrixBuilderWorkspace(MatrixBuilderWorkspace const & other) :
+        _current(other._current),
+        _end(other._end),
+        _manager(other._manager)
+    {}
+
     int getRemaining() const { return _end - _current; }
 
 #ifndef SWIG
@@ -108,11 +114,16 @@ public:
     Matrix makeMatrix(int rows, int cols);
     Vector makeVector(int size);
 
+    void increment(int size);
+
     ndarray::Manager::Ptr getManager() const { return _manager; }
 
 #endif
 
 private:
+
+    void operator=(MatrixBuilderWorkspace & other); // disabled
+
     T * _current;
     T * _end;
     ndarray::Manager::Ptr _manager;
