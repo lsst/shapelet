@@ -171,7 +171,7 @@ public:
         _order(order),
         _gaussian(workspace->makeVector(x.template getSize<0>())),
         _xHermite(workspace->makeMatrix(x.template getSize<0>(), order + 1)),
-        _yHermite(workspace->makeMatrix(y.template getSize<0>(), order + 1))
+        _yHermite(workspace->makeMatrix(x.template getSize<0>(), order + 1))
     {}
 
     virtual int getBasisSize() const { return computeSize(_order); }
@@ -180,13 +180,21 @@ public:
         ndarray::Array<T,2,-1> const & output,
         afw::geom::ellipses::Ellipse const & ellipse
     ) {
+        apply(output.template asEigen<Eigen::ArrayXpr>(), ellipse);
+    }
+
+    template <typename EigenArrayT>
+    void apply(
+        EigenArrayT output,
+        afw::geom::ellipses::Ellipse const & ellipse
+    ) {
         this->readEllipse(ellipse);
         fillGaussian();
         fillHermite1d(_xHermite, this->_xt);
         fillHermite1d(_yHermite, this->_yt);
         for (PackedIndex i; i.getOrder() <= _order; ++i) {
-            output.template asEigen<Eigen::ArrayXpr>().col(i.getIndex())
-                += this->_detFactor*_gaussian * _xHermite.col(i.getX()) * _yHermite.col(i.getY());
+            output.col(i.getIndex())
+                += this->_detFactor * _gaussian * _xHermite.col(i.getX()) * _yHermite.col(i.getY());
         }
     }
 
@@ -211,7 +219,7 @@ public:
         }
     }
 
-private:
+protected:
     int _order;
     typename Workspace::Vector _gaussian;
     typename Workspace::Matrix _xHermite;
@@ -248,12 +256,102 @@ public:
         return boost::make_shared<BuilderImpl>(this->_x, this->_y, _order, &workspace, manager);
     }
 
-private:
+protected:
     int _order;
     int _basisSize;
 };
 
 } // anonymous
+
+
+//===========================================================================================================
+//================== Non-Convolved, Remapped Shapelet Implementation ========================================
+//===========================================================================================================
+
+namespace {
+
+template <typename T>
+class RemappedShapeletMatrixBuilderImpl : public ShapeletMatrixBuilderImpl<T> {
+public:
+
+    typedef MatrixBuilderWorkspace<T> Workspace;
+
+    RemappedShapeletMatrixBuilderImpl(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        int order,
+        double radius,
+        ndarray::Array<double const,2,2> const & remapMatrix,
+        Workspace * workspace,
+        ndarray::Manager::Ptr const & manager
+    ) : ShapeletMatrixBuilderImpl<T>(x, y, order, workspace, manager),
+        _radius(radius),
+        _ellipse(afw::geom::ellipses::Quadrupole()),
+        _remapMatrix(remapMatrix.asEigen().cast<T>().transpose()), // transpose to preserve memory order
+        _lhs(workspace->makeMatrix(x.template getSize<0>(), computeSize(order)))
+    {}
+
+    virtual int getBasisSize() const { return _remapMatrix.rows(); }
+
+    virtual void apply(
+        ndarray::Array<T,2,-1> const & output,
+        afw::geom::ellipses::Ellipse const & ellipse
+    ) {
+        _ellipse = ellipse;
+        _ellipse.scale(_radius);
+        _lhs.setZero();
+        ShapeletMatrixBuilderImpl<T>::apply(_lhs, _ellipse);
+        output.asEigen() += _lhs.matrix() * _remapMatrix.transpose(); // undo the transpose in the ctor
+    }
+
+protected:
+    double _radius;
+    mutable afw::geom::ellipses::Ellipse _ellipse;
+    Eigen::Matrix<T,Eigen::Dynamic,Eigen::Dynamic> _remapMatrix;
+    typename Workspace::Matrix _lhs;
+};
+
+template <typename T>
+class RemappedShapeletMatrixBuilderFactoryImpl : public ShapeletMatrixBuilderFactoryImpl<T> {
+public:
+
+    typedef MatrixBuilderWorkspace<T> Workspace;
+    typedef RemappedShapeletMatrixBuilderImpl<T> BuilderImpl;
+
+    RemappedShapeletMatrixBuilderFactoryImpl(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        int order,
+        double radius,
+        ndarray::Array<double const,2,2> const & remapMatrix
+    ) : ShapeletMatrixBuilderFactoryImpl<T>(x, y, order),
+        _radius(radius),
+        _remapMatrix(remapMatrix)
+    {}
+
+    virtual int getBasisSize() const { return _remapMatrix.getSize<1>(); }
+
+    virtual int computeWorkspace() const {
+        return ShapeletMatrixBuilderFactoryImpl<T>::computeWorkspace()
+            + ShapeletMatrixBuilderFactoryImpl<T>::getBasisSize() * this->getDataSize();
+    }
+
+    virtual PTR(typename MatrixBuilder<T>::Impl) apply(
+        Workspace & workspace,
+        ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
+    ) const {
+        return boost::make_shared<BuilderImpl>(
+            this->_x, this->_y, this->_order, _radius, _remapMatrix, &workspace, manager
+        );
+    }
+
+protected:
+    double _radius;
+    ndarray::Array<double const,2,2> _remapMatrix;
+};
+
+} // anonymous
+
 
 //===========================================================================================================
 //================== Multi-Component Implementations ========================================================
@@ -472,6 +570,10 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
             )
         ) {
             _impl = boost::make_shared< ShapeletMatrixBuilderFactoryImpl<T> >(x, y, component.getOrder());
+        } else {
+            _impl = boost::make_shared< RemappedShapeletMatrixBuilderFactoryImpl<T> >(
+                x, y, component.getOrder(), component.getRadius(), component.getMatrix()
+            );
         }
     } else {
         throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
@@ -511,15 +613,17 @@ MatrixBuilder<T> MatrixBuilderFactory<T>::operator()(Workspace & workspace) cons
 //================== Explicit Instantiation =================================================================
 //===========================================================================================================
 
-#define INSTANTIATE(T)                                  \
-    template class MatrixBuilder<T>;                    \
-    template class MatrixBuilderFactory<T>;             \
-    template class MatrixBuilderWorkspace<T>;           \
-    template class SimpleMatrixBuilderImpl<T>;          \
-    template class SimpleMatrixBuilderFactoryImpl<T>;   \
-    template class ShapeletMatrixBuilderImpl<T>;        \
-    template class ShapeletMatrixBuilderFactoryImpl<T>; \
-    template class CompoundMatrixBuilderImpl<T>;        \
+#define INSTANTIATE(T)                                          \
+    template class MatrixBuilder<T>;                            \
+    template class MatrixBuilderFactory<T>;                     \
+    template class MatrixBuilderWorkspace<T>;                   \
+    template class SimpleMatrixBuilderImpl<T>;                  \
+    template class SimpleMatrixBuilderFactoryImpl<T>;           \
+    template class ShapeletMatrixBuilderImpl<T>;                \
+    template class ShapeletMatrixBuilderFactoryImpl<T>;         \
+    template class RemappedShapeletMatrixBuilderImpl<T>;        \
+    template class RemappedShapeletMatrixBuilderFactoryImpl<T>; \
+    template class CompoundMatrixBuilderImpl<T>;                \
     template class CompoundMatrixBuilderFactoryImpl<T>
 
 INSTANTIATE(float);

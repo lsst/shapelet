@@ -44,7 +44,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         self.assertEqual(obj.getDataSize(), self.xD.size)
         self.assertEqual(obj.getBasisSize(), basisSize)
 
-    def testSimpleShapeletMatrixBuilder(self):
+    def testShapeletMatrixBuilder(self):
         function = self.makeRandomShapeletFunction(order=4)
         size = function.getCoefficients().size
         function.getCoefficients()[:] = numpy.random.randn(size)
@@ -89,7 +89,46 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         # Finally, check against a completely different implementation (which is tested elsewhere)
         checkEvaluator = function.evaluate()
         checkVector = checkEvaluator(self.xD, self.yD)
-        self.assertClose(numpy.dot(matrix1D, function.getCoefficients()), checkVector, rtol=1E-15)
+        self.assertClose(numpy.dot(matrix1D, function.getCoefficients()), checkVector, rtol=1E-14)
+
+
+    def testRemappedShapeletMatrixBuilder(self):
+        function = self.makeRandomShapeletFunction(order=4)
+        size = 6
+        radius = 3.2
+        remapMatrix = numpy.random.randn(function.getCoefficients().size, size)
+        coefficients = numpy.random.randn(size)
+        function.getCoefficients()[:] = numpy.dot(remapMatrix, coefficients)
+        basis = lsst.shapelet.MultiShapeletBasis(size)
+        basis.addComponent(radius, function.getOrder(), remapMatrix)
+        factoryF = lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, basis)
+        factoryD = lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, basis)
+        self.checkAccessors(factoryF, size)
+        self.checkAccessors(factoryD, size)
+        builder1F = factoryF()
+        builder1D = factoryD()
+        self.checkAccessors(builder1F, size)
+        self.checkAccessors(builder1D, size)
+        workspaceF = lsst.shapelet.MatrixBuilderF.Workspace(factoryF.computeWorkspace())
+        workspaceD = lsst.shapelet.MatrixBuilderD.Workspace(factoryD.computeWorkspace())
+        builder2F = factoryF(workspaceF)
+        builder2D = factoryD(workspaceD)
+        self.assertEqual(workspaceF.getRemaining(), 0)
+        self.assertEqual(workspaceD.getRemaining(), 0)
+        self.checkAccessors(builder2F, size)
+        self.checkAccessors(builder2D, size)
+        matrix1F = builder1F(function.getEllipse())
+        matrix1D = builder1D(function.getEllipse())
+        matrix2F = builder2F(function.getEllipse())
+        matrix2D = builder2D(function.getEllipse())
+        self.assertClose(matrix1D, matrix2D, rtol=0.0, atol=0.0)  # same code, different workspace
+        self.assertClose(matrix1F, matrix2F, rtol=0.0, atol=0.0)  # same code, different workspace
+        self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0) # same code, different precision
+        # Finally, check against a completely different implementation (which is tested elsewhere)
+        function.getEllipse().scale(radius)
+        checkEvaluator = function.evaluate()
+        checkVector = checkEvaluator(self.xD, self.yD)
+        self.assertClose(numpy.dot(matrix1D, coefficients), checkVector, rtol=1E-14)
 
 
 def suite():
