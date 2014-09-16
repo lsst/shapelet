@@ -269,13 +269,11 @@ public:
     typedef std::vector<PTR(Component)> Vector;
     typedef typename Vector::const_iterator Iterator;
 
-    CompoundMatrixBuilderImpl(int dataSize, int basisSize, Vector const & components) :
-        _dataSize(dataSize), _basisSize(basisSize), _components(components)
-    {}
+    explicit CompoundMatrixBuilderImpl(Vector const & components) : _components(components) {}
 
-    virtual int getDataSize() const { return _dataSize; }
+    virtual int getDataSize() const { return _components.front()->getDataSize(); }
 
-    virtual int getBasisSize() const { return _basisSize; }
+    virtual int getBasisSize() const { return _components.front()->getBasisSize(); }
 
     virtual void apply(
         ndarray::Array<T,2,-1> const & output,
@@ -287,8 +285,64 @@ public:
     }
 
 private:
-    int _dataSize;
-    int _basisSize;
+    Vector _components;
+};
+
+template <typename T>
+class CompoundMatrixBuilderFactoryImpl : public MatrixBuilderFactory<T>::Impl {
+public:
+
+    typedef typename MatrixBuilderFactory<T>::Impl Component;
+    typedef std::vector<PTR(Component)> Vector;
+    typedef typename Vector::const_iterator Iterator;
+
+    typedef MatrixBuilderWorkspace<T> Workspace;
+    typedef CompoundMatrixBuilderImpl<T> BuilderImpl;
+
+    CompoundMatrixBuilderFactoryImpl(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        MultiShapeletBasis const & basis
+    ) {
+        _components.reserve(basis.getComponentCount());
+        // TODO
+    }
+
+    CompoundMatrixBuilderFactoryImpl(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        MultiShapeletBasis const & basis,
+        MultiShapeletFunction const & psf
+    ) {
+        _components.reserve(psf.getElements().size() * basis.getComponentCount());
+        // TODO
+    }
+
+    virtual int getBasisSize() const { return _components.front()->getBasisSize(); }
+
+    virtual int getDataSize() const { return _components.front()->getDataSize(); }
+
+    virtual int computeWorkspace() const {
+        int ws = 0;
+        for (Iterator i = _components.begin(); i != _components.end(); ++i) {
+            ws = std::max((**i).computeWorkspace(), ws);
+        }
+        return ws;
+    }
+
+    virtual PTR(typename MatrixBuilder<T>::Impl) apply(
+        Workspace & workspace,
+        ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
+    ) const {
+        typename BuilderImpl::Vector builders;
+        builders.reserve(_components.size());
+        for (Iterator i = _components.begin(); i != _components.end(); ++i) {
+            builders.push_back((**i).apply(workspace, manager));
+        }
+        return boost::make_shared<BuilderImpl>(builders);
+    }
+
+private:
     Vector _components;
 };
 
@@ -464,7 +518,9 @@ MatrixBuilder<T> MatrixBuilderFactory<T>::operator()(Workspace & workspace) cons
     template class SimpleMatrixBuilderImpl<T>;          \
     template class SimpleMatrixBuilderFactoryImpl<T>;   \
     template class ShapeletMatrixBuilderImpl<T>;        \
-    template class ShapeletMatrixBuilderFactoryImpl<T>
+    template class ShapeletMatrixBuilderFactoryImpl<T>; \
+    template class CompoundMatrixBuilderImpl<T>;        \
+    template class CompoundMatrixBuilderFactoryImpl<T>
 
 INSTANTIATE(float);
 INSTANTIATE(double);
