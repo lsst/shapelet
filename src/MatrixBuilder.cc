@@ -229,7 +229,10 @@ public:
         ndarray::Array<T const,1,1> const & x,
         ndarray::Array<T const,1,1> const & y,
         int order
-    ) : SimpleMatrixBuilderFactoryImpl<T>(x, y), _order(order), _basisSize(computeSize(order)) {}
+    ) : SimpleMatrixBuilderFactoryImpl<T>(x, y),
+        _order(order),
+        _basisSize(computeSize(order))
+    {}
 
     virtual int getBasisSize() const { return _basisSize; }
 
@@ -403,7 +406,22 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
     ndarray::Array<T const,1,1> const & y,
     MultiShapeletBasis const & basis
 ) {
-    throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
+    if (basis.getComponentCount() == 1) {
+        MultiShapeletBasisComponent const & component = *basis.begin();
+        ndarray::EigenView<double const,2,2> matrix(component.getMatrix());
+        if (
+            std::abs(component.getRadius() - 1.0) < std::numeric_limits<double>::epsilon() &&
+            matrix.rows() == matrix.cols() &&
+            matrix.isApprox(
+                Eigen::MatrixXd::Identity(matrix.rows(), matrix.cols()),
+                std::numeric_limits<double>::epsilon()
+            )
+        ) {
+            _impl = boost::make_shared< ShapeletMatrixBuilderFactoryImpl<T> >(x, y, component.getOrder());
+        }
+    } else {
+        throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
+    }
 }
 
 template <typename T>

@@ -46,27 +46,45 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def testSimpleShapeletMatrixBuilder(self):
         function = self.makeRandomShapeletFunction(order=4)
-        function.getCoefficients()[:] = numpy.random.randn(function.getCoefficients().size)
+        size = function.getCoefficients().size
+        function.getCoefficients()[:] = numpy.random.randn(size)
+        basis = lsst.shapelet.MultiShapeletBasis(size)
+        basis.addComponent(1.0, function.getOrder(), numpy.identity(size))
         factoryF = lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, function.getOrder())
         factoryD = lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, function.getOrder())
-        self.checkAccessors(factoryF, function.getCoefficients().size)
-        self.checkAccessors(factoryD, function.getCoefficients().size)
+        # we should get the same results with an appropriately simple MultiShapeletBasis
+        compoundFactoryF = lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, basis)
+        compoundFactoryD = lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, basis)
+        self.checkAccessors(factoryF, size)
+        self.checkAccessors(factoryD, size)
+        self.checkAccessors(compoundFactoryF, size)
+        self.checkAccessors(compoundFactoryD, size)
         builder1F = factoryF()
         builder1D = factoryD()
-        self.checkAccessors(builder1F, function.getCoefficients().size)
-        self.checkAccessors(builder1D, function.getCoefficients().size)
+        self.checkAccessors(builder1F, size)
+        self.checkAccessors(builder1D, size)
         workspaceF = lsst.shapelet.MatrixBuilderF.Workspace(factoryF.computeWorkspace())
         workspaceD = lsst.shapelet.MatrixBuilderD.Workspace(factoryD.computeWorkspace())
         builder2F = factoryF(workspaceF)
         builder2D = factoryD(workspaceD)
         self.assertEqual(workspaceF.getRemaining(), 0)
         self.assertEqual(workspaceD.getRemaining(), 0)
+        self.checkAccessors(builder2F, size)
+        self.checkAccessors(builder2D, size)
+        builder3F = compoundFactoryF()
+        builder3D = compoundFactoryD()
+        self.checkAccessors(builder3F, size)
+        self.checkAccessors(builder3D, size)
         matrix1F = builder1F(function.getEllipse())
         matrix1D = builder1D(function.getEllipse())
         matrix2F = builder2F(function.getEllipse())
         matrix2D = builder2D(function.getEllipse())
+        matrix3F = builder3F(function.getEllipse())
+        matrix3D = builder3D(function.getEllipse())
         self.assertClose(matrix1D, matrix2D, rtol=0.0, atol=0.0)  # same code, different workspace
         self.assertClose(matrix1F, matrix2F, rtol=0.0, atol=0.0)  # same code, different workspace
+        self.assertClose(matrix1F, matrix3F, rtol=0.0, atol=0.0)  # same code, different construction pattern
+        self.assertClose(matrix1D, matrix3D, rtol=0.0, atol=0.0)  # same code, different construction pattern
         self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0) # same code, different precision
         # Finally, check against a completely different implementation (which is tested elsewhere)
         checkEvaluator = function.evaluate()
