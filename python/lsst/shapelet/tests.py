@@ -53,28 +53,30 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
         return z
 
     @staticmethod
-    def makeRandomShapeletFunction(order=2, zeroCenter=False):
+    def makeRandomShapeletFunction(order=2, zeroCenter=False, ellipse=None, scale=1.0):
         center = lsst.afw.geom.Point2D()
         if not zeroCenter:
             center = lsst.afw.geom.Point2D(numpy.random.randn(), numpy.random.randn())
-        ellipse = lsst.afw.geom.ellipses.Ellipse(
-            lsst.afw.geom.ellipses.Axes(
-                float(numpy.random.uniform(low=1, high=2)),
-                float(numpy.random.uniform(low=1, high=2)),
-                float(numpy.random.uniform(low=0, high=numpy.pi))
-                ),
-            center
-            )
+        if ellipse is None:
+            ellipse = lsst.afw.geom.ellipses.Ellipse(
+                lsst.afw.geom.ellipses.Axes(
+                    float(numpy.random.uniform(low=1, high=2)),
+                    float(numpy.random.uniform(low=1, high=2)),
+                    float(numpy.random.uniform(low=0, high=numpy.pi))
+                    ),
+                center
+                )
         coefficients = numpy.random.randn(lsst.shapelet.computeSize(order))
         result = lsst.shapelet.ShapeletFunction(order, lsst.shapelet.HERMITE, coefficients)
         result.setEllipse(ellipse)
+        result.getEllipse().scale(scale)
         return result
 
     @staticmethod
-    def makeRandomMultiShapeletFunction(nElements=3):
+    def makeRandomMultiShapeletFunction(nElements=3, ellipse=None):
         elements = []
         for n in range(nElements):
-            elements.append(ShapeletTestCase.makeRandomShapeletFunction())
+            elements.append(ShapeletTestCase.makeRandomShapeletFunction(ellipse=ellipse))
         return lsst.shapelet.MultiShapeletFunction(elements)
 
     def compareShapeletFunctions(self, a, b, rtolEllipse=1E-14, rtolCoeff=1E-14):
