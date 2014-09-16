@@ -403,7 +403,13 @@ public:
         MultiShapeletBasis const & basis
     ) {
         _components.reserve(basis.getComponentCount());
-        // TODO
+        for (MultiShapeletBasis::Iterator i = basis.begin(); i != basis.end(); ++i) {
+            _components.push_back(
+                boost::make_shared< RemappedShapeletMatrixBuilderFactoryImpl<T> >(
+                    x, y, i->getOrder(), i->getRadius(), i->getMatrix()
+                )
+            );
+        }
     }
 
     CompoundMatrixBuilderFactoryImpl(
@@ -435,8 +441,16 @@ public:
         typename BuilderImpl::Vector builders;
         builders.reserve(_components.size());
         for (Iterator i = _components.begin(); i != _components.end(); ++i) {
-            builders.push_back((**i).apply(workspace, manager));
+            // By copying the workspace here, we prevent the original from having its pointer updated (yet),
+            // and hence each component builder starts grabbing workspace arrays from the same point,
+            // and they all end up sharing the same space.  That's what we want, because we call them one
+            // at a time, and they don't need anything to remain between calls.
+            Workspace wsCopy(workspace);
+            builders.push_back((**i).apply(wsCopy, manager));
         }
+        // Now, at the end, we increment the workspace by the amount we claimed we needed, which was
+        // the maximum needed by any individual components.
+        workspace.increment(computeWorkspace());
         return boost::make_shared<BuilderImpl>(builders);
     }
 
@@ -581,7 +595,7 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
             );
         }
     } else {
-        throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
+        _impl = boost::make_shared< CompoundMatrixBuilderFactoryImpl<T> >(x, y, basis);
     }
 }
 

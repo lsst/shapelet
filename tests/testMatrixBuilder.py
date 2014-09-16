@@ -131,6 +131,51 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         self.assertClose(numpy.dot(matrix1D, coefficients), checkVector, rtol=1E-14)
 
 
+    def testCompoundMatrixBuilder(self):
+        ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes(4.0, 3.0, 1.0),
+                                                 lsst.afw.geom.Point2D(3.2, 1.0))
+        radii = [0.7, 1.2]
+        orders = [4, 3]
+        size = 8
+        functions = [self.makeRandomShapeletFunction(order=order, ellipse=ellipse, scale=radius)
+                     for radius, order in zip(radii, orders)]
+        remapMatrices = [numpy.random.randn(f.getCoefficients().size, size) for f in functions]
+        coefficients = numpy.random.randn(size)
+        basis = lsst.shapelet.MultiShapeletBasis(size)
+        for radius, function, matrix in zip(radii, functions, remapMatrices):
+            function.getCoefficients()[:] = numpy.dot(matrix, coefficients)
+            basis.addComponent(radius, function.getOrder(), matrix)
+        factoryF = lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, basis)
+        factoryD = lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, basis)
+        self.checkAccessors(factoryF, size)
+        self.checkAccessors(factoryD, size)
+        builder1F = factoryF()
+        builder1D = factoryD()
+        self.checkAccessors(builder1F, size)
+        self.checkAccessors(builder1D, size)
+        workspaceF = lsst.shapelet.MatrixBuilderF.Workspace(factoryF.computeWorkspace())
+        workspaceD = lsst.shapelet.MatrixBuilderD.Workspace(factoryD.computeWorkspace())
+        builder2F = factoryF(workspaceF)
+        builder2D = factoryD(workspaceD)
+        self.assertEqual(workspaceF.getRemaining(), 0)
+        self.assertEqual(workspaceD.getRemaining(), 0)
+        self.checkAccessors(builder2F, size)
+        self.checkAccessors(builder2D, size)
+        matrix1F = builder1F(ellipse)
+        matrix1D = builder1D(ellipse)
+        matrix2F = builder2F(ellipse)
+        matrix2D = builder2D(ellipse)
+        self.assertClose(matrix1D, matrix2D, rtol=0.0, atol=0.0)  # same code, different workspace
+        self.assertClose(matrix1F, matrix2F, rtol=0.0, atol=0.0)  # same code, different workspace
+        self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0) # same code, different precision
+        # Finally, check against a completely different implementation (which is tested elsewhere)
+        checkVector = numpy.zeros(self.xD.shape, dtype=float)
+        for function in functions:
+            checkEvaluator = function.evaluate()
+            checkVector += checkEvaluator(self.xD, self.yD)
+        self.assertClose(numpy.dot(matrix1D, coefficients), checkVector, rtol=1E-14)
+
+
 def suite():
     """Returns a suite containing all the test cases in this module."""
 
