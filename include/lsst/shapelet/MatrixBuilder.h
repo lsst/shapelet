@@ -201,14 +201,14 @@ public:
      *
      *  @param[in] x          column positions at which the basis should be evaluated.
      *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
-     *  @param[in] psf        function to convolve the basis with
      *  @param[in] basis      basis object defining the functions the matrix evaluates
+     *  @param[in] psf        function to convolve the basis with
      */
     MatrixBuilderFactory(
         ndarray::Array<T const,1,1> const & x,
         ndarray::Array<T const,1,1> const & y,
-        MultiShapeletFunction const & psf,
-        MultiShapeletBasis const & basis
+        MultiShapeletBasis const & basis,
+        MultiShapeletFunction const & psf
     );
 
     /// Return the number of data points

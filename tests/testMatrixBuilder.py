@@ -130,6 +130,61 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         checkVector = checkEvaluator(self.xD, self.yD)
         self.assertClose(numpy.dot(matrix1D, coefficients), checkVector, rtol=1E-14)
 
+    def testConvolvedShapeletMatrixBuilder(self):
+        function = self.makeRandomShapeletFunction(order=4)
+        psf = self.makeRandomMultiShapeletFunction(nElements=1)
+        size = function.getCoefficients().size
+        function.getCoefficients()[:] = numpy.random.randn(size)
+        basis = lsst.shapelet.MultiShapeletBasis(size)
+        basis.addComponent(1.0, function.getOrder(), numpy.identity(size))
+        factoriesF = [lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, function.getOrder(),
+                                                           psf.getElements()[0]),
+                      lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, function.getOrder(), psf),
+                      lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, basis, psf),
+                      ]
+        factoriesD = [lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, function.getOrder(),
+                                                           psf.getElements()[0]),
+                      lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, function.getOrder(), psf),
+                      lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, basis, psf),
+                      ]
+        lastF = None
+        for factory in factoriesF:
+            self.checkAccessors(factory, size)
+            workspace = lsst.shapelet.MatrixBuilderF.Workspace(factory.computeWorkspace())
+            builder1 = factory()
+            builder2 = factory(workspace)
+            self.checkAccessors(builder1, size)
+            self.checkAccessors(builder2, size)
+            self.assertEqual(workspace.getRemaining(), 0)
+            matrix1 = builder1(function.getEllipse())
+            matrix2 = builder2(function.getEllipse())
+            self.assertClose(matrix1, matrix2, rtol=0.0, atol=0.0)  # same code, different workspace
+            if lastF is not None:
+                self.assertClose(matrix1, lastF, rtol=0.0, atol=0.0) # same code, different construction
+            lastF = matrix1
+        lastD = None
+        for factory in factoriesD:
+            self.checkAccessors(factory, size)
+            workspace = lsst.shapelet.MatrixBuilderD.Workspace(factory.computeWorkspace())
+            builder1 = factory()
+            builder2 = factory(workspace)
+            self.checkAccessors(builder1, size)
+            self.checkAccessors(builder2, size)
+            self.assertEqual(workspace.getRemaining(), 0)
+            matrix1 = builder1(function.getEllipse())
+            matrix2 = builder2(function.getEllipse())
+            self.assertClose(matrix1, matrix2, rtol=0.0, atol=0.0)  # same code, different workspace
+            if lastD is not None:
+                self.assertClose(matrix1, lastD, rtol=0.0, atol=0.0) # same code, different construction
+            lastD = matrix1
+        self.assertClose(lastF, lastD, rtol=1E-4, atol=0.0) # same code, different precision
+
+        # Finally, check against a completely different implementation (which is tested elsewhere)
+        convolved = function.convolve(psf.getElements()[0])
+        checkEvaluator = convolved.evaluate()
+        checkVector = checkEvaluator(self.xD, self.yD)
+        self.assertClose(numpy.dot(lastD, function.getCoefficients()), checkVector, rtol=1E-13)
+
 
     def testCompoundMatrixBuilder(self):
         ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes(4.0, 3.0, 1.0),

@@ -259,6 +259,89 @@ protected:
 
 
 //===========================================================================================================
+//================== Convolved, Non-Remapped Shapelet Implementation ========================================
+//===========================================================================================================
+
+namespace {
+
+template <typename T>
+class ConvolvedShapeletImpl : public ShapeletImpl<T> {
+public:
+
+    typedef MatrixBuilderWorkspace<T> Workspace;
+
+    class Factory : public ShapeletImpl<T>::Factory {
+    public:
+
+        Factory(
+            ndarray::Array<T const,1,1> const & x,
+            ndarray::Array<T const,1,1> const & y,
+            int rhsOrder,
+            ShapeletFunction const & psf
+        ) :
+            ShapeletImpl<T>::Factory(
+                x, y, GaussHermiteConvolution::computeRowOrder(rhsOrder, psf.getOrder())
+            ),
+            _rhsOrder(rhsOrder),
+            _psf(psf)
+        {}
+
+        virtual int getBasisSize() const { return computeSize(_rhsOrder); }
+
+        virtual int computeWorkspace() const {
+            return ShapeletImpl<T>::Factory::computeWorkspace()
+                +  this->getDataSize() * computeSize(this->getLhsOrder());
+        }
+
+        int getRhsOrder() const { return _rhsOrder; }
+
+        ShapeletFunction const & getPsf() const { return _psf; }
+
+        virtual PTR(typename MatrixBuilder<T>::Impl) apply(
+            Workspace & workspace,
+            ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
+        ) const {
+            return boost::make_shared<ConvolvedShapeletImpl>(*this, &workspace, manager);
+        }
+
+    protected:
+        int _rhsOrder;
+        ShapeletFunction _psf;
+    };
+
+    ConvolvedShapeletImpl(
+        Factory const & factory,
+        Workspace * workspace,
+        ndarray::Manager::Ptr const & manager
+    ) : ShapeletImpl<T>(factory, workspace, manager),
+        _ellipse(afw::geom::ellipses::Quadrupole()),
+        _convolution(factory.getRhsOrder(), factory.getPsf()),
+        _lhs(workspace->makeMatrix(factory.getDataSize(), computeSize(_convolution.getRowOrder())))
+    {}
+
+    virtual int getBasisSize() const { return computeSize(_convolution.getColOrder()); }
+
+    virtual void apply(
+        ndarray::Array<T,2,-1> const & output,
+        afw::geom::ellipses::Ellipse const & ellipse
+    ) {
+        _ellipse = ellipse;
+        ndarray::Array<double const,2,2> rhs = _convolution.evaluate(_ellipse);
+        _lhs.setZero();
+        ShapeletImpl<T>::apply(_lhs, _ellipse);
+        output.asEigen() += _lhs.matrix() * rhs.asEigen().cast<T>();
+    }
+
+protected:
+    mutable afw::geom::ellipses::Ellipse _ellipse;
+    GaussHermiteConvolution _convolution;
+    typename Workspace::Matrix _lhs;
+};
+
+} // anonymous
+
+
+//===========================================================================================================
 //================== Non-Convolved, Remapped Shapelet Implementation ========================================
 //===========================================================================================================
 
@@ -340,6 +423,7 @@ protected:
 };
 
 } // anonymous
+
 
 //===========================================================================================================
 //================== Multi-Component Implementations ========================================================
@@ -543,9 +627,8 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
     ndarray::Array<T const,1,1> const & y,
     int order,
     ShapeletFunction const & psf
-) {
-    throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
-}
+) : _impl(boost::make_shared< typename ConvolvedShapeletImpl<T>::Factory >(x, y, order, psf))
+{}
 
 template <typename T>
 MatrixBuilderFactory<T>::MatrixBuilderFactory(
@@ -554,7 +637,13 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
     int order,
     MultiShapeletFunction const & psf
 ) {
-    throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
+    if (psf.getElements().size() == 1u) {
+        _impl = boost::make_shared< typename ConvolvedShapeletImpl<T>::Factory >(
+            x, y, order, psf.getElements().front()
+        );
+    } else {
+        throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
+    }
 }
 
 template <typename T>
@@ -589,10 +678,29 @@ template <typename T>
 MatrixBuilderFactory<T>::MatrixBuilderFactory(
     ndarray::Array<T const,1,1> const & x,
     ndarray::Array<T const,1,1> const & y,
-    MultiShapeletFunction const & psf,
-    MultiShapeletBasis const & basis
+    MultiShapeletBasis const & basis,
+    MultiShapeletFunction const & psf
 ) {
-    throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
+    if (basis.getComponentCount() == 1 && psf.getElements().size() == 1u) {
+        MultiShapeletBasisComponent const & component = *basis.begin();
+        ndarray::EigenView<double const,2,2> matrix(component.getMatrix());
+        if (
+            std::abs(component.getRadius() - 1.0) < std::numeric_limits<double>::epsilon() &&
+            matrix.rows() == matrix.cols() &&
+            matrix.isApprox(
+                Eigen::MatrixXd::Identity(matrix.rows(), matrix.cols()),
+                std::numeric_limits<double>::epsilon()
+            )
+        ) {
+            _impl = boost::make_shared< typename ConvolvedShapeletImpl<T>::Factory >(
+                x, y, component.getOrder(), psf.getElements().front()
+            );
+        } else {
+            throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
+        }
+    } else {
+        throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
+    }
 }
 
 template <typename T>
@@ -624,6 +732,7 @@ MatrixBuilder<T> MatrixBuilderFactory<T>::operator()(Workspace & workspace) cons
     template class MatrixBuilderWorkspace<T>;                   \
     template class SimpleImpl<T>;                               \
     template class ShapeletImpl<T>;                             \
+    template class ConvolvedShapeletImpl<T>;                    \
     template class RemappedShapeletImpl<T>;                     \
     template class CompoundImpl<T>
 
