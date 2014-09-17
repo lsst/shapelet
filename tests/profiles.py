@@ -67,10 +67,10 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
             xg, yg = numpy.meshgrid(xb, yb)
 
             basis = lsst.shapelet.tractor.loadBasis(profile, nComponents, maxRadius)
-            builder = lsst.shapelet.MultiShapeletMatrixBuilderD(basis, psf, xg.ravel(), yg.ravel())
+            builder = lsst.shapelet.MatrixBuilderD.Factory(xg.ravel(), yg.ravel(), basis, psf)()
             image1 = numpy.zeros(check1.shape, dtype=float)
             matrix = image1.reshape(check1.size, 1)
-            builder.build(matrix, el.Ellipse(ellipse))
+            builder(matrix, el.Ellipse(ellipse))
             self.assertClose(check1, image1, plotOnFailure=True, rtol=5E-5, relTo=check1.max())
             msf = basis.makeFunction(el.Ellipse(ellipse, lsst.afw.geom.Point2D(xc, yc)),
                                      numpy.array([1.0], dtype=float))
