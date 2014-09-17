@@ -78,7 +78,6 @@ Python interface to lsst::shapelet classes and functions
 
 %feature(valuewrapper) lsst::shapelet::ShapeletFunction;
 %feature(valuewrapper) lsst::shapelet::MultiShapeletFunction;
-%feature(valuewrapper) lsst::shapelet::ModelBuilder;
 
 %template(MultiShapeletElementList) std::vector<lsst::shapelet::ShapeletFunction>;
 
@@ -98,14 +97,10 @@ Python interface to lsst::shapelet classes and functions
 %include "lsst/shapelet/ShapeletFunction.h"
 %include "lsst/shapelet/MultiShapeletFunction.h"
 %include "lsst/shapelet/BasisEvaluator.h"
-%include "lsst/shapelet/ModelBuilder.h"
 %include "lsst/shapelet/HermiteTransformMatrix.h"
 %include "lsst/shapelet/GaussHermiteConvolution.h"
 %include "lsst/shapelet/GaussHermiteProjection.h"
 %include "lsst/shapelet/MultiShapeletBasis.h"
-
-%template(ModelBuilderF) lsst::shapelet::ModelBuilder<float>;
-%template(ModelBuilderD) lsst::shapelet::ModelBuilder<double>;
 
 %include "lsst/shapelet/MatrixBuilder.h"
 %define %instantiateMatrixBuilder(T, SUFFIX)
