@@ -326,10 +326,15 @@ public:
         afw::geom::ellipses::Ellipse const & ellipse
     ) {
         _ellipse = ellipse;
+        ndarray::Array<double const,2,2> rhs = computeTerms();
+        output.asEigen() += _lhs.matrix() * rhs.asEigen().cast<T>();
+    }
+
+    ndarray::Array<double const,2,2> computeTerms() {
         ndarray::Array<double const,2,2> rhs = _convolution.evaluate(_ellipse);
         _lhs.setZero();
         ShapeletImpl<T>::apply(_lhs, _ellipse);
-        output.asEigen() += _lhs.matrix() * rhs.asEigen().cast<T>();
+        return rhs;
     }
 
 protected:
@@ -426,6 +431,89 @@ protected:
 
 
 //===========================================================================================================
+//================== Convolved, Remapped Shapelet Implementation ========================================
+//===========================================================================================================
+
+namespace {
+
+template <typename T>
+class RemappedConvolvedShapeletImpl : public ConvolvedShapeletImpl<T> {
+public:
+
+    typedef MatrixBuilderWorkspace<T> Workspace;
+
+    class Factory : public ConvolvedShapeletImpl<T>::Factory {
+    public:
+
+        Factory(
+            ndarray::Array<T const,1,1> const & x,
+            ndarray::Array<T const,1,1> const & y,
+            int rhsOrder,
+            double radius,
+            ndarray::Array<double const,2,2> const & remapMatrix,
+            ShapeletFunction const & psf
+        ) : ConvolvedShapeletImpl<T>::Factory(x, y, rhsOrder, psf),
+            _radius(radius),
+            _remapMatrix(remapMatrix)
+        {}
+
+        virtual int getBasisSize() const { return _remapMatrix.getSize<1>(); }
+
+        virtual int computeWorkspace() const {
+            return ConvolvedShapeletImpl<T>::Factory::computeWorkspace()
+                + computeSize(this->getLhsOrder()) * getBasisSize();
+        }
+
+        double getRadius() const { return _radius; }
+
+        ndarray::Array<double const,2,2> getRemapMatrix() const { return _remapMatrix; }
+
+        virtual PTR(typename MatrixBuilder<T>::Impl) apply(
+            Workspace & workspace,
+            ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
+        ) const {
+            return boost::make_shared<RemappedConvolvedShapeletImpl>(*this, &workspace, manager);
+        }
+
+    protected:
+        double _radius;
+        ndarray::Array<double const,2,2> _remapMatrix;
+    };
+
+    RemappedConvolvedShapeletImpl(
+        Factory const & factory,
+        Workspace * workspace,
+        ndarray::Manager::Ptr const & manager
+    ) : ConvolvedShapeletImpl<T>(factory, workspace, manager),
+        _radius(factory.getRadius()),
+        // transpose the remap matrix to preserve memory order when we copy it; will untranspose later
+        _remapMatrix(factory.getRemapMatrix().asEigen().template cast<T>().transpose()),
+        _rhs(workspace->makeMatrix(computeSize(factory.getLhsOrder()), factory.getBasisSize()))
+    {}
+
+    virtual int getBasisSize() const { return _remapMatrix.rows(); }
+
+    virtual void apply(
+        ndarray::Array<T,2,-1> const & output,
+        afw::geom::ellipses::Ellipse const & ellipse
+    ) {
+        this->_ellipse = ellipse;
+        this->_ellipse.scale(_radius);
+        ndarray::Array<double const,2,2> convolutionMatrix = this->computeTerms();
+        _rhs.matrix() = convolutionMatrix.asEigen().cast<T>() * _remapMatrix.transpose();  // untranspose
+        output.asEigen() += this->_lhs.matrix() * _rhs.matrix();
+    }
+
+protected:
+    double _radius;
+    Eigen::Matrix<T,Eigen::Dynamic,Eigen::Dynamic> _remapMatrix;
+    typename Workspace::Matrix _rhs;
+};
+
+} // anonymous
+
+
+//===========================================================================================================
 //================== Multi-Component Implementations ========================================================
 //===========================================================================================================
 
@@ -470,7 +558,19 @@ public:
             MultiShapeletFunction const & psf
         ) {
             _components.reserve(psf.getElements().size() * basis.getComponentCount());
-            // TODO
+            for (MultiShapeletBasis::Iterator i = basis.begin(); i != basis.end(); ++i) {
+                for (
+                    MultiShapeletFunction::ElementList::const_iterator j = psf.getElements().begin();
+                    j != psf.getElements().end();
+                    ++j
+                ) {
+                    _components.push_back(
+                        boost::make_shared< typename RemappedConvolvedShapeletImpl<T>::Factory >(
+                            x, y, i->getOrder(), i->getRadius(), i->getMatrix(), *j
+                        )
+                    );
+                }
+            }
         }
 
         virtual int getBasisSize() const { return _components.front()->getBasisSize(); }
@@ -630,21 +730,21 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
 ) : _impl(boost::make_shared< typename ConvolvedShapeletImpl<T>::Factory >(x, y, order, psf))
 {}
 
-template <typename T>
-MatrixBuilderFactory<T>::MatrixBuilderFactory(
-    ndarray::Array<T const,1,1> const & x,
-    ndarray::Array<T const,1,1> const & y,
-    int order,
-    MultiShapeletFunction const & psf
-) {
-    if (psf.getElements().size() == 1u) {
-        _impl = boost::make_shared< typename ConvolvedShapeletImpl<T>::Factory >(
-            x, y, order, psf.getElements().front()
+namespace {
+
+// helper function for the next two ctors: test if a MultiShapeletBasisComponent has unit scaling
+// and identity remap matrix
+bool isSimple(MultiShapeletBasisComponent const & component) {
+    ndarray::EigenView<double const,2,2> matrix(component.getMatrix());
+    return std::abs(component.getRadius() - 1.0) < std::numeric_limits<double>::epsilon() &&
+        matrix.rows() == matrix.cols() &&
+        matrix.isApprox(
+            Eigen::MatrixXd::Identity(matrix.rows(), matrix.cols()),
+            std::numeric_limits<double>::epsilon()
         );
-    } else {
-        throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
-    }
 }
+
+} // anonymous
 
 template <typename T>
 MatrixBuilderFactory<T>::MatrixBuilderFactory(
@@ -654,15 +754,7 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
 ) {
     if (basis.getComponentCount() == 1) {
         MultiShapeletBasisComponent const & component = *basis.begin();
-        ndarray::EigenView<double const,2,2> matrix(component.getMatrix());
-        if (
-            std::abs(component.getRadius() - 1.0) < std::numeric_limits<double>::epsilon() &&
-            matrix.rows() == matrix.cols() &&
-            matrix.isApprox(
-                Eigen::MatrixXd::Identity(matrix.rows(), matrix.cols()),
-                std::numeric_limits<double>::epsilon()
-            )
-        ) {
+        if (isSimple(component)) {
             _impl = boost::make_shared< typename ShapeletImpl<T>::Factory >(x, y, component.getOrder());
         } else {
             _impl = boost::make_shared< typename RemappedShapeletImpl<T>::Factory >(
@@ -682,24 +774,19 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
     MultiShapeletFunction const & psf
 ) {
     if (basis.getComponentCount() == 1 && psf.getElements().size() == 1u) {
+        ShapeletFunction const & psfComponent = psf.getElements().front();
         MultiShapeletBasisComponent const & component = *basis.begin();
-        ndarray::EigenView<double const,2,2> matrix(component.getMatrix());
-        if (
-            std::abs(component.getRadius() - 1.0) < std::numeric_limits<double>::epsilon() &&
-            matrix.rows() == matrix.cols() &&
-            matrix.isApprox(
-                Eigen::MatrixXd::Identity(matrix.rows(), matrix.cols()),
-                std::numeric_limits<double>::epsilon()
-            )
-        ) {
+        if (isSimple(component)) {
             _impl = boost::make_shared< typename ConvolvedShapeletImpl<T>::Factory >(
-                x, y, component.getOrder(), psf.getElements().front()
+                x, y, component.getOrder(), psfComponent
             );
         } else {
-            throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
+            _impl = boost::make_shared< typename RemappedConvolvedShapeletImpl<T>::Factory >(
+                x, y, component.getOrder(), component.getRadius(), component.getMatrix(), psfComponent
+            );
         }
     } else {
-        throw LSST_EXCEPT(pex::exceptions::LogicError, "Not implemented");
+        _impl = boost::make_shared< typename CompoundImpl<T>::Factory >(x, y, basis, psf);
     }
 }
 
@@ -734,6 +821,7 @@ MatrixBuilder<T> MatrixBuilderFactory<T>::operator()(Workspace & workspace) cons
     template class ShapeletImpl<T>;                             \
     template class ConvolvedShapeletImpl<T>;                    \
     template class RemappedShapeletImpl<T>;                     \
+    template class RemappedConvolvedShapeletImpl<T>;            \
     template class CompoundImpl<T>
 
 INSTANTIATE(float);

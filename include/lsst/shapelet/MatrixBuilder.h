@@ -167,22 +167,6 @@ public:
     );
 
     /**
-     *  Create a MatrixBuilder that evaluates a simple non-compound shapelet basis after convolving it
-     *  with a MultiShapeletFunction.
-     *
-     *  @param[in] x          column positions at which the basis should be evaluated.
-     *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
-     *  @param[in] order      order of the shapelet basis
-     *  @param[in] psf        function to convolve the basis with
-     */
-    MatrixBuilderFactory(
-        ndarray::Array<T const,1,1> const & x,
-        ndarray::Array<T const,1,1> const & y,
-        int order,
-        MultiShapeletFunction const & psf
-    );
-
-    /**
      *  Create a MatrixBuilder that evaluates a MultiShapeletBasis object.
      *
      *  @param[in] x          column positions at which the basis should be evaluated.

@@ -139,12 +139,10 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         basis.addComponent(1.0, function.getOrder(), numpy.identity(size))
         factoriesF = [lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, function.getOrder(),
                                                            psf.getElements()[0]),
-                      lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, function.getOrder(), psf),
                       lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, basis, psf),
                       ]
         factoriesD = [lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, function.getOrder(),
                                                            psf.getElements()[0]),
-                      lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, function.getOrder(), psf),
                       lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, basis, psf),
                       ]
         lastF = None
@@ -177,7 +175,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
             if lastD is not None:
                 self.assertClose(matrix1, lastD, rtol=0.0, atol=0.0) # same code, different construction
             lastD = matrix1
-        self.assertClose(lastF, lastD, rtol=1E-4, atol=0.0) # same code, different precision
+        self.assertClose(lastF, lastD, rtol=1E-6, atol=1E-5) # same code, different precision
 
         # Finally, check against a completely different implementation (which is tested elsewhere)
         convolved = function.convolve(psf.getElements()[0])
@@ -185,6 +183,41 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         checkVector = checkEvaluator(self.xD, self.yD)
         self.assertClose(numpy.dot(lastD, function.getCoefficients()), checkVector, rtol=1E-13)
 
+    def testRemappedConvolvedShapeletMatrixBuilder(self):
+        function = self.makeRandomShapeletFunction(order=4)
+        psf = self.makeRandomMultiShapeletFunction(nElements=1)
+        size = 6
+        radius = 3.2
+        remapMatrix = numpy.random.randn(function.getCoefficients().size, size)
+        coefficients = numpy.random.randn(size)
+        function.getCoefficients()[:] = numpy.dot(remapMatrix, coefficients)
+        basis = lsst.shapelet.MultiShapeletBasis(size)
+        basis.addComponent(radius, function.getOrder(), remapMatrix)
+        factoryF = lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, basis, psf)
+        factoryD = lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, basis, psf)
+        matrixF = None
+        for factory in (factoryF, factoryD):
+            self.checkAccessors(factory, size)
+            workspace = factory.Workspace(factory.computeWorkspace())
+            builder1 = factory()
+            builder2 = factory(workspace)
+            self.checkAccessors(builder1, size)
+            self.checkAccessors(builder2, size)
+            self.assertEqual(workspace.getRemaining(), 0)
+            matrix1 = builder1(function.getEllipse())
+            matrix2 = builder2(function.getEllipse())
+            self.assertClose(matrix1, matrix2, rtol=0.0, atol=0.0)  # same code, different workspace
+            if matrixF is None:
+                matrixF = matrix1
+        matrixD = matrix1
+        self.assertClose(matrixF, matrixD, rtol=1E-4, atol=0.0) # same code, different precision
+
+        # Finally, check against a completely different implementation (which is tested elsewhere)
+        function.getEllipse().scale(radius)
+        convolved = function.convolve(psf.getElements()[0])
+        checkEvaluator = convolved.evaluate()
+        checkVector = checkEvaluator(self.xD, self.yD)
+        self.assertClose(numpy.dot(matrixD, coefficients), checkVector, rtol=1E-13)
 
     def testCompoundMatrixBuilder(self):
         ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes(4.0, 3.0, 1.0),
@@ -228,6 +261,52 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         for function in functions:
             checkEvaluator = function.evaluate()
             checkVector += checkEvaluator(self.xD, self.yD)
+        self.assertClose(numpy.dot(matrix1D, coefficients), checkVector, rtol=1E-14)
+
+    def testConvolvedCompoundMatrixBuilder(self):
+        ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes(4.0, 3.0, 1.0),
+                                                 lsst.afw.geom.Point2D(3.2, 1.0))
+        radii = [0.7, 1.2]
+        orders = [4, 3]
+        size = 8
+        functions = [self.makeRandomShapeletFunction(order=order, ellipse=ellipse, scale=radius)
+                     for radius, order in zip(radii, orders)]
+        psf = self.makeRandomMultiShapeletFunction()
+        remapMatrices = [numpy.random.randn(f.getCoefficients().size, size) for f in functions]
+        coefficients = numpy.random.randn(size)
+        basis = lsst.shapelet.MultiShapeletBasis(size)
+        for radius, function, matrix in zip(radii, functions, remapMatrices):
+            function.getCoefficients()[:] = numpy.dot(matrix, coefficients)
+            basis.addComponent(radius, function.getOrder(), matrix)
+        msf = lsst.shapelet.MultiShapeletFunction(functions)
+        factoryF = lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, basis, psf)
+        factoryD = lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, basis, psf)
+        self.checkAccessors(factoryF, size)
+        self.checkAccessors(factoryD, size)
+        builder1F = factoryF()
+        builder1D = factoryD()
+        self.checkAccessors(builder1F, size)
+        self.checkAccessors(builder1D, size)
+        workspaceF = lsst.shapelet.MatrixBuilderF.Workspace(factoryF.computeWorkspace())
+        workspaceD = lsst.shapelet.MatrixBuilderD.Workspace(factoryD.computeWorkspace())
+        builder2F = factoryF(workspaceF)
+        builder2D = factoryD(workspaceD)
+        self.assertEqual(workspaceF.getRemaining(), 0)
+        self.assertEqual(workspaceD.getRemaining(), 0)
+        self.checkAccessors(builder2F, size)
+        self.checkAccessors(builder2D, size)
+        matrix1F = builder1F(ellipse)
+        matrix1D = builder1D(ellipse)
+        matrix2F = builder2F(ellipse)
+        matrix2D = builder2D(ellipse)
+        self.assertClose(matrix1D, matrix2D, rtol=0.0, atol=0.0)  # same code, different workspace
+        self.assertClose(matrix1F, matrix2F, rtol=0.0, atol=0.0)  # same code, different workspace
+        self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0) # same code, different precision
+
+        # Finally, check against a completely different implementation (which is tested elsewhere)
+        convolved = msf.convolve(psf)
+        checkEvaluator = convolved.evaluate()
+        checkVector = checkEvaluator(self.xD, self.yD)
         self.assertClose(numpy.dot(matrix1D, coefficients), checkVector, rtol=1E-14)
 
 
