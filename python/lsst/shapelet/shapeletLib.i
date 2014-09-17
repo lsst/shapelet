@@ -106,8 +106,6 @@ Python interface to lsst::shapelet classes and functions
 
 %template(ModelBuilderF) lsst::shapelet::ModelBuilder<float>;
 %template(ModelBuilderD) lsst::shapelet::ModelBuilder<double>;
-%template(MultiShapeletMatrixBuilderF) lsst::shapelet::MultiShapeletMatrixBuilder<float>;
-%template(MultiShapeletMatrixBuilderD) lsst::shapelet::MultiShapeletMatrixBuilder<double>;
 
 %include "lsst/shapelet/MatrixBuilder.h"
 %define %instantiateMatrixBuilder(T, SUFFIX)

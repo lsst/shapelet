@@ -56,7 +56,7 @@
 template <typename T>
 double buildModelsImpl(
     int nPixels, int basisSize,
-    lsst::shapelet::MultiShapeletMatrixBuilder<T> const & builder,
+    lsst::shapelet::MatrixBuilder<T> const & builder,
     ndarray::Array<double const,2> const & parameters,
     std::string const & ellipseType
 ) {
@@ -69,7 +69,7 @@ double buildModelsImpl(
     double result = 0.0;
     for (ndarray::Array<double const,2>::Iterator i = parameters.begin(); i != parameters.end(); ++i) {
         ellipse.setParameterVector(i->asEigen());
-        builder.build(matrix, ellipse);
+        builder(matrix, ellipse);
         result += matrix.asEigen().norm();
     }
     return result;
@@ -79,18 +79,18 @@ double buildModelsImpl(
 
 %inline %{
 
-double buildModelsF(
+void buildModelsF(
     int nPixels, int basisSize,
-    lsst::shapelet::MultiShapeletMatrixBuilder<float> const & builder,
+    lsst::shapelet::MatrixBuilder<float> const & builder,
     ndarray::Array<double const,2> const & parameters,
     std::string const & ellipseType
 ) {
     buildModelsImpl(nPixels, basisSize, builder, parameters, ellipseType);
 }
 
-double buildModelsD(
+void buildModelsD(
     int nPixels, int basisSize,
-    lsst::shapelet::MultiShapeletMatrixBuilder<double> const & builder,
+    lsst::shapelet::MatrixBuilder<double> const & builder,
     ndarray::Array<double const,2> const & parameters,
     std::string const & ellipseType
 ) {
@@ -122,8 +122,6 @@ def main():
                         default=8, type=int)
     parser.add_argument("--n-bulge-terms", help="Number of Gaussians in bulge (de Vaucouleur) component",
                         default=8, type=int)
-    parser.add_argument("--approximate-exp", help="Use the approximate fast exponential from lsst::utils",
-                        default=False, action="store_true")
     parser.add_argument("--n-x-pixels", help="Number of pixels in x direction (footprint is a rectangle)",
                         default=20, type=int)
     parser.add_argument("--n-y-pixels", help="Number of pixels in y direction (footprint is a rectangle)",
@@ -141,17 +139,16 @@ def main():
     yMin = -args.n_y_pixels // 2
     if args.double_precision:
         dtype = numpy.float64
-        Builder = lsst.shapelet.MultiShapeletMatrixBuilderD
+        Builder = lsst.shapelet.MatrixBuilderD
         func = buildModelsD
     else:
         dtype = numpy.float32
-        Builder = lsst.shapelet.MultiShapeletMatrixBuilderF
+        Builder = lsst.shapelet.MatrixBuilderF
         func = buildModelsF
 
     x, y = numpy.meshgrid(numpy.arange(xMin, xMin+args.n_x_pixels, dtype=dtype),
                           numpy.arange(yMin, yMin+args.n_y_pixels, dtype=dtype))
-    builder = Builder(disk, psf, x.flatten(), y.flatten(),
-                                                        args.approximate_exp)
+    builder = Builder(x.flatten(), y.flatten(), disk, psf)
     parameters = numpy.random.randn(args.n_samples, 5)
     cpuTime1 = time.clock()
     res1 = resource.getrusage(resource.RUSAGE_SELF)
