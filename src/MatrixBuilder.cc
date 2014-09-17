@@ -86,19 +86,39 @@ public:
 namespace {
 
 template <typename T>
-class SimpleMatrixBuilderImpl : public MatrixBuilder<T>::Impl {
+class SimpleImpl : public MatrixBuilder<T>::Impl {
 public:
 
     typedef MatrixBuilderWorkspace<T> Workspace;
 
-    SimpleMatrixBuilderImpl(
-        ndarray::Array<T const,1,1> const & x,
-        ndarray::Array<T const,1,1> const & y,
+    class Factory : public MatrixBuilderFactory<T>::Impl {
+    public:
+
+        Factory(
+            ndarray::Array<T const,1,1> const & x,
+            ndarray::Array<T const,1,1> const & y
+        ) : _x(x), _y(y) {}
+
+        virtual int getDataSize() const { return _x.template getSize<0>(); }
+
+        virtual int computeWorkspace() const { return 2*_x.template getSize<0>(); }
+
+        ndarray::Array<T const,1,1> getX() const { return _x; }
+
+        ndarray::Array<T const,1,1> getY() const { return _y; }
+
+    private:
+        ndarray::Array<T const,1,1> _x;
+        ndarray::Array<T const,1,1> _y;
+    };
+
+    SimpleImpl(
+        Factory const & factory,
         Workspace * workspace,
         ndarray::Manager::Ptr const & manager
-    ) : _x(x), _y(y),
-        _xt(workspace->makeVector(_x.template getSize<0>())),
-        _yt(workspace->makeVector(_y.template getSize<0>())),
+    ) : _x(factory.getX()), _y(factory.getY()),
+        _xt(workspace->makeVector(factory.getDataSize())),
+        _yt(workspace->makeVector(factory.getDataSize())),
         _detFactor(1.0),
         _manager(manager)
     {}
@@ -127,26 +147,6 @@ private:
     ndarray::Manager::Ptr _manager;
 };
 
-template <typename T>
-class SimpleMatrixBuilderFactoryImpl : public MatrixBuilderFactory<T>::Impl {
-public:
-
-    typedef MatrixBuilderWorkspace<T> Workspace;
-
-    virtual int getDataSize() const { return _x.template getSize<0>(); }
-
-    virtual int computeWorkspace() const { return 2*_x.template getSize<0>(); }
-
-    SimpleMatrixBuilderFactoryImpl(
-        ndarray::Array<T const,1,1> const & x,
-        ndarray::Array<T const,1,1> const & y
-    ) : _x(x), _y(y) {}
-
-protected:
-    ndarray::Array<T const,1,1> _x;
-    ndarray::Array<T const,1,1> _y;
-};
-
 } // anonymous
 
 //===========================================================================================================
@@ -156,25 +156,54 @@ protected:
 namespace {
 
 template <typename T>
-class ShapeletMatrixBuilderImpl : public SimpleMatrixBuilderImpl<T> {
+class ShapeletImpl : public SimpleImpl<T> {
 public:
 
     typedef MatrixBuilderWorkspace<T> Workspace;
 
-    ShapeletMatrixBuilderImpl(
-        ndarray::Array<T const,1,1> const & x,
-        ndarray::Array<T const,1,1> const & y,
-        int order,
+    class Factory : public SimpleImpl<T>::Factory {
+    public:
+
+        Factory(
+            ndarray::Array<T const,1,1> const & x,
+            ndarray::Array<T const,1,1> const & y,
+            int lhsOrder
+        ) : SimpleImpl<T>::Factory(x, y),
+            _lhsOrder(lhsOrder)
+        {}
+
+        virtual int getBasisSize() const { return computeSize(_lhsOrder); }
+
+        virtual int computeWorkspace() const {
+            return this->getDataSize()*(1 + 2*(_lhsOrder + 1))
+                + SimpleImpl<T>::Factory::computeWorkspace();
+        }
+
+        int getLhsOrder() const { return _lhsOrder; }
+
+        virtual PTR(typename MatrixBuilder<T>::Impl) apply(
+            Workspace & workspace,
+            ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
+        ) const {
+            return boost::make_shared<ShapeletImpl>(*this, &workspace, manager);
+        }
+
+    private:
+        int _lhsOrder;
+    };
+
+    ShapeletImpl(
+        Factory const & factory,
         Workspace * workspace,
         ndarray::Manager::Ptr const & manager
-    ) : SimpleMatrixBuilderImpl<T>(x, y, workspace, manager),
-        _order(order),
-        _gaussian(workspace->makeVector(x.template getSize<0>())),
-        _xHermite(workspace->makeMatrix(x.template getSize<0>(), order + 1)),
-        _yHermite(workspace->makeMatrix(x.template getSize<0>(), order + 1))
+    ) : SimpleImpl<T>(factory, workspace, manager),
+        _lhsOrder(factory.getLhsOrder()),
+        _gaussian(workspace->makeVector(factory.getDataSize())),
+        _xHermite(workspace->makeMatrix(factory.getDataSize(), factory.getLhsOrder() + 1)),
+        _yHermite(workspace->makeMatrix(factory.getDataSize(), factory.getLhsOrder() + 1))
     {}
 
-    virtual int getBasisSize() const { return computeSize(_order); }
+    virtual int getBasisSize() const { return computeSize(_lhsOrder); }
 
     virtual void apply(
         ndarray::Array<T,2,-1> const & output,
@@ -192,7 +221,7 @@ public:
         fillGaussian();
         fillHermite1d(_xHermite, this->_xt);
         fillHermite1d(_yHermite, this->_yt);
-        for (PackedIndex i; i.getOrder() <= _order; ++i) {
+        for (PackedIndex i; i.getOrder() <= _lhsOrder; ++i) {
             output.col(i.getIndex())
                 += this->_detFactor * _gaussian * _xHermite.col(i.getX()) * _yHermite.col(i.getY());
         }
@@ -213,52 +242,17 @@ public:
         if (output.cols() > 1) {
             output.col(1) = intSqrt(2) * coord * output.col(0);
         }
-        for (int j = 2; j <= _order; ++j) {
+        for (int j = 2; j <= _lhsOrder; ++j) {
             output.col(j) = rationalSqrt(2, j) * coord * output.col(j-1)
                 - rationalSqrt(j - 1, j) * output.col(j-2);
         }
     }
 
 protected:
-    int _order;
+    int _lhsOrder;
     typename Workspace::Vector _gaussian;
     typename Workspace::Matrix _xHermite;
     typename Workspace::Matrix _yHermite;
-};
-
-template <typename T>
-class ShapeletMatrixBuilderFactoryImpl : public SimpleMatrixBuilderFactoryImpl<T> {
-public:
-
-    typedef MatrixBuilderWorkspace<T> Workspace;
-    typedef ShapeletMatrixBuilderImpl<T> BuilderImpl;
-
-    ShapeletMatrixBuilderFactoryImpl(
-        ndarray::Array<T const,1,1> const & x,
-        ndarray::Array<T const,1,1> const & y,
-        int order
-    ) : SimpleMatrixBuilderFactoryImpl<T>(x, y),
-        _order(order),
-        _basisSize(computeSize(order))
-    {}
-
-    virtual int getBasisSize() const { return _basisSize; }
-
-    virtual int computeWorkspace() const {
-        return this->getDataSize()*(1 + 2*(_order + 1))
-            + SimpleMatrixBuilderFactoryImpl<T>::computeWorkspace();
-    }
-
-    virtual PTR(typename MatrixBuilder<T>::Impl) apply(
-        Workspace & workspace,
-        ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
-    ) const {
-        return boost::make_shared<BuilderImpl>(this->_x, this->_y, _order, &workspace, manager);
-    }
-
-protected:
-    int _order;
-    int _basisSize;
 };
 
 } // anonymous
@@ -271,24 +265,58 @@ protected:
 namespace {
 
 template <typename T>
-class RemappedShapeletMatrixBuilderImpl : public ShapeletMatrixBuilderImpl<T> {
+class RemappedShapeletImpl : public ShapeletImpl<T> {
 public:
 
     typedef MatrixBuilderWorkspace<T> Workspace;
 
-    RemappedShapeletMatrixBuilderImpl(
-        ndarray::Array<T const,1,1> const & x,
-        ndarray::Array<T const,1,1> const & y,
-        int order,
-        double radius,
-        ndarray::Array<double const,2,2> const & remapMatrix,
+    class Factory : public ShapeletImpl<T>::Factory {
+    public:
+
+        Factory(
+            ndarray::Array<T const,1,1> const & x,
+            ndarray::Array<T const,1,1> const & y,
+            int lhsOrder,
+            double radius,
+            ndarray::Array<double const,2,2> const & remapMatrix
+        ) : ShapeletImpl<T>::Factory(x, y, lhsOrder),
+            _radius(radius),
+            _remapMatrix(remapMatrix)
+        {}
+
+        virtual int getBasisSize() const { return _remapMatrix.getSize<1>(); }
+
+        virtual int computeWorkspace() const {
+            return ShapeletImpl<T>::Factory::computeWorkspace()
+                +  this->getDataSize() * computeSize(this->getLhsOrder());
+        }
+
+        double getRadius() const { return _radius; }
+
+        ndarray::Array<double const,2,2> getRemapMatrix() const { return _remapMatrix; }
+
+        virtual PTR(typename MatrixBuilder<T>::Impl) apply(
+            Workspace & workspace,
+            ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
+        ) const {
+            return boost::make_shared<RemappedShapeletImpl>(*this, &workspace, manager);
+        }
+
+    protected:
+        double _radius;
+        ndarray::Array<double const,2,2> _remapMatrix;
+    };
+
+    RemappedShapeletImpl(
+        Factory const & factory,
         Workspace * workspace,
         ndarray::Manager::Ptr const & manager
-    ) : ShapeletMatrixBuilderImpl<T>(x, y, order, workspace, manager),
-        _radius(radius),
+    ) : ShapeletImpl<T>(factory, workspace, manager),
         _ellipse(afw::geom::ellipses::Quadrupole()),
-        _remapMatrix(remapMatrix.asEigen().cast<T>().transpose()), // transpose to preserve memory order
-        _lhs(workspace->makeMatrix(x.template getSize<0>(), computeSize(order)))
+        _radius(factory.getRadius()),
+        // transpose the remap matrix to preserve memory order when we copy it; will untranspose later
+        _remapMatrix(factory.getRemapMatrix().asEigen().template cast<T>().transpose()),
+        _lhs(workspace->makeMatrix(factory.getDataSize(), computeSize(factory.getLhsOrder())))
     {}
 
     virtual int getBasisSize() const { return _remapMatrix.rows(); }
@@ -300,58 +328,18 @@ public:
         _ellipse = ellipse;
         _ellipse.scale(_radius);
         _lhs.setZero();
-        ShapeletMatrixBuilderImpl<T>::apply(_lhs, _ellipse);
+        ShapeletImpl<T>::apply(_lhs, _ellipse);
         output.asEigen() += _lhs.matrix() * _remapMatrix.transpose(); // undo the transpose in the ctor
     }
 
 protected:
-    double _radius;
     mutable afw::geom::ellipses::Ellipse _ellipse;
+    double _radius;
     Eigen::Matrix<T,Eigen::Dynamic,Eigen::Dynamic> _remapMatrix;
     typename Workspace::Matrix _lhs;
 };
 
-template <typename T>
-class RemappedShapeletMatrixBuilderFactoryImpl : public ShapeletMatrixBuilderFactoryImpl<T> {
-public:
-
-    typedef MatrixBuilderWorkspace<T> Workspace;
-    typedef RemappedShapeletMatrixBuilderImpl<T> BuilderImpl;
-
-    RemappedShapeletMatrixBuilderFactoryImpl(
-        ndarray::Array<T const,1,1> const & x,
-        ndarray::Array<T const,1,1> const & y,
-        int order,
-        double radius,
-        ndarray::Array<double const,2,2> const & remapMatrix
-    ) : ShapeletMatrixBuilderFactoryImpl<T>(x, y, order),
-        _radius(radius),
-        _remapMatrix(remapMatrix)
-    {}
-
-    virtual int getBasisSize() const { return _remapMatrix.getSize<1>(); }
-
-    virtual int computeWorkspace() const {
-        return ShapeletMatrixBuilderFactoryImpl<T>::computeWorkspace()
-            + ShapeletMatrixBuilderFactoryImpl<T>::getBasisSize() * this->getDataSize();
-    }
-
-    virtual PTR(typename MatrixBuilder<T>::Impl) apply(
-        Workspace & workspace,
-        ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
-    ) const {
-        return boost::make_shared<BuilderImpl>(
-            this->_x, this->_y, this->_order, _radius, _remapMatrix, &workspace, manager
-        );
-    }
-
-protected:
-    double _radius;
-    ndarray::Array<double const,2,2> _remapMatrix;
-};
-
 } // anonymous
-
 
 //===========================================================================================================
 //================== Multi-Component Implementations ========================================================
@@ -360,14 +348,84 @@ protected:
 namespace {
 
 template <typename T>
-class CompoundMatrixBuilderImpl : public MatrixBuilder<T>::Impl {
+class CompoundImpl : public MatrixBuilder<T>::Impl {
 public:
+
+    typedef MatrixBuilderWorkspace<T> Workspace;
 
     typedef typename MatrixBuilder<T>::Impl Component;
     typedef std::vector<PTR(Component)> Vector;
     typedef typename Vector::const_iterator Iterator;
 
-    explicit CompoundMatrixBuilderImpl(Vector const & components) : _components(components) {}
+    typedef typename MatrixBuilderFactory<T>::Impl FactoryComponent;
+    typedef std::vector<PTR(FactoryComponent)> FactoryVector;
+    typedef typename FactoryVector::const_iterator FactoryIterator;
+
+    class Factory : public MatrixBuilderFactory<T>::Impl {
+    public:
+
+        Factory(
+            ndarray::Array<T const,1,1> const & x,
+            ndarray::Array<T const,1,1> const & y,
+            MultiShapeletBasis const & basis
+        ) {
+            _components.reserve(basis.getComponentCount());
+            for (MultiShapeletBasis::Iterator i = basis.begin(); i != basis.end(); ++i) {
+                _components.push_back(
+                    boost::make_shared< typename RemappedShapeletImpl<T>::Factory >(
+                        x, y, i->getOrder(), i->getRadius(), i->getMatrix()
+                    )
+                );
+            }
+        }
+
+        Factory(
+            ndarray::Array<T const,1,1> const & x,
+            ndarray::Array<T const,1,1> const & y,
+            MultiShapeletBasis const & basis,
+            MultiShapeletFunction const & psf
+        ) {
+            _components.reserve(psf.getElements().size() * basis.getComponentCount());
+            // TODO
+        }
+
+        virtual int getBasisSize() const { return _components.front()->getBasisSize(); }
+
+        virtual int getDataSize() const { return _components.front()->getDataSize(); }
+
+        virtual int computeWorkspace() const {
+            int ws = 0;
+            for (FactoryIterator i = _components.begin(); i != _components.end(); ++i) {
+                ws = std::max((**i).computeWorkspace(), ws);
+            }
+            return ws;
+        }
+
+        virtual PTR(typename MatrixBuilder<T>::Impl) apply(
+            Workspace & workspace,
+            ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
+        ) const {
+            Vector builders;
+            builders.reserve(_components.size());
+            for (FactoryIterator i = _components.begin(); i != _components.end(); ++i) {
+                // By copying the workspace here, we prevent the original from having its pointer updated
+                // (yet), and hence each component builder starts grabbing workspace arrays from the same
+                // point, and they all end up sharing the same space.  That's what we want, because we call
+                // them one at a time, and they don't need anything to remain between calls.
+                Workspace wsCopy(workspace);
+                builders.push_back((**i).apply(wsCopy, manager));
+            }
+            // Now, at the end, we increment the workspace by the amount we claimed we needed, which was
+            // the maximum needed by any individual components.
+            workspace.increment(computeWorkspace());
+            return boost::make_shared<CompoundImpl>(builders);
+        }
+
+    private:
+        FactoryVector _components;
+    };
+
+    explicit CompoundImpl(Vector const & components) : _components(components) {}
 
     virtual int getDataSize() const { return _components.front()->getDataSize(); }
 
@@ -380,78 +438,6 @@ public:
         for (Iterator i = _components.begin(); i != _components.end(); ++i) {
             (**i).apply(output, ellipse);
         }
-    }
-
-private:
-    Vector _components;
-};
-
-template <typename T>
-class CompoundMatrixBuilderFactoryImpl : public MatrixBuilderFactory<T>::Impl {
-public:
-
-    typedef typename MatrixBuilderFactory<T>::Impl Component;
-    typedef std::vector<PTR(Component)> Vector;
-    typedef typename Vector::const_iterator Iterator;
-
-    typedef MatrixBuilderWorkspace<T> Workspace;
-    typedef CompoundMatrixBuilderImpl<T> BuilderImpl;
-
-    CompoundMatrixBuilderFactoryImpl(
-        ndarray::Array<T const,1,1> const & x,
-        ndarray::Array<T const,1,1> const & y,
-        MultiShapeletBasis const & basis
-    ) {
-        _components.reserve(basis.getComponentCount());
-        for (MultiShapeletBasis::Iterator i = basis.begin(); i != basis.end(); ++i) {
-            _components.push_back(
-                boost::make_shared< RemappedShapeletMatrixBuilderFactoryImpl<T> >(
-                    x, y, i->getOrder(), i->getRadius(), i->getMatrix()
-                )
-            );
-        }
-    }
-
-    CompoundMatrixBuilderFactoryImpl(
-        ndarray::Array<T const,1,1> const & x,
-        ndarray::Array<T const,1,1> const & y,
-        MultiShapeletBasis const & basis,
-        MultiShapeletFunction const & psf
-    ) {
-        _components.reserve(psf.getElements().size() * basis.getComponentCount());
-        // TODO
-    }
-
-    virtual int getBasisSize() const { return _components.front()->getBasisSize(); }
-
-    virtual int getDataSize() const { return _components.front()->getDataSize(); }
-
-    virtual int computeWorkspace() const {
-        int ws = 0;
-        for (Iterator i = _components.begin(); i != _components.end(); ++i) {
-            ws = std::max((**i).computeWorkspace(), ws);
-        }
-        return ws;
-    }
-
-    virtual PTR(typename MatrixBuilder<T>::Impl) apply(
-        Workspace & workspace,
-        ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
-    ) const {
-        typename BuilderImpl::Vector builders;
-        builders.reserve(_components.size());
-        for (Iterator i = _components.begin(); i != _components.end(); ++i) {
-            // By copying the workspace here, we prevent the original from having its pointer updated (yet),
-            // and hence each component builder starts grabbing workspace arrays from the same point,
-            // and they all end up sharing the same space.  That's what we want, because we call them one
-            // at a time, and they don't need anything to remain between calls.
-            Workspace wsCopy(workspace);
-            builders.push_back((**i).apply(wsCopy, manager));
-        }
-        // Now, at the end, we increment the workspace by the amount we claimed we needed, which was
-        // the maximum needed by any individual components.
-        workspace.increment(computeWorkspace());
-        return boost::make_shared<BuilderImpl>(builders);
     }
 
 private:
@@ -548,7 +534,7 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
     ndarray::Array<T const,1,1> const & x,
     ndarray::Array<T const,1,1> const & y,
     int order
-) : _impl(boost::make_shared< ShapeletMatrixBuilderFactoryImpl<T> >(x, y, order))
+) : _impl(boost::make_shared< typename ShapeletImpl<T>::Factory >(x, y, order))
 {}
 
 template <typename T>
@@ -588,14 +574,14 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
                 std::numeric_limits<double>::epsilon()
             )
         ) {
-            _impl = boost::make_shared< ShapeletMatrixBuilderFactoryImpl<T> >(x, y, component.getOrder());
+            _impl = boost::make_shared< typename ShapeletImpl<T>::Factory >(x, y, component.getOrder());
         } else {
-            _impl = boost::make_shared< RemappedShapeletMatrixBuilderFactoryImpl<T> >(
+            _impl = boost::make_shared< typename RemappedShapeletImpl<T>::Factory >(
                 x, y, component.getOrder(), component.getRadius(), component.getMatrix()
             );
         }
     } else {
-        _impl = boost::make_shared< CompoundMatrixBuilderFactoryImpl<T> >(x, y, basis);
+        _impl = boost::make_shared< typename CompoundImpl<T>::Factory >(x, y, basis);
     }
 }
 
@@ -636,14 +622,10 @@ MatrixBuilder<T> MatrixBuilderFactory<T>::operator()(Workspace & workspace) cons
     template class MatrixBuilder<T>;                            \
     template class MatrixBuilderFactory<T>;                     \
     template class MatrixBuilderWorkspace<T>;                   \
-    template class SimpleMatrixBuilderImpl<T>;                  \
-    template class SimpleMatrixBuilderFactoryImpl<T>;           \
-    template class ShapeletMatrixBuilderImpl<T>;                \
-    template class ShapeletMatrixBuilderFactoryImpl<T>;         \
-    template class RemappedShapeletMatrixBuilderImpl<T>;        \
-    template class RemappedShapeletMatrixBuilderFactoryImpl<T>; \
-    template class CompoundMatrixBuilderImpl<T>;                \
-    template class CompoundMatrixBuilderFactoryImpl<T>
+    template class SimpleImpl<T>;                               \
+    template class ShapeletImpl<T>;                             \
+    template class RemappedShapeletImpl<T>;                     \
+    template class CompoundImpl<T>
 
 INSTANTIATE(float);
 INSTANTIATE(double);
