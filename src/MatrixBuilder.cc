@@ -604,6 +604,44 @@ private:
 //===========================================================================================================
 
 template <typename T>
+MatrixBuilder<T>::MatrixBuilder(
+    ndarray::Array<T const,1,1> const & x,
+    ndarray::Array<T const,1,1> const & y,
+    int order
+) {
+    *this = MatrixBuilderFactory<T>(x, y, order)();
+}
+
+template <typename T>
+MatrixBuilder<T>::MatrixBuilder(
+    ndarray::Array<T const,1,1> const & x,
+    ndarray::Array<T const,1,1> const & y,
+    int order,
+    ShapeletFunction const & psf
+) {
+    *this = MatrixBuilderFactory<T>(x, y, order, psf)();
+}
+
+template <typename T>
+MatrixBuilder<T>::MatrixBuilder(
+    ndarray::Array<T const,1,1> const & x,
+    ndarray::Array<T const,1,1> const & y,
+    MultiShapeletBasis const & basis
+) {
+    *this = MatrixBuilderFactory<T>(x, y, basis)();
+}
+
+template <typename T>
+MatrixBuilder<T>::MatrixBuilder(
+    ndarray::Array<T const,1,1> const & x,
+    ndarray::Array<T const,1,1> const & y,
+    MultiShapeletBasis const & basis,
+    MultiShapeletFunction const & psf
+) {
+    *this = MatrixBuilderFactory<T>(x, y, basis, psf)();
+}
+
+template <typename T>
 int MatrixBuilder<T>::getDataSize() const {
     return _impl->getDataSize();
 }

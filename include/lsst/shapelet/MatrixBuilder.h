@@ -55,6 +55,64 @@ public:
 
     class Impl;
 
+    /**
+     *  Create a MatrixBuilder that evaluates a simple non-compound shapelet basis.
+     *
+     *  @param[in] x          column positions at which the basis should be evaluated.
+     *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
+     *  @param[in] order      order of the shapelet basis
+     */
+    MatrixBuilder(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        int order
+    );
+
+    /**
+     *  Create a MatrixBuilder that evaluates a simple non-compound shapelet basis after convolving it
+     *  with a ShapeletFunction.
+     *
+     *  @param[in] x          column positions at which the basis should be evaluated.
+     *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
+     *  @param[in] order      order of the shapelet basis
+     *  @param[in] psf        function to convolve the basis with
+     */
+    MatrixBuilder(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        int order,
+        ShapeletFunction const & psf
+    );
+
+    /**
+     *  Create a MatrixBuilder that evaluates a MultiShapeletBasis object.
+     *
+     *  @param[in] x          column positions at which the basis should be evaluated.
+     *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
+     *  @param[in] basis      basis object defining the functions the matrix evaluates
+     */
+    MatrixBuilder(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        MultiShapeletBasis const & basis
+    );
+
+    /**
+     *  Create a MatrixBuilder that evaluates a MultiShapeletBasis object after convolving it with
+     *  a MultiShapeletFunction.
+     *
+     *  @param[in] x          column positions at which the basis should be evaluated.
+     *  @param[in] y          row positions at which the basis should be evaluated (same size as x).
+     *  @param[in] basis      basis object defining the functions the matrix evaluates
+     *  @param[in] psf        function to convolve the basis with
+     */
+    MatrixBuilder(
+        ndarray::Array<T const,1,1> const & x,
+        ndarray::Array<T const,1,1> const & y,
+        MultiShapeletBasis const & basis,
+        MultiShapeletFunction const & psf
+    );
+
     /// Return the number of data points
     int getDataSize() const;
 
