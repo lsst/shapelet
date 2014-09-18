@@ -36,6 +36,9 @@ class MultiShapeletBasis;
 template <typename T>
 class MatrixBuilderFactory;
 
+template <typename T>
+class MatrixBuilderWorkspace;
+
 /**
  *  @brief Class that evaluates a (multi-)shapelet basis at predefined points
  *
@@ -46,6 +49,9 @@ class MatrixBuilderFactory;
 template <typename T>
 class MatrixBuilder {
 public:
+
+    typedef MatrixBuilderFactory<T> Factory;
+    typedef MatrixBuilderWorkspace<T> Workspace;
 
     class Impl;
 

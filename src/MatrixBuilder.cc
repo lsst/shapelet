@@ -67,13 +67,10 @@ public:
 
     PTR(BuilderImpl) apply() const {
         Workspace workspace(computeWorkspace());
-        return apply(workspace, workspace.getManager());
+        return apply(workspace);
     }
 
-    virtual PTR(BuilderImpl) apply(
-        Workspace & workspace,
-        ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
-    ) const = 0;
+    virtual PTR(BuilderImpl) apply(Workspace & workspace) const = 0;
 
     virtual ~Impl() {}
 
@@ -112,15 +109,12 @@ public:
         ndarray::Array<T const,1,1> _y;
     };
 
-    SimpleImpl(
-        Factory const & factory,
-        Workspace * workspace,
-        ndarray::Manager::Ptr const & manager
-    ) : _x(factory.getX()), _y(factory.getY()),
+    SimpleImpl(Factory const & factory, Workspace * workspace) :
+        _x(factory.getX()), _y(factory.getY()),
         _xt(workspace->makeVector(factory.getDataSize())),
         _yt(workspace->makeVector(factory.getDataSize())),
         _detFactor(1.0),
-        _manager(manager)
+        _manager(workspace->getManager())
     {}
 
     virtual int getDataSize() const { return _x.template getSize<0>(); }
@@ -181,22 +175,16 @@ public:
 
         int getLhsOrder() const { return _lhsOrder; }
 
-        virtual PTR(typename MatrixBuilder<T>::Impl) apply(
-            Workspace & workspace,
-            ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
-        ) const {
-            return boost::make_shared<ShapeletImpl>(*this, &workspace, manager);
+        virtual PTR(typename MatrixBuilder<T>::Impl) apply(Workspace & workspace) const {
+            return boost::make_shared<ShapeletImpl>(*this, &workspace);
         }
 
     private:
         int _lhsOrder;
     };
 
-    ShapeletImpl(
-        Factory const & factory,
-        Workspace * workspace,
-        ndarray::Manager::Ptr const & manager
-    ) : SimpleImpl<T>(factory, workspace, manager),
+    ShapeletImpl(Factory const & factory, Workspace * workspace) :
+        SimpleImpl<T>(factory, workspace),
         _lhsOrder(factory.getLhsOrder()),
         _gaussian(workspace->makeVector(factory.getDataSize())),
         _xHermite(workspace->makeMatrix(factory.getDataSize(), factory.getLhsOrder() + 1)),
@@ -297,11 +285,8 @@ public:
 
         ShapeletFunction const & getPsf() const { return _psf; }
 
-        virtual PTR(typename MatrixBuilder<T>::Impl) apply(
-            Workspace & workspace,
-            ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
-        ) const {
-            return boost::make_shared<ConvolvedShapeletImpl>(*this, &workspace, manager);
+        virtual PTR(typename MatrixBuilder<T>::Impl) apply(Workspace & workspace) const {
+            return boost::make_shared<ConvolvedShapeletImpl>(*this, &workspace);
         }
 
     protected:
@@ -309,11 +294,8 @@ public:
         ShapeletFunction _psf;
     };
 
-    ConvolvedShapeletImpl(
-        Factory const & factory,
-        Workspace * workspace,
-        ndarray::Manager::Ptr const & manager
-    ) : ShapeletImpl<T>(factory, workspace, manager),
+    ConvolvedShapeletImpl(Factory const & factory, Workspace * workspace) :
+        ShapeletImpl<T>(factory, workspace),
         _ellipse(afw::geom::ellipses::Quadrupole()),
         _convolution(factory.getRhsOrder(), factory.getPsf()),
         _lhs(workspace->makeMatrix(factory.getDataSize(), computeSize(_convolution.getRowOrder())))
@@ -383,11 +365,8 @@ public:
 
         ndarray::Array<double const,2,2> getRemapMatrix() const { return _remapMatrix; }
 
-        virtual PTR(typename MatrixBuilder<T>::Impl) apply(
-            Workspace & workspace,
-            ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
-        ) const {
-            return boost::make_shared<RemappedShapeletImpl>(*this, &workspace, manager);
+        virtual PTR(typename MatrixBuilder<T>::Impl) apply(Workspace & workspace) const {
+            return boost::make_shared<RemappedShapeletImpl>(*this, &workspace);
         }
 
     protected:
@@ -397,9 +376,8 @@ public:
 
     RemappedShapeletImpl(
         Factory const & factory,
-        Workspace * workspace,
-        ndarray::Manager::Ptr const & manager
-    ) : ShapeletImpl<T>(factory, workspace, manager),
+        Workspace * workspace
+    ) : ShapeletImpl<T>(factory, workspace),
         _ellipse(afw::geom::ellipses::Quadrupole()),
         _radius(factory.getRadius()),
         // transpose the remap matrix to preserve memory order when we copy it; will untranspose later
@@ -468,11 +446,8 @@ public:
 
         ndarray::Array<double const,2,2> getRemapMatrix() const { return _remapMatrix; }
 
-        virtual PTR(typename MatrixBuilder<T>::Impl) apply(
-            Workspace & workspace,
-            ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
-        ) const {
-            return boost::make_shared<RemappedConvolvedShapeletImpl>(*this, &workspace, manager);
+        virtual PTR(typename MatrixBuilder<T>::Impl) apply(Workspace & workspace) const {
+            return boost::make_shared<RemappedConvolvedShapeletImpl>(*this, &workspace);
         }
 
     protected:
@@ -480,11 +455,8 @@ public:
         ndarray::Array<double const,2,2> _remapMatrix;
     };
 
-    RemappedConvolvedShapeletImpl(
-        Factory const & factory,
-        Workspace * workspace,
-        ndarray::Manager::Ptr const & manager
-    ) : ConvolvedShapeletImpl<T>(factory, workspace, manager),
+    RemappedConvolvedShapeletImpl(Factory const & factory, Workspace * workspace) :
+        ConvolvedShapeletImpl<T>(factory, workspace),
         _radius(factory.getRadius()),
         // transpose the remap matrix to preserve memory order when we copy it; will untranspose later
         _remapMatrix(factory.getRemapMatrix().asEigen().template cast<T>().transpose()),
@@ -585,10 +557,7 @@ public:
             return ws;
         }
 
-        virtual PTR(typename MatrixBuilder<T>::Impl) apply(
-            Workspace & workspace,
-            ndarray::Manager::Ptr manager=ndarray::Manager::Ptr()
-        ) const {
+        virtual PTR(typename MatrixBuilder<T>::Impl) apply(Workspace & workspace) const {
             Vector builders;
             builders.reserve(_components.size());
             for (FactoryIterator i = _components.begin(); i != _components.end(); ++i) {
@@ -597,7 +566,7 @@ public:
                 // point, and they all end up sharing the same space.  That's what we want, because we call
                 // them one at a time, and they don't need anything to remain between calls.
                 Workspace wsCopy(workspace);
-                builders.push_back((**i).apply(wsCopy, manager));
+                builders.push_back((**i).apply(wsCopy));
             }
             // Now, at the end, we increment the workspace by the amount we claimed we needed, which was
             // the maximum needed by any individual components.
