@@ -48,12 +48,12 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
         function1 = self.makeRandomMultiShapeletFunction()
         s = cPickle.dumps(function1, protocol=2)
         function2 = cPickle.loads(s)
-        for element1, element2 in zip(function1.getElements(), function2.getElements()):
-            self.assertEqual(element1.getOrder(), element2.getOrder())
-            self.assertEqual(element1.getBasisType(), element2.getBasisType())
-            self.assertClose(element1.getEllipse().getParameterVector(),
-                             element2.getEllipse().getParameterVector())
-            self.assertClose(element1.getCoefficients(), element2.getCoefficients())
+        for component1, component2 in zip(function1.getComponents(), function2.getComponents()):
+            self.assertEqual(component1.getOrder(), component2.getOrder())
+            self.assertEqual(component1.getBasisType(), component2.getBasisType())
+            self.assertClose(component1.getEllipse().getParameterVector(),
+                             component2.getEllipse().getParameterVector())
+            self.assertClose(component1.getCoefficients(), component2.getCoefficients())
 
     def testConvolveGaussians(self):
         sigma1 = [lsst.afw.geom.ellipses.Quadrupole(6.0, 5.0, 2.0),
@@ -71,7 +71,7 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
                 f = lsst.shapelet.ShapeletFunction(0, lsst.shapelet.HERMITE,
                                                    lsst.afw.geom.ellipses.Ellipse(s))
                 f.getCoefficients()[0] = a / lsst.shapelet.ShapeletFunction.FLUX_FACTOR
-                msf.getElements().push_back(f)
+                msf.getComponents().push_back(f)
             return msf
         for a1, s1 in zip(alpha1, sigma1):
             for a2, s2 in zip(alpha2, sigma2):

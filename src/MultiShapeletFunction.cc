@@ -32,55 +32,55 @@ namespace lsst { namespace shapelet {
 
 void MultiShapeletFunction::normalize() {
     double integral = evaluate().integrate();
-    for (ElementList::iterator i = _elements.begin(); i != _elements.end(); ++i) {
+    for (ComponentList::iterator i = _components.begin(); i != _components.end(); ++i) {
         i->getCoefficients().deep() /= integral;
     }
 }
 
 void MultiShapeletFunction::shiftInPlace(afw::geom::Extent2D const & offset) {
-    for (ElementList::iterator i = _elements.begin(); i != _elements.end(); ++i) {
+    for (ComponentList::iterator i = _components.begin(); i != _components.end(); ++i) {
         i->shiftInPlace(offset);
     }    
 }
 
 void MultiShapeletFunction::transformInPlace(afw::geom::AffineTransform const & transform) {
-    for (ElementList::iterator i = _elements.begin(); i != _elements.end(); ++i) {
+    for (ComponentList::iterator i = _components.begin(); i != _components.end(); ++i) {
         i->transformInPlace(transform);
     }    
 }
 
 MultiShapeletFunction MultiShapeletFunction::convolve(ShapeletFunction const & other) const {
-    ElementList newElements;
-    for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
-        newElements.push_back(i->convolve(other));
+    ComponentList newComponents;
+    for (ComponentList::const_iterator i = _components.begin(); i != _components.end(); ++i) {
+        newComponents.push_back(i->convolve(other));
     }
-    return MultiShapeletFunction(newElements);
+    return MultiShapeletFunction(newComponents);
 }
 
 MultiShapeletFunction MultiShapeletFunction::convolve(MultiShapeletFunction const & other) const {
-    ElementList newElements;
-    for (ElementList::const_iterator j = other.getElements().begin(); j != other.getElements().end(); ++j) {
-        for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
-            newElements.push_back(i->convolve(*j));
+    ComponentList newComponents;
+    for (ComponentList::const_iterator j = other.getComponents().begin(); j != other.getComponents().end(); ++j) {
+        for (ComponentList::const_iterator i = _components.begin(); i != _components.end(); ++i) {
+            newComponents.push_back(i->convolve(*j));
         }
     }
-    return MultiShapeletFunction(newElements);
+    return MultiShapeletFunction(newComponents);
 }
 
 void MultiShapeletFunctionEvaluator::update(MultiShapeletFunction const & function) {
-    _elements.clear();
+    _components.clear();
     for (
-        MultiShapeletFunction::ElementList::const_iterator i = function.getElements().begin(); 
-        i != function.getElements().end();
+        MultiShapeletFunction::ComponentList::const_iterator i = function.getComponents().begin(); 
+        i != function.getComponents().end();
         ++i
     ) {
-        _elements.push_back(i->evaluate());
+        _components.push_back(i->evaluate());
     }
 }
 
 double MultiShapeletFunctionEvaluator::operator()(afw::geom::Point2D const & point) const {
     double r = 0.0;
-    for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
+    for (ComponentList::const_iterator i = _components.begin(); i != _components.end(); ++i) {
         r += (*i)(point);
     }
     return r;
@@ -88,7 +88,7 @@ double MultiShapeletFunctionEvaluator::operator()(afw::geom::Point2D const & poi
 
 double MultiShapeletFunctionEvaluator::operator()(afw::geom::Extent2D const & point) const {
     double r = 0.0;
-    for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
+    for (ComponentList::const_iterator i = _components.begin(); i != _components.end(); ++i) {
         r += (*i)(point);
     }
     return r;
@@ -109,14 +109,14 @@ void MultiShapeletFunctionEvaluator::addToImage(
     ndarray::Array<double,2,1> const & array,
     afw::geom::Point2I const & xy0
 ) const {
-    for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
+    for (ComponentList::const_iterator i = _components.begin(); i != _components.end(); ++i) {
         i->addToImage(array, xy0);
     }
 }
 
 double MultiShapeletFunctionEvaluator::integrate() const {
     double r = 0.0;
-    for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
+    for (ComponentList::const_iterator i = _components.begin(); i != _components.end(); ++i) {
         r += i->integrate();
     }
     return r;
@@ -132,7 +132,7 @@ afw::geom::ellipses::Ellipse MultiShapeletFunctionEvaluator::computeMoments() co
     double q0 = 0.0;
     Eigen::Vector2d q1 = Eigen::Vector2d::Zero();
     Eigen::Matrix2d q2 = Eigen::Matrix2d::Zero();
-    for (ElementList::const_iterator i = _elements.begin(); i != _elements.end(); ++i) {
+    for (ComponentList::const_iterator i = _components.begin(); i != _components.end(); ++i) {
         i->_computeRawMoments(q0, q1, q2);
     }
     q1 /= q0;
