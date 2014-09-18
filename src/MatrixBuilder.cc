@@ -529,11 +529,11 @@ public:
             MultiShapeletBasis const & basis,
             MultiShapeletFunction const & psf
         ) {
-            _components.reserve(psf.getElements().size() * basis.getComponentCount());
+            _components.reserve(psf.getComponents().size() * basis.getComponentCount());
             for (MultiShapeletBasis::Iterator i = basis.begin(); i != basis.end(); ++i) {
                 for (
-                    MultiShapeletFunction::ElementList::const_iterator j = psf.getElements().begin();
-                    j != psf.getElements().end();
+                    MultiShapeletFunction::ComponentList::const_iterator j = psf.getComponents().begin();
+                    j != psf.getComponents().end();
                     ++j
                 ) {
                     _components.push_back(
@@ -780,8 +780,8 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
     MultiShapeletBasis const & basis,
     MultiShapeletFunction const & psf
 ) {
-    if (basis.getComponentCount() == 1 && psf.getElements().size() == 1u) {
-        ShapeletFunction const & psfComponent = psf.getElements().front();
+    if (basis.getComponentCount() == 1 && psf.getComponents().size() == 1u) {
+        ShapeletFunction const & psfComponent = psf.getComponents().front();
         MultiShapeletBasisComponent const & component = *basis.begin();
         if (isSimple(component)) {
             _impl = boost::make_shared< typename ConvolvedShapeletImpl<T>::Factory >(

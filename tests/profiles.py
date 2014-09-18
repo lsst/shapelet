@@ -54,7 +54,7 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
         psf0 = lsst.shapelet.ShapeletFunction(0, lsst.shapelet.HERMITE, PSF_SIGMA)
         psf0.getCoefficients()[:] = 1.0 / lsst.shapelet.ShapeletFunction.FLUX_FACTOR
         psf = lsst.shapelet.MultiShapeletFunction()
-        psf.getElements().push_back(psf0)
+        psf.getComponents().push_back(psf0)
         psf.normalize()
         ellipse = el.Separable[el.Distortion, el.DeterminantRadius](E1, E2, GALAXY_RADIUS)
         for profile, nComponents, maxRadius in PROFILES:
@@ -93,7 +93,7 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
                 # This was once useful for debugging test failures, and may be again, but it's
                 # redundant with the above and requires putting more check images in git, so
                 # it's disabled by default.
-                for n, sf in enumerate(msf.getElements()):
+                for n, sf in enumerate(msf.getComponents()):
                     check = lsst.afw.image.ImageD(
                         os.path.join("tests", "data", "%s-approx-%0d.fits" % (profile, n))
                     ).getArray()

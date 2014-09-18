@@ -79,7 +79,7 @@ Python interface to lsst::shapelet classes and functions
 %feature(valuewrapper) lsst::shapelet::ShapeletFunction;
 %feature(valuewrapper) lsst::shapelet::MultiShapeletFunction;
 
-%template(MultiShapeletElementList) std::vector<lsst::shapelet::ShapeletFunction>;
+%template(MultiShapeletComponentList) std::vector<lsst::shapelet::ShapeletFunction>;
 
 %import "lsst/afw/geom/geomLib.i"
 %import "lsst/afw/geom/ellipses/ellipsesLib.i"
@@ -131,7 +131,7 @@ def __reduce__(self):
 
 %pythoncode %{
 def __reduce__(self):
-    return (MultiShapeletFunction, (list(self.getElements()),))
+    return (MultiShapeletFunction, (list(self.getComponents()),))
 %}
 
 }

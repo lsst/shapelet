@@ -107,9 +107,9 @@ MultiShapeletFunction MultiShapeletBasis::makeFunction(
 ) const {
     MultiShapeletFunction result;
     for (Iterator i = begin(); i != end(); ++i) {
-        result.getElements().push_back(ShapeletFunction(i->getOrder(), HERMITE, ellipse));
-        result.getElements().back().getEllipse().getCore().scale(i->getRadius());
-        result.getElements().back().getCoefficients().asEigen()
+        result.getComponents().push_back(ShapeletFunction(i->getOrder(), HERMITE, ellipse));
+        result.getComponents().back().getEllipse().getCore().scale(i->getRadius());
+        result.getComponents().back().getCoefficients().asEigen()
             = i->getMatrix().asEigen() * coefficients.asEigen();
     }
     return result;

@@ -147,12 +147,12 @@ def evaluateRadial(basis, r, sbNormalize=False, doComponents=False):
     ev = msf.evaluate()
     n = 1
     if doComponents:
-        n += len(msf.getElements())
+        n += len(msf.getComponents())
     z = numpy.zeros((n,) + r.shape, dtype=float)
     for j, x in enumerate(r):
         z[0,j] = ev(x, 0.0)
     if doComponents:
-        for i, sf in enumerate(msf.getElements()):
+        for i, sf in enumerate(msf.getComponents()):
             evc = sf.evaluate()
             for j, x in enumerate(r):
                 z[i+1,j] = evc(x, 0.0)

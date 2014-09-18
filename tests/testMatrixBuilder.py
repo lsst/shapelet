@@ -132,17 +132,17 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def testConvolvedShapeletMatrixBuilder(self):
         function = self.makeRandomShapeletFunction(order=4)
-        psf = self.makeRandomMultiShapeletFunction(nElements=1)
+        psf = self.makeRandomMultiShapeletFunction(nComponents=1)
         size = function.getCoefficients().size
         function.getCoefficients()[:] = numpy.random.randn(size)
         basis = lsst.shapelet.MultiShapeletBasis(size)
         basis.addComponent(1.0, function.getOrder(), numpy.identity(size))
         factoriesF = [lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, function.getOrder(),
-                                                           psf.getElements()[0]),
+                                                           psf.getComponents()[0]),
                       lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, basis, psf),
                       ]
         factoriesD = [lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, function.getOrder(),
-                                                           psf.getElements()[0]),
+                                                           psf.getComponents()[0]),
                       lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, basis, psf),
                       ]
         lastF = None
@@ -178,14 +178,14 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         self.assertClose(lastF, lastD, rtol=1E-6, atol=1E-5) # same code, different precision
 
         # Finally, check against a completely different implementation (which is tested elsewhere)
-        convolved = function.convolve(psf.getElements()[0])
+        convolved = function.convolve(psf.getComponents()[0])
         checkEvaluator = convolved.evaluate()
         checkVector = checkEvaluator(self.xD, self.yD)
         self.assertClose(numpy.dot(lastD, function.getCoefficients()), checkVector, rtol=1E-13)
 
     def testRemappedConvolvedShapeletMatrixBuilder(self):
         function = self.makeRandomShapeletFunction(order=4)
-        psf = self.makeRandomMultiShapeletFunction(nElements=1)
+        psf = self.makeRandomMultiShapeletFunction(nComponents=1)
         size = 6
         radius = 3.2
         remapMatrix = numpy.random.randn(function.getCoefficients().size, size)
@@ -214,7 +214,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
         # Finally, check against a completely different implementation (which is tested elsewhere)
         function.getEllipse().scale(radius)
-        convolved = function.convolve(psf.getElements()[0])
+        convolved = function.convolve(psf.getComponents()[0])
         checkEvaluator = convolved.evaluate()
         checkVector = checkEvaluator(self.xD, self.yD)
         self.assertClose(numpy.dot(matrixD, coefficients), checkVector, rtol=1E-13)

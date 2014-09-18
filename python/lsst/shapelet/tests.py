@@ -73,11 +73,11 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
         return result
 
     @staticmethod
-    def makeRandomMultiShapeletFunction(nElements=3, ellipse=None):
-        elements = []
-        for n in range(nElements):
-            elements.append(ShapeletTestCase.makeRandomShapeletFunction(ellipse=ellipse))
-        return lsst.shapelet.MultiShapeletFunction(elements)
+    def makeRandomMultiShapeletFunction(nComponents=3, ellipse=None):
+        components = []
+        for n in range(nComponents):
+            components.append(ShapeletTestCase.makeRandomShapeletFunction(ellipse=ellipse))
+        return lsst.shapelet.MultiShapeletFunction(components)
 
     def compareShapeletFunctions(self, a, b, rtolEllipse=1E-14, rtolCoeff=1E-14):
         self.assertEqual(a.getOrder(), b.getOrder())
@@ -88,22 +88,22 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
 
     def simplifyMultiShapeletFunction(self, msf):
         keep = []
-        for s in msf.getElements():
+        for s in msf.getComponents():
             if not numpy.allclose(s.getCoefficients(), 0.0):
                 params = tuple(s.getEllipse().getParameterVector()) + tuple(s.getCoefficients())
                 keep.append((params, s))
         msf = lsst.shapelet.MultiShapeletFunction()
         keep.sort(key=lambda t: t[0])
         for params, s in keep:
-            msf.getElements().push_back(s)
+            msf.getComponents().push_back(s)
         return msf
 
     def compareMultiShapeletFunctions(self, a, b, simplify=True, rtolEllipse=1E-14, rtolCoeff=1E-14):
         if simplify:
             a = self.simplifyMultiShapeletFunction(a)
             b = self.simplifyMultiShapeletFunction(b)
-        self.assertEqual(a.getElements().size(), b.getElements().size())  
-        for sa, sb in zip(a.getElements(), b.getElements()):
+        self.assertEqual(a.getComponents().size(), b.getComponents().size())  
+        for sa, sb in zip(a.getComponents(), b.getComponents()):
             self.compareShapeletFunctions(sa, sb, rtolEllipse=rtolEllipse, rtolCoeff=rtolCoeff)
 
     def checkMoments(self, function, x, y, z):
