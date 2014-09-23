@@ -26,7 +26,7 @@
 #define LSST_AFW_MATH_SHAPELETS_MULTISHAPELETFUNCTION_H
 
 #include "lsst/shapelet/ShapeletFunction.h"
-#include <list>
+#include <vector>
 
 namespace lsst { namespace shapelet {
 
@@ -43,21 +43,21 @@ public:
 
     typedef MultiShapeletFunctionEvaluator Evaluator;
 
-    typedef ShapeletFunction Element;
+    typedef ShapeletFunction Component;
 
-    typedef std::list<Element> ElementList;
+    typedef std::vector<Component> ComponentList;
 
-    ElementList & getElements() { return _elements; }
+    ComponentList & getComponents() { return _components; }
 
-    ElementList const & getElements() const { return _elements; }
+    ComponentList const & getComponents() const { return _components; }
 
     /// @brief Normalize the integral of the shapelet function to 1.
     void normalize();
 
-    /// @brief Shift the shapelet function by shifting the ellipse of each element.
+    /// @brief Shift the shapelet function by shifting the ellipse of each component.
     void shiftInPlace(afw::geom::Extent2D const & offset);
 
-    /// @brief Transform the shapelet function by transforming the ellipse of each elements.
+    /// @brief Transform the shapelet function by transforming the ellipse of each component.
     void transformInPlace(afw::geom::AffineTransform const & transform);
 
     /// @brief Convolve the multi-shapelet function.
@@ -69,14 +69,14 @@ public:
     /// @brief Construct a helper object that can efficiently evaluate the function.
     Evaluator evaluate() const;
 
-    MultiShapeletFunction() : _elements() {}
+    MultiShapeletFunction() : _components() {}
 
-    explicit MultiShapeletFunction(ElementList const & elements) : _elements(elements) {}
+    explicit MultiShapeletFunction(ComponentList const & components) : _components(components) {}
 
-    explicit MultiShapeletFunction(ShapeletFunction const & element) : _elements(1, element) {}
+    explicit MultiShapeletFunction(ShapeletFunction const & component) : _components(1, component) {}
 
 private:
-    ElementList _elements;
+    ComponentList _components;
 };
 
 /**
@@ -105,6 +105,12 @@ public:
     /// @brief Evaluate at the given point.
     double operator()(afw::geom::Extent2D const & point) const;
 
+    /// @brief Evaluate at the given points, returning a newly-allocated array.
+    ndarray::Array<double,1,1> operator()(
+        ndarray::Array<double const,1> const & x,
+        ndarray::Array<double const,1> const & y
+    ) const;
+
     /// @brief Add the function to the given image-like array.
     void addToImage(
         ndarray::Array<double,2,1> const & array,
@@ -129,9 +135,9 @@ public:
     explicit MultiShapeletFunctionEvaluator(MultiShapeletFunction const & function);
 
 private:
-    typedef ShapeletFunctionEvaluator Element;
-    typedef std::list<Element> ElementList;
-    ElementList _elements;
+    typedef ShapeletFunctionEvaluator Component;
+    typedef std::list<Component> ComponentList;
+    ComponentList _components;
 };
 
 inline MultiShapeletFunctionEvaluator MultiShapeletFunction::evaluate() const {

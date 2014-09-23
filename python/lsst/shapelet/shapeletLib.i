@@ -41,7 +41,7 @@ Python interface to lsst::shapelet classes and functions
 %}
 
 %include "lsst/p_lsstSwig.i"
-%include "std_list.i"
+%include "std_vector.i"
 
 %{
 #include "lsst/afw/geom.h"
@@ -62,11 +62,14 @@ Python interface to lsst::shapelet classes and functions
 %declareNumPyConverters(Eigen::MatrixXd);
 %declareNumPyConverters(Eigen::Matrix2d);
 %declareNumPyConverters(ndarray::Array<double,1>);
+%declareNumPyConverters(ndarray::Array<double const,1>);
 %declareNumPyConverters(ndarray::Array<float,1,1>);
 %declareNumPyConverters(ndarray::Array<double,1,1>);
 %declareNumPyConverters(ndarray::Array<double,2,1>);
 %declareNumPyConverters(ndarray::Array<float,2,-1>);
 %declareNumPyConverters(ndarray::Array<double,2,-1>);
+%declareNumPyConverters(ndarray::Array<float,2,-2>);
+%declareNumPyConverters(ndarray::Array<double,2,-2>);
 %declareNumPyConverters(ndarray::Array<float const,1,1>);
 %declareNumPyConverters(ndarray::Array<double const,1,1>);
 %declareNumPyConverters(ndarray::Array<double const,2,-2>);
@@ -75,9 +78,8 @@ Python interface to lsst::shapelet classes and functions
 
 %feature(valuewrapper) lsst::shapelet::ShapeletFunction;
 %feature(valuewrapper) lsst::shapelet::MultiShapeletFunction;
-%feature(valuewrapper) lsst::shapelet::ModelBuilder;
 
-%template(MultiShapeletElementList) std::list<lsst::shapelet::ShapeletFunction>;
+%template(MultiShapeletComponentList) std::vector<lsst::shapelet::ShapeletFunction>;
 
 %import "lsst/afw/geom/geomLib.i"
 %import "lsst/afw/geom/ellipses/ellipsesLib.i"
@@ -95,16 +97,25 @@ Python interface to lsst::shapelet classes and functions
 %include "lsst/shapelet/ShapeletFunction.h"
 %include "lsst/shapelet/MultiShapeletFunction.h"
 %include "lsst/shapelet/BasisEvaluator.h"
-%include "lsst/shapelet/ModelBuilder.h"
 %include "lsst/shapelet/HermiteTransformMatrix.h"
 %include "lsst/shapelet/GaussHermiteConvolution.h"
 %include "lsst/shapelet/GaussHermiteProjection.h"
 %include "lsst/shapelet/MultiShapeletBasis.h"
 
-%template(ModelBuilderF) lsst::shapelet::ModelBuilder<float>;
-%template(ModelBuilderD) lsst::shapelet::ModelBuilder<double>;
-%template(MultiShapeletMatrixBuilderF) lsst::shapelet::MultiShapeletMatrixBuilder<float>;
-%template(MultiShapeletMatrixBuilderD) lsst::shapelet::MultiShapeletMatrixBuilder<double>;
+%include "lsst/shapelet/MatrixBuilder.h"
+%define %instantiateMatrixBuilder(T, SUFFIX)
+%template(MatrixBuilder##SUFFIX) lsst::shapelet::MatrixBuilder<T>;
+%template(MatrixBuilderFactory##SUFFIX) lsst::shapelet::MatrixBuilderFactory<T>;
+%template(MatrixBuilderWorkspace##SUFFIX) lsst::shapelet::MatrixBuilderWorkspace<T>;
+%pythoncode %{
+MatrixBuilder##SUFFIX.Factory = MatrixBuilderFactory##SUFFIX
+MatrixBuilder##SUFFIX.Workspace = MatrixBuilderWorkspace##SUFFIX
+MatrixBuilderFactory##SUFFIX.Workspace = MatrixBuilderWorkspace##SUFFIX
+%}
+%enddef
+
+%instantiateMatrixBuilder(float, F)
+%instantiateMatrixBuilder(double, D)
 
 %extend lsst::shapelet::ShapeletFunction {
 
@@ -120,7 +131,7 @@ def __reduce__(self):
 
 %pythoncode %{
 def __reduce__(self):
-    return (MultiShapeletFunction, (list(self.getElements()),))
+    return (MultiShapeletFunction, (list(self.getComponents()),))
 %}
 
 }

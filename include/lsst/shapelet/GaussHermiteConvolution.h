@@ -42,6 +42,8 @@ class ShapeletFunction;
 class GaussHermiteConvolution : private boost::noncopyable {
 public:
 
+    static int computeRowOrder(int colOrder, int psfOrder) { return colOrder + psfOrder; }
+
     /**
      *  @brief Evaluate a shapelet convolution matrix in the given array.
      *

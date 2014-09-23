@@ -99,8 +99,11 @@ public:
     /// Construct a MultiShapeletBasis with the given number of elements (i.e. free amplitudes).
     explicit MultiShapeletBasis(int size);
 
-    /// Return the number of elements in the MultiShapeletBasis
+    /// Return the number of elements (i.e. free amplitudes) in the MultiShapeletBasis
     int getSize() const { return _size; }
+
+    /// Return the number of components (distinct shapelet bases) in the MultiShapeletBasis
+    int getComponentCount() const { return _components.size(); }
 
     //@{
     /// Iterator over the components (distinct shapelet bases) of the MultiShapeletBasis
@@ -139,59 +142,6 @@ public:
 private:
     int _size;
     ComponentVector _components;
-};
-
-/**
- *  @brief Class that efficiently evaluates a PSF-convolved elliptical MultiShapeletBasis matrix
- *         at predefined points.
- *
- *  The output "matrix" has pixels along the rows, and MultiShapeletBasis elements along columns;
- *  this is the design matrix involved in a linear least squares fit for the basis coefficients.
- */
-template <typename T>
-class MultiShapeletMatrixBuilder {
-public:
-
-    /// Return the number of data points
-    int getDataSize() const;
-
-    /// Return the number of basis elements
-    int getBasisSize() const;
-
-    /**
-     *  @brief Main constructor.
-     *
-     *  @param[in] basis     MultiShapeletBasis that defines the matrix to be generated
-     *  @param[in] psf       Point-spread function with which to convolve the MultiShapeletBasis model
-     *  @param[in] x         Array of x coordinates at which the matrix will be evaluated
-     *  @param[in] y         Array of y coordinates at which the matrix will be evaluated (must have the
-     *                       same size as x).
-     *  @param[in] useApproximateExp   Use utils::PowFast to compute fast approximate exponentials
-     */
-    MultiShapeletMatrixBuilder(
-        MultiShapeletBasis const & basis,
-        MultiShapeletFunction const & psf,
-        ndarray::Array<T const,1,1> const & x,
-        ndarray::Array<T const,1,1> const & y,
-        bool useApproximateExp = false
-    );
-
-    /**
-     *  @brief Evaluate the matrix given the ellipse parameters of the model
-     *
-     *  @param[out]  output   Matrix to fill, with dimensions (x.getSize<0>(), basis.getSize()).
-     *                        Will be zeroed before filling.
-     *  @param[in]   ellipse  Ellipse parameters of the model, with center relative to the x and y
-     *                        arrays passed at construction.
-     */
-    void build(
-        ndarray::Array<T,2,-1> const & output,
-        afw::geom::ellipses::Ellipse const & ellipse
-    ) const;
-
-private:
-    class Impl;
-    PTR(Impl) _impl;
 };
 
 }} // namespace lsst::shapelet

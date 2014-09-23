@@ -195,6 +195,12 @@ public:
         return _normalization * _h.sumEvaluation(_coefficients, _transform(point));
     }
 
+    /// @brief Evaluate at the given points, returning a newly-allocated array.
+    ndarray::Array<double,1,1> operator()(
+        ndarray::Array<double const,1> const & x,
+        ndarray::Array<double const,1> const & y
+    ) const;
+
     /// @brief Add the function to the given image-like array.
     void addToImage(
         ndarray::Array<double,2,1> const & array,

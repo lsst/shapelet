@@ -42,7 +42,7 @@ class ProjectionTestCase(lsst.shapelet.tests.ShapeletTestCase):
         order = 4
         size = lsst.shapelet.computeSize(order)
         nPoints = 100
-        unitCircle = lsst.afw.geom.ellipses.Quadrupole(1.0, 1.0, 0.0)
+        unitCircle = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Quadrupole(1.0, 1.0, 0.0))
         # This matrix should represent a pure rotation in shapelet space, which can be done exactly.
         inputTransform = lsst.afw.geom.LinearTransform.makeRotation(0.0*lsst.afw.geom.radians)
         outputTransform = lsst.afw.geom.LinearTransform.makeRotation(numpy.pi/3*lsst.afw.geom.radians)
@@ -52,14 +52,12 @@ class ProjectionTestCase(lsst.shapelet.tests.ShapeletTestCase):
         # Now we test that we get the same result (up to round-off error) for a bunch of test points.
         inputTestPoints = numpy.random.randn(2, nPoints)
         outputTestPoints = numpy.dot(outputTransform.getMatrix(), inputTestPoints)
-        inputBuilder = lsst.shapelet.ModelBuilderD(inputTestPoints[0,:], inputTestPoints[1,:])
-        outputBuilder = lsst.shapelet.ModelBuilderD(outputTestPoints[0,:], outputTestPoints[1,:])
-        inputBuilder.update(unitCircle)
-        outputBuilder.update(unitCircle)
-        inputBasis= numpy.zeros((size, nPoints), dtype=float).transpose()
-        outputBasis = numpy.zeros((size, nPoints), dtype=float).transpose()
-        inputBuilder.addModelMatrix(order, inputBasis)
-        outputBuilder.addModelMatrix(order, outputBasis)
+        inputBuilder = lsst.shapelet.MatrixBuilderD.Factory(inputTestPoints[0,:],
+                                                            inputTestPoints[1,:], order)()
+        outputBuilder = lsst.shapelet.MatrixBuilderD.Factory(outputTestPoints[0,:],
+                                                             outputTestPoints[1,:], order)()
+        inputBasis = inputBuilder(unitCircle)
+        outputBasis = outputBuilder(unitCircle)
         self.assertClose(numpy.dot(outputBasis, m), inputBasis, rtol=1E-13)
 
     def testPerturbation(self):

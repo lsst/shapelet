@@ -1,7 +1,7 @@
 // -*- lsst-c++ -*-
 /*
  * LSST Data Management System
- * Copyright 2008-2013 LSST Corporation.
+ * Copyright 2008-2014 LSST Corporation.
  *
  * This product includes software developed by the
  * LSST Project (http://www.lsst.org/).
@@ -22,12 +22,9 @@
  */
 
 #include "ndarray/eigen.h"
-#include "lsst/utils/ieee.h"
 #include "lsst/pex/exceptions.h"
 
 #include "lsst/shapelet/MultiShapeletBasis.h"
-#include "lsst/shapelet/ModelBuilder.h"
-#include "lsst/shapelet/GaussHermiteConvolution.h"
 
 namespace lsst { namespace shapelet {
 
@@ -110,134 +107,12 @@ MultiShapeletFunction MultiShapeletBasis::makeFunction(
 ) const {
     MultiShapeletFunction result;
     for (Iterator i = begin(); i != end(); ++i) {
-        result.getElements().push_back(ShapeletFunction(i->getOrder(), HERMITE, ellipse));
-        result.getElements().back().getEllipse().getCore().scale(i->getRadius());
-        result.getElements().back().getCoefficients().asEigen()
+        result.getComponents().push_back(ShapeletFunction(i->getOrder(), HERMITE, ellipse));
+        result.getComponents().back().getEllipse().getCore().scale(i->getRadius());
+        result.getComponents().back().getCoefficients().asEigen()
             = i->getMatrix().asEigen() * coefficients.asEigen();
     }
     return result;
 }
-
-namespace {
-
-template <typename T>
-struct MatrixBuilderItem : public MultiShapeletBasis::Component {
-
-    MatrixBuilderItem(
-        MultiShapeletBasis::Component const & basisComponent,
-        PTR(GaussHermiteConvolution) convolution_
-    ) : MultiShapeletBasis::Component(basisComponent),
-        convolution(convolution_)
-    {}
-
-    PTR(GaussHermiteConvolution) convolution;
-    ndarray::Array<T,2,-1> workspace;
-};
-
-} // anonymous
-
-template <typename T>
-class MultiShapeletMatrixBuilder<T>::Impl {
-public:
-
-    typedef std::vector< MatrixBuilderItem<T> > ItemVector;
-
-    Impl(
-        ndarray::Array<T const,1,1> const & x,
-        ndarray::Array<T const,1,1> const & y,
-        int basisSize_,
-        bool useApproximateExp
-    ) : basisSize(basisSize_), dataSize(x.template getSize<0>()), modelBuilder(x, y, useApproximateExp) {}
-
-    int basisSize;
-    int dataSize;
-    ModelBuilder<T> modelBuilder;
-    ItemVector items;
-};
-
-template <typename T>
-void MultiShapeletMatrixBuilder<T>::build(
-    ndarray::Array<T,2,-1> const & output,
-    afw::geom::ellipses::Ellipse const & ellipse
-) const {
-    output.asEigen().setZero();
-    for (typename Impl::ItemVector::const_iterator i = _impl->items.begin(); i != _impl->items.end(); ++i) {
-        afw::geom::ellipses::Ellipse itemEllipse
-            = afw::geom::ellipses::Ellipse(afw::geom::ellipses::Quadrupole(0.0, 0.0, 0.0),
-                                           ellipse.getCenter());
-        if (ellipse.getCore().getDeterminantRadius() >= 0.0) {
-            itemEllipse = ellipse;
-        }
-        itemEllipse.getCore().scale(i->getRadius());
-        ndarray::Array<double const,2,2> convolution = i->convolution->evaluate(itemEllipse);
-        if (!(itemEllipse.getCore().getDeterminantRadius() >= 0.0)) {
-            throw LSST_EXCEPT(
-                pex::exceptions::UnderflowError,
-                "Underflow error in ellipse scaling/convolution"
-            );
-        }
-        i->workspace.asEigen().setZero();
-        _impl->modelBuilder.update(itemEllipse);
-        _impl->modelBuilder.addModelMatrix(i->convolution->getRowOrder(), i->workspace);
-        Eigen::Matrix<T,Eigen::Dynamic,Eigen::Dynamic> rhs
-            = (convolution.asEigen() * i->getMatrix().asEigen()).template cast<T>();
-        output.asEigen() += i->workspace.asEigen() * rhs;
-    }
-}
-
-template <typename T>
-MultiShapeletMatrixBuilder<T>::MultiShapeletMatrixBuilder(
-    MultiShapeletBasis const & basis,
-    MultiShapeletFunction const & psf,
-    ndarray::Array<T const,1,1> const & x,
-    ndarray::Array<T const,1,1> const & y,
-    bool useApproximateExp
-) : _impl(new Impl(x, y, basis.getSize(), useApproximateExp))
-{
-    // Add the cartesian product of (basis components) x (PSF elements) to the ItemVector
-    int maxConvolvedOrder = 0;
-    for (
-        MultiShapeletFunction::ElementList::const_iterator psfIter = psf.getElements().begin();
-        psfIter != psf.getElements().end();
-        ++psfIter
-    ) {
-        int lastBasisOrder = -1;
-        PTR(GaussHermiteConvolution) convolution;
-        for (MultiShapeletBasis::Iterator basisIter = basis.begin(); basisIter != basis.end(); ++basisIter) {
-            if (basisIter->getOrder() != lastBasisOrder) {
-                convolution.reset(new GaussHermiteConvolution(basisIter->getOrder(), *psfIter));
-                lastBasisOrder = basisIter->getOrder();
-                maxConvolvedOrder = std::max(convolution->getRowOrder(), maxConvolvedOrder);
-            }
-            _impl->items.push_back(MatrixBuilderItem<T>(*basisIter, convolution));
-        }
-    }
-
-    // Loop over the ItemVector one more time to set up workspace arrays with which to call
-    // ModelBuilder.  We allocate one big array with the maximum workspace, then give each
-    // item a view into it that only contains as much as it needs.
-    ndarray::Array<T,2,2> fullWorkspaceT = ndarray::allocate(
-        computeSize(maxConvolvedOrder), x.template getSize<0>()
-    );
-    ndarray::Array<T,2,-2> fullWorkspace = fullWorkspaceT.transpose();
-    for (
-        typename Impl::ItemVector::iterator itemIter = _impl->items.begin();
-        itemIter != _impl->items.end();
-        ++itemIter
-    ) {
-        itemIter->workspace = fullWorkspace[
-            ndarray::view()(0, computeSize(itemIter->convolution->getRowOrder()))
-        ];
-    }
-}
-
-template <typename T>
-int MultiShapeletMatrixBuilder<T>::getDataSize() const { return _impl->dataSize; }
-
-template <typename T>
-int MultiShapeletMatrixBuilder<T>::getBasisSize() const { return _impl->basisSize; }
-
-template class MultiShapeletMatrixBuilder<float>;
-template class MultiShapeletMatrixBuilder<double>;
 
 }} // namespace lsst::shapelet

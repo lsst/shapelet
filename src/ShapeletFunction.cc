@@ -183,6 +183,17 @@ ShapeletFunction ShapeletFunction::convolve(ShapeletFunction const & other) cons
     return result;
 }
 
+ndarray::Array<double,1,1> ShapeletFunctionEvaluator::operator()(
+    ndarray::Array<double const,1> const & x,
+    ndarray::Array<double const,1> const & y
+) const {
+    ndarray::Array<double,1,1> output = ndarray::allocate(x.getSize<0>());
+    for (int i = 0, n = x.getSize<0>(); i < n; ++i) {
+        output[i] = (*this)(x[i], y[i]);
+    }
+    return output;
+}
+
 void ShapeletFunctionEvaluator::addToImage(
     ndarray::Array<double,2,1> const & array,
     afw::geom::Point2I const & xy0
