@@ -42,6 +42,15 @@ namespace lsst { namespace shapelet {
  *
  * For each Builder/Factory implementation pair, we declare the Factory as an inner class of the Builder
  * class, just to avoid template and forward-declaration boilerplate.
+ *
+ * The public MatrixBuilderFactory class holds a MatrixBuilderFactory::Impl, which it uses to create a
+ * MatrixBuilder::Impl, which is passed to the MatrixBuilder private constructor.  When one of the
+ * MatrixBuilder public constructors is called directly, it simply forwards those arguments to
+ * a MatrixBuilderFactory constructor, then uses the MatrixBuilderFactory to create the
+ * MatrixBuilder::Impl it will hold.
+ *
+ * Which Impl derived classes are used is set by the arguments to the MatrixBuilderFactory or
+ * MatrixBuilder constructor.
  */
 
 template <typename T>
@@ -91,7 +100,7 @@ public:
 
 /*
  * This implementation pair is an intermediate base class for cases where we have only one shapelet basis.
- * It olds the original coordinate arrays and a set of temporary arrays that are filled with the values
+ * It holds the original coordinate arrays and a set of temporary arrays that are filled with the values
  * of the coordinate arrays in the coordinate system where the ellipse we're evaluating on is the unit
  * circle.  In other words, all the derived classes just have to worry about evaluating circular basis
  * functions, and the base class handles turning those into ellipses by giving them transformed inputs.
@@ -293,10 +302,10 @@ protected:
  *    result).
  *
  *  - We need to evaluate a regular shapelet basis, using the "convolved" ellipse, at a higher order
- *    than the convolved basis we want.  In the code, we call that the "lhs" matrix, and this higher
- *    order the "lhs order".
+ *    than the convolved basis we want.  In the code, we call the higher-order basis matrix the "lhs"
+ *    matrix, and this higher order the "lhs order".
  *
- *  - We multiply the lhs basis matrix by another matrix that maps the higher-order lhs basis to the
+ *  - We multiply the lhs basis matrix by another matrix that maps the lhs basis to the
  *    lower-order rhs basis that corresponds to the requested order of the total.  Note that the
  *    lhs matrix has dimensions (dataSize, computeSize(lhsOrder)), while the rhs convolution matrix
  *    has dimensions (computeSize(lhsOrder), computeSize(rhsOrder)), so their product has dimensions
@@ -392,7 +401,7 @@ protected:
 //===========================================================================================================
 
 /*
- * This implementation pair handles a standard Gauss-Hermite basis that is remapped to an different
+ * This implementation pair handles a standard Gauss-Hermite basis that is remapped to a different
  * basis via a "remap" matrix.  That is, each of the elements of the remapped matrix is a linear
  * combination of the elements in the original Gauss-Hermite basis.
  *

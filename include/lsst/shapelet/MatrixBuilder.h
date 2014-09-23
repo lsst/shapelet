@@ -167,7 +167,7 @@ private:
  *  Multiple MatrixBuilders are often used together to evaluate a multi-shapelet model,
  *  and in this case it's more efficient for the MatrixBuilders to use the same memory
  *  for temporary arrays rather than have them each allocate their own workspace.  At other
- *  times, it may be useful to use one workspace for several a sequence of throwaway
+ *  times, it may be useful to use one workspace for a sequence of throwaway
  *  MatrixBuilders, to avoid unnecessary memory allocations.  This class manages the
  *  memory used for a MatrixBuilder's workspace arrays, and provides methods for tracking
  *  it and sharing it between multple MatrixBuilders.  See MatrixBuilderFactory for examples.
@@ -181,7 +181,7 @@ private:
  *  this as workspace matrices and vectors are created from it.  It also checks that any created
  *  arrays do not exceed the bounds of the allocated memory.  In order to share workspace memory
  *  between MatrixBuilders, the workspace object is simply copied - copied objects share the
- *  same memory, but main different "current" pointers, and hence create arrays from the
+ *  same memory, but maintain different "current" pointers, and hence create arrays from the
  *  same block of memory.
  */
 template <typename T>
