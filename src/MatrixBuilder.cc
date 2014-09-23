@@ -61,7 +61,7 @@ public:
 
     virtual int getBasisSize() const = 0;
 
-    virtual void apply(
+    virtual void buildMatrix(
         ndarray::Array<T,2,-1> const & output,
         afw::geom::ellipses::Ellipse const & ellipse
     ) = 0;
@@ -83,12 +83,12 @@ public:
 
     virtual int computeWorkspace() const = 0;
 
-    PTR(BuilderImpl) apply() const {
+    PTR(BuilderImpl) makeBuilderImpl() const {
         Workspace workspace(computeWorkspace());
-        return apply(workspace);
+        return makeBuilderImpl(workspace);
     }
 
-    virtual PTR(BuilderImpl) apply(Workspace & workspace) const = 0;
+    virtual PTR(BuilderImpl) makeBuilderImpl(Workspace & workspace) const = 0;
 
     virtual ~Impl() {}
 
@@ -217,7 +217,7 @@ public:
 
         int getLhsOrder() const { return _lhsOrder; }
 
-        virtual PTR(typename MatrixBuilder<T>::Impl) apply(Workspace & workspace) const {
+        virtual PTR(typename MatrixBuilder<T>::Impl) makeBuilderImpl(Workspace & workspace) const {
             return boost::make_shared<ShapeletImpl>(*this, &workspace);
         }
 
@@ -235,15 +235,15 @@ public:
 
     virtual int getBasisSize() const { return computeSize(_lhsOrder); }
 
-    virtual void apply(
+    virtual void buildMatrix(
         ndarray::Array<T,2,-1> const & output,
         afw::geom::ellipses::Ellipse const & ellipse
     ) {
-        apply(output.template asEigen<Eigen::ArrayXpr>(), ellipse);
+        buildMatrix(output.template asEigen<Eigen::ArrayXpr>(), ellipse);
     }
 
     template <typename EigenArrayT>
-    void apply(
+    void buildMatrix(
         EigenArrayT output,
         afw::geom::ellipses::Ellipse const & ellipse
     ) {
@@ -353,7 +353,7 @@ public:
 
         ShapeletFunction const & getPsf() const { return _psf; }
 
-        virtual PTR(typename MatrixBuilder<T>::Impl) apply(Workspace & workspace) const {
+        virtual PTR(typename MatrixBuilder<T>::Impl) makeBuilderImpl(Workspace & workspace) const {
             return boost::make_shared<ConvolvedShapeletImpl>(*this, &workspace);
         }
 
@@ -371,7 +371,7 @@ public:
 
     virtual int getBasisSize() const { return computeSize(_convolution.getColOrder()); }
 
-    virtual void apply(
+    virtual void buildMatrix(
         ndarray::Array<T,2,-1> const & output,
         afw::geom::ellipses::Ellipse const & ellipse
     ) {
@@ -383,7 +383,7 @@ public:
     ndarray::Array<double const,2,2> computeTerms() {
         ndarray::Array<double const,2,2> rhs = _convolution.evaluate(_ellipse);
         _lhs.setZero();
-        ShapeletImpl<T>::apply(_lhs, _ellipse);
+        ShapeletImpl<T>::buildMatrix(_lhs, _ellipse);
         return rhs;
     }
 
@@ -443,7 +443,7 @@ public:
 
         ndarray::Array<double const,2,2> getRemapMatrix() const { return _remapMatrix; }
 
-        virtual PTR(typename MatrixBuilder<T>::Impl) apply(Workspace & workspace) const {
+        virtual PTR(typename MatrixBuilder<T>::Impl) makeBuilderImpl(Workspace & workspace) const {
             return boost::make_shared<RemappedShapeletImpl>(*this, &workspace);
         }
 
@@ -465,14 +465,14 @@ public:
 
     virtual int getBasisSize() const { return _remapMatrix.rows(); }
 
-    virtual void apply(
+    virtual void buildMatrix(
         ndarray::Array<T,2,-1> const & output,
         afw::geom::ellipses::Ellipse const & ellipse
     ) {
         _ellipse = ellipse;
         _ellipse.scale(_radius);
         _lhs.setZero();
-        ShapeletImpl<T>::apply(_lhs, _ellipse);
+        ShapeletImpl<T>::buildMatrix(_lhs, _ellipse);
         output.asEigen() += _lhs.matrix() * _remapMatrix.transpose(); // undo the transpose in the ctor
     }
 
@@ -541,7 +541,7 @@ public:
 
         ndarray::Array<double const,2,2> getRemapMatrix() const { return _remapMatrix; }
 
-        virtual PTR(typename MatrixBuilder<T>::Impl) apply(Workspace & workspace) const {
+        virtual PTR(typename MatrixBuilder<T>::Impl) makeBuilderImpl(Workspace & workspace) const {
             return boost::make_shared<RemappedConvolvedShapeletImpl>(*this, &workspace);
         }
 
@@ -560,7 +560,7 @@ public:
 
     virtual int getBasisSize() const { return _remapMatrix.rows(); }
 
-    virtual void apply(
+    virtual void buildMatrix(
         ndarray::Array<T,2,-1> const & output,
         afw::geom::ellipses::Ellipse const & ellipse
     ) {
@@ -668,7 +668,7 @@ public:
             return ws;
         }
 
-        virtual PTR(typename MatrixBuilder<T>::Impl) apply(Workspace & workspace) const {
+        virtual PTR(typename MatrixBuilder<T>::Impl) makeBuilderImpl(Workspace & workspace) const {
             Vector builders;
             builders.reserve(_components.size());
             for (FactoryIterator i = _components.begin(); i != _components.end(); ++i) {
@@ -677,7 +677,7 @@ public:
                 // point, and they all end up sharing the same space.  That's what we want, because we call
                 // them one at a time, and they don't need anything to remain between calls.
                 Workspace wsCopy(workspace);
-                builders.push_back((**i).apply(wsCopy));
+                builders.push_back((**i).makeBuilderImpl(wsCopy));
             }
             // Now, at the end, we increment the workspace by the amount we claimed we needed, which was
             // the maximum needed by any individual components.
@@ -695,12 +695,12 @@ public:
 
     virtual int getBasisSize() const { return _components.front()->getBasisSize(); }
 
-    virtual void apply(
+    virtual void buildMatrix(
         ndarray::Array<T,2,-1> const & output,
         afw::geom::ellipses::Ellipse const & ellipse
     ) {
         for (Iterator i = _components.begin(); i != _components.end(); ++i) {
-            (**i).apply(output, ellipse);
+            (**i).buildMatrix(output, ellipse);
         }
     }
 
@@ -774,7 +774,7 @@ void MatrixBuilder<T>::operator()(
     ndarray::Array<T,2,-1> const & output,
     afw::geom::ellipses::Ellipse const & ellipse
 ) const {
-    _impl->apply(output, ellipse);
+    _impl->buildMatrix(output, ellipse);
 }
 
 template <typename T>
@@ -919,12 +919,12 @@ int MatrixBuilderFactory<T>::computeWorkspace() const { return _impl->computeWor
 
 template <typename T>
 MatrixBuilder<T> MatrixBuilderFactory<T>::operator()() const {
-    return MatrixBuilder<T>(_impl->apply());
+    return MatrixBuilder<T>(_impl->makeBuilderImpl());
 }
 
 template <typename T>
 MatrixBuilder<T> MatrixBuilderFactory<T>::operator()(Workspace & workspace) const {
-    return MatrixBuilder<T>(_impl->apply(workspace));
+    return MatrixBuilder<T>(_impl->makeBuilderImpl(workspace));
 }
 
 //===========================================================================================================
