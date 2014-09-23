@@ -217,7 +217,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         convolved = function.convolve(psf.getComponents()[0])
         checkEvaluator = convolved.evaluate()
         checkVector = checkEvaluator(self.xD, self.yD)
-        self.assertClose(numpy.dot(matrixD, coefficients), checkVector, rtol=1E-13)
+        self.assertClose(numpy.dot(matrixD, coefficients), checkVector, rtol=1E-12)
 
     def testCompoundMatrixBuilder(self):
         ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes(4.0, 3.0, 1.0),
