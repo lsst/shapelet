@@ -375,6 +375,12 @@ public:
         ndarray::Array<T,2,-1> const & output,
         afw::geom::ellipses::Ellipse const & ellipse
     ) {
+        if (!(ellipse.getCore().getDeterminantRadius() >= 0.0)) {
+            throw LSST_EXCEPT(
+                pex::exceptions::UnderflowError,
+                "Underflow error in ellipse scaling/convolution"
+            );
+        }
         _ellipse = ellipse;
         ndarray::Array<double const,2,2> rhs = computeTerms();
         output.asEigen() += _lhs.matrix() * rhs.asEigen().cast<T>();
