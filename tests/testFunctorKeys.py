@@ -29,6 +29,7 @@ import lsst.utils.tests
 import lsst.afw.geom.ellipses
 import lsst.shapelet.tests
 import lsst.afw.image
+import lsst.afw.table
 
 numpy.random.seed(500)
 
@@ -42,6 +43,27 @@ class FunctorKeyTestCase(lsst.shapelet.tests.ShapeletTestCase):
             invalidSizes.remove(size)
         for size in invalidSizes:
             self.assertRaises(lsst.pex.exceptions.InvalidParameterError, lsst.shapelet.computeOrder, size)
+
+    def testShapeletFunctionKey(self):
+        schema = lsst.afw.table.Schema()
+        order = 4
+        k0 = lsst.shapelet.ShapeletFunctionKey.addFields(schema, "s", "shapelet function",
+                                                         "pixels", "dn", order)
+        k1 = lsst.shapelet.ShapeletFunctionKey(k0.getEllipse(), k0.getCoefficients())
+        k2 = lsst.shapelet.ShapeletFunctionKey(schema["s"])
+        self.assertEqual(k0, k1)
+        self.assertEqual(k1, k2)
+        self.assertTrue(k0.isValid())
+        self.assertEqual(k0.getEllipse(), lsst.afw.table.EllipseKey(schema["s"]))
+        self.assertEqual(k0.getCoefficients(), lsst.afw.table.ArrayDKey(schema["s"]))
+        table = lsst.afw.table.BaseTable.make(schema)
+        record = table.makeRecord()
+        s0 = self.makeRandomShapeletFunction(order=order)
+        record.set(k0, s0)
+        s1 = record.get(k0)
+        self.compareShapeletFunctions(s0, s1)
+        self.assertRaises(lsst.pex.exceptions.InvalidParameterError, record.set, k0,
+                          self.makeRandomShapeletFunction(order=3))
 
 def suite():
     """Returns a suite containing all the test cases in this module."""
