@@ -50,6 +50,7 @@ Python interface to lsst::shapelet classes and functions
 #include "ndarray/swig.h"
 #include "ndarray/swig/eigen.h"
 #include "lsst/afw/geom/ellipses/PyPixelRegion.h"
+#include "lsst/afw/table.h"
 %}
 
 %init %{
@@ -84,6 +85,7 @@ Python interface to lsst::shapelet classes and functions
 %import "lsst/afw/geom/geomLib.i"
 %import "lsst/afw/geom/ellipses/ellipsesLib.i"
 %import "lsst/afw/image/imageLib.i"
+%import "lsst/afw/table/tableLib.i"
 
 %lsst_exceptions();
 
@@ -135,3 +137,8 @@ def __reduce__(self):
 %}
 
 }
+
+%declareFunctorKey(ShapeletFunction, lsst::shapelet::ShapeletFunction)
+%shared_ptr(lsst::shapelet::ShapeletFunctionKey)
+%include "lsst/shapelet/FunctorKeys.h"
+%useValueEquality(lsst::shapelet::ShapeletFunctionKey)

@@ -39,5 +39,6 @@
 #include "lsst/shapelet/GaussHermiteProjection.h"
 #include "lsst/shapelet/MultiShapeletBasis.h"
 #include "lsst/shapelet/MatrixBuilder.h"
+#include "lsst/shapelet/FunctorKeys.h"
 
 #endif // !defined(LSST_AFW_MATH_SHAPELETS_H)
