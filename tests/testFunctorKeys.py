@@ -65,6 +65,26 @@ class FunctorKeyTestCase(lsst.shapelet.tests.ShapeletTestCase):
         self.assertRaises(lsst.pex.exceptions.InvalidParameterError, record.set, k0,
                           self.makeRandomShapeletFunction(order=3))
 
+
+    def testMultiShapeletFunctionKey(self):
+        schema = lsst.afw.table.Schema()
+        msf0 = self.makeRandomMultiShapeletFunction(nComponents=3)
+        orders = [s.getOrder() for s in msf0.getComponents()]
+        k0 = lsst.shapelet.MultiShapeletFunctionKey.addFields(schema, "s", "shapelet function",
+                                                              "pixels", "dn", orders)
+        k1 = lsst.shapelet.MultiShapeletFunctionKey([k0[i] for i in range(len(orders))])
+        k2 = lsst.shapelet.MultiShapeletFunctionKey(schema["s"])
+        self.assertEqual(k0, k1)
+        self.assertEqual(k1, k2)
+        self.assertTrue(k0.isValid())
+        table = lsst.afw.table.BaseTable.make(schema)
+        record = table.makeRecord()
+        record.set(k0, msf0)
+        msf1 = record.get(k0)
+        self.compareMultiShapeletFunctions(msf0, msf1)
+        self.assertRaises(lsst.pex.exceptions.InvalidParameterError, record.set, k0,
+                          self.makeRandomMultiShapeletFunction(nComponents=4))
+
 def suite():
     """Returns a suite containing all the test cases in this module."""
 
