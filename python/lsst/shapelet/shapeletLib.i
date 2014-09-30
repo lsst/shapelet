@@ -140,5 +140,19 @@ def __reduce__(self):
 
 %declareFunctorKey(ShapeletFunction, lsst::shapelet::ShapeletFunction)
 %shared_ptr(lsst::shapelet::ShapeletFunctionKey)
+
+%declareFunctorKey(MultiShapeletFunction, lsst::shapelet::MultiShapeletFunction)
+%shared_ptr(lsst::shapelet::MultiShapeletFunctionKey)
+%template(ShapeletFunctionKeyVector) std::vector<PTR(lsst::shapelet::ShapeletFunctionKey)>;
+%template(IntVector) std::vector<int>;
+
 %include "lsst/shapelet/FunctorKeys.h"
+
 %useValueEquality(lsst::shapelet::ShapeletFunctionKey)
+%useValueEquality(lsst::shapelet::MultiShapeletFunctionKey)
+
+%extend lsst::shapelet::MultiShapeletFunctionKey {
+
+    PTR(lsst::shapelet::ShapeletFunctionKey) __getitem__(int i) { return (*self)[i]; }
+
+}
