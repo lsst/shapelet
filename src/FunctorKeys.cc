@@ -67,4 +67,96 @@ void ShapeletFunctionKey::set(afw::table::BaseRecord & record, ShapeletFunction 
     _ellipseKey.set(record, value.getEllipse());
 }
 
+
+MultiShapeletFunctionKey MultiShapeletFunctionKey::addFields(
+    afw::table::Schema & schema,
+    std::string const & name,
+    std::string const & doc,
+    std::string const & ellipseUnit,
+    std::string const & coeffUnit,
+    std::vector<int> const & orders,
+    BasisTypeEnum basisType
+) {
+    MultiShapeletFunctionKey result;
+    result._components.reserve(orders.size());
+    for (std::size_t i = 0; i < orders.size(); ++i) {
+        result._components.push_back(
+            boost::make_shared<ShapeletFunctionKey>(
+                ShapeletFunctionKey::addFields(
+                    schema,
+                    schema[name][boost::lexical_cast<std::string>(i)].getPrefix(),
+                    doc,
+                    ellipseUnit,
+                    coeffUnit,
+                    orders[i],
+                    basisType
+                )
+            )
+        );
+    }
+    return result;
+}
+
+MultiShapeletFunctionKey::MultiShapeletFunctionKey(
+    afw::table::SubSchema const & s,
+    BasisTypeEnum basisType
+) {
+    std::size_t i = 0;
+    while (true) {
+        try {
+            PTR(ShapeletFunctionKey) component = boost::make_shared<ShapeletFunctionKey>(
+                s[boost::lexical_cast<std::string>(i)],
+                basisType
+            );
+            _components.push_back(component);
+            ++i;
+        } catch (pex::exceptions::NotFoundError &) {
+            break;
+        }
+    }
+}
+
+MultiShapeletFunction MultiShapeletFunctionKey::get(afw::table::BaseRecord const & record) const {
+    MultiShapeletFunction result;
+    result.getComponents().reserve(_components.size());
+    for (std::size_t i = 0; i < _components.size(); ++i) {
+        result.getComponents().push_back(_components[i]->get(record));
+    }
+    return result;
+}
+
+void MultiShapeletFunctionKey::set(
+    afw::table::BaseRecord & record,
+    MultiShapeletFunction const & value
+) const {
+    LSST_THROW_IF_NE(
+        value.getComponents().size(), _components.size(),
+        pex::exceptions::InvalidParameterError,
+        "Number of components in value (%d) does not match number of components in FunctorKey (%d)"
+    );
+    for (std::size_t i = 0; i < _components.size(); ++i) {
+        _components[i]->set(record, value.getComponents()[i]);
+    }
+}
+
+bool MultiShapeletFunctionKey::operator==(MultiShapeletFunctionKey const & other) const {
+    if (_components.size() != other._components.size()) {
+        return false;
+    }
+    for (std::size_t i = 0; i < _components.size(); ++i) {
+        if ((_components[i] != other._components[i]) && (*_components[i] != *other._components[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool MultiShapeletFunctionKey::isValid() const {
+    for (std::size_t i = 0; i < _components.size(); ++i) {
+        if (!_components[i]->isValid()) return false;
+    }
+    return true;
+}
+
+
 }} // namespace lsst::shapelet
