@@ -84,6 +84,9 @@ class FunctorKeyTestCase(lsst.shapelet.tests.ShapeletTestCase):
         self.compareMultiShapeletFunctions(msf0, msf1)
         self.assertRaises(lsst.pex.exceptions.InvalidParameterError, record.set, k0,
                           self.makeRandomMultiShapeletFunction(nComponents=4))
+        self.assertRaises(lsst.pex.exceptions.NotFoundError,
+                          lsst.shapelet.MultiShapeletFunctionKey,
+                          schema["a"])
 
 def suite():
     """Returns a suite containing all the test cases in this module."""

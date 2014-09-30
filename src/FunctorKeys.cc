@@ -114,6 +114,12 @@ MultiShapeletFunctionKey::MultiShapeletFunctionKey(
             break;
         }
     }
+    if (i == 0) {
+        throw LSST_EXCEPT(
+            pex::exceptions::NotFoundError,
+            (boost::format("No shapelet expansions found with prefix %s") % s.getPrefix()).str()
+        );
+    }
 }
 
 MultiShapeletFunction MultiShapeletFunctionKey::get(afw::table::BaseRecord const & record) const {
