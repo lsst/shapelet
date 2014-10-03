@@ -21,6 +21,7 @@
 #
 
 from shapeletLib import *
+from . import tractor
 from lsst.afw.geom.ellipses import Quadrupole as EllipseCore
 
 class IndexGenerator(object):
