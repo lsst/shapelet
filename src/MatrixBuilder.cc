@@ -927,18 +927,14 @@ MatrixBuilder<T> MatrixBuilderFactory<T>::operator()(Workspace & workspace) cons
     return MatrixBuilder<T>(_impl->makeBuilderImpl(workspace));
 }
 
-
-}} // namespace lsst::shapelet
-
 //===========================================================================================================
 //================== Explicit Instantiation =================================================================
 //===========================================================================================================
 
 #define INSTANTIATE(T)                                          \
-    namespace lsst { namespace shapelet {                       \
-        template class MatrixBuilder<T>;                        \
-        template class MatrixBuilderFactory<T>;                 \
-        template class MatrixBuilderWorkspace<T>;               \
+    template class MatrixBuilder<T>;                            \
+    template class MatrixBuilderFactory<T>;                     \
+    template class MatrixBuilderWorkspace<T>;                   \
     namespace {                                                 \
         template class SimpleImpl<T>;                           \
         template class ShapeletImpl<T>;                         \
@@ -950,3 +946,5 @@ MatrixBuilder<T> MatrixBuilderFactory<T>::operator()(Workspace & workspace) cons
 
 INSTANTIATE(float);
 INSTANTIATE(double);
+
+}} // namespace lsst::shapelet
