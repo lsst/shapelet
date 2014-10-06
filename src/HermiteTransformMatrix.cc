@@ -104,7 +104,7 @@ Eigen::MatrixXd HermiteTransformMatrix::compute(Eigen::Matrix2d const & transfor
     Binomial binomial_m(order);
     Binomial binomial_n(order);
     for (int jn=0, joff=0; jn <= order; joff += (++jn)) {
-        for (int kn=jn, koff=joff; kn <= order; (koff += (++kn)) += (++kn)) {
+        for (int kn=jn, koff=joff; kn <= order; koff += ++kn, koff += ++kn) {
             for (int jx=0,jy=jn; jx <= jn; ++jx,--jy) {
                 for (int kx=0,ky=kn; kx <= kn; ++kx,--ky) {
                     double & element = result(koff+kx, joff+jx);
