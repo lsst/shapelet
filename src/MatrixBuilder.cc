@@ -942,7 +942,7 @@ MatrixBuilder<T> MatrixBuilderFactory<T>::operator()(Workspace & workspace) cons
         template class RemappedShapeletImpl<T>;                 \
         template class RemappedConvolvedShapeletImpl<T>;        \
         template class CompoundImpl<T>                          \
-    }}}
+    }
 
 INSTANTIATE(float);
 INSTANTIATE(double);
