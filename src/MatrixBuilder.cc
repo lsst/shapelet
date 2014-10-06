@@ -939,7 +939,6 @@ MatrixBuilder<T> MatrixBuilderFactory<T>::operator()(Workspace & workspace) cons
         template class MatrixBuilder<T>;                        \
         template class MatrixBuilderFactory<T>;                 \
         template class MatrixBuilderWorkspace<T>;               \
-    }}                                                          \
     namespace {                                                 \
         template class SimpleImpl<T>;                           \
         template class ShapeletImpl<T>;                         \
@@ -947,7 +946,7 @@ MatrixBuilder<T> MatrixBuilderFactory<T>::operator()(Workspace & workspace) cons
         template class RemappedShapeletImpl<T>;                 \
         template class RemappedConvolvedShapeletImpl<T>;        \
         template class CompoundImpl<T>                          \
-    } // anonymous namespace
+    }}}
 
 INSTANTIATE(float);
 INSTANTIATE(double);
