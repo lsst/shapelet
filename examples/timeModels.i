@@ -32,6 +32,7 @@
 #include "lsst/afw/fits.h"
 #include "lsst/afw/cameraGeom.h"
 #include "lsst/afw/image.h"
+#include "lsst/afw/table.h"
 #include "lsst/pex/logging.h"
 #define PY_ARRAY_UNIQUE_SYMBOL LSST_SHAPELET_TIMEMODELS_NUMPY_ARRAY_API
 #include "numpy/arrayobject.h"
@@ -39,6 +40,7 @@
 #include "ndarray/swig/eigen.h"
 %}
 
+%import "lsst/afw/table/tableLib.i"
 %import "lsst/shapelet/shapeletLib.i"
 
 %init %{
