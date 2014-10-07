@@ -73,7 +73,7 @@ MultiShapeletFunctionKey MultiShapeletFunctionKey::addFields(
     std::string const & name,
     std::string const & doc,
     std::string const & ellipseUnit,
-    std::string const & coefficientUnit,
+    std::string const & coeffUnit,
     std::vector<int> const & orders,
     BasisTypeEnum basisType
 ) {
@@ -87,7 +87,7 @@ MultiShapeletFunctionKey MultiShapeletFunctionKey::addFields(
                     schema[name][boost::lexical_cast<std::string>(i)].getPrefix(),
                     doc,
                     ellipseUnit,
-                    coefficientUnit,
+                    coeffUnit,
                     orders[i],
                     basisType
                 )

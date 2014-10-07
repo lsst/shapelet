@@ -175,7 +175,7 @@ public:
         std::string const & name,
         std::string const & doc,
         std::string const & ellipseUnit,
-        std::string const & coefficientUnit,
+        std::string const & coeffUnit,
         std::vector<int> const & orders,
         BasisTypeEnum basisType=HERMITE
     );
