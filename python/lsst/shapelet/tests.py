@@ -79,7 +79,7 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
             components.append(ShapeletTestCase.makeRandomShapeletFunction(ellipse=ellipse))
         return lsst.shapelet.MultiShapeletFunction(components)
 
-    def compareShapeletFunctions(self, a, b, rtolEllipse=1E-14, rtolCoeff=1E-14):
+    def compareShapeletFunctions(self, a, b, rtolEllipse=1E-13, rtolCoeff=1E-13):
         self.assertEqual(a.getOrder(), b.getOrder())
         self.assertEqual(a.getBasisType(), b.getBasisType())
         self.assertClose(a.getEllipse().getParameterVector(), b.getEllipse().getParameterVector(),
@@ -98,7 +98,7 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
             msf.getComponents().push_back(s)
         return msf
 
-    def compareMultiShapeletFunctions(self, a, b, simplify=True, rtolEllipse=1E-14, rtolCoeff=1E-14):
+    def compareMultiShapeletFunctions(self, a, b, simplify=True, rtolEllipse=1E-13, rtolCoeff=1E-13):
         if simplify:
             a = self.simplifyMultiShapeletFunction(a)
             b = self.simplifyMultiShapeletFunction(b)
