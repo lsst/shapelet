@@ -107,7 +107,7 @@ ShapeletFunction::ShapeletFunction(
 
 ShapeletFunction::ShapeletFunction(
     int order, BasisTypeEnum basisType, afw::geom::ellipses::Ellipse const & ellipse,
-    ndarray::Array<double,1,1> const & coefficients
+    ndarray::Array<double const,1,1> const & coefficients
 ) :
     _order(order), _basisType(basisType), _ellipse(EllipseCore(ellipse.getCore()), ellipse.getCenter()),
     _coefficients(ndarray::copy(coefficients))

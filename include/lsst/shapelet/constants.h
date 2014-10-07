@@ -97,6 +97,22 @@ inline int computeOffset(int order) { return order * (order + 1) / 2; }
 inline int computeSize(int order) { return computeOffset(order + 1); }
 
 /**
+ *  Infer the order of a shapelet expansion from the number of coefficients.
+ *
+ *  @throw InvalidParameterError if the number of coefficients does not correspond to any shapelet order.
+ */
+inline int computeOrder(int size) {
+    int order = (std::sqrt(8*size + 1) - 3)/2;
+    if (computeSize(order) != size) {
+        throw LSST_EXCEPT(
+            pex::exceptions::InvalidParameterError,
+            "Invalid size for shapelet coefficient matrix"
+        );
+    }
+    return order;
+}
+
+/**
  *  @brief Typedef for a commonly-used array type.
  *
  *  @note Serves as a workaround for ambiguities in the C++ standard itself:

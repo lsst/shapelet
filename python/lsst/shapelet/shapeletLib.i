@@ -50,6 +50,7 @@ Python interface to lsst::shapelet classes and functions
 #include "ndarray/swig.h"
 #include "ndarray/swig/eigen.h"
 #include "lsst/afw/geom/ellipses/PyPixelRegion.h"
+#include "lsst/afw/table.h"
 %}
 
 %init %{
@@ -87,6 +88,7 @@ Python interface to lsst::shapelet classes and functions
 %import "lsst/afw/geom/geomLib.i"
 %import "lsst/afw/geom/ellipses/ellipsesLib.i"
 %import "lsst/afw/image/imageLib.i"
+%import "lsst/afw/table/tableLib.i"
 
 %lsst_exceptions();
 
@@ -149,3 +151,22 @@ def __reduce__(self):
     %}
 }
 %include "lsst/shapelet/RadialProfile.h"
+
+%declareFunctorKey(ShapeletFunction, lsst::shapelet::ShapeletFunction)
+%shared_ptr(lsst::shapelet::ShapeletFunctionKey)
+
+%declareFunctorKey(MultiShapeletFunction, lsst::shapelet::MultiShapeletFunction)
+%shared_ptr(lsst::shapelet::MultiShapeletFunctionKey)
+%template(ShapeletFunctionKeyVector) std::vector<PTR(lsst::shapelet::ShapeletFunctionKey)>;
+%template(IntVector) std::vector<int>;
+
+%include "lsst/shapelet/FunctorKeys.h"
+
+%useValueEquality(lsst::shapelet::ShapeletFunctionKey)
+%useValueEquality(lsst::shapelet::MultiShapeletFunctionKey)
+
+%extend lsst::shapelet::MultiShapeletFunctionKey {
+
+    PTR(lsst::shapelet::ShapeletFunctionKey) __getitem__(int i) { return (*self)[i]; }
+
+}

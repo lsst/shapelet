@@ -145,7 +145,7 @@ public:
     ShapeletFunction(
         int order, BasisTypeEnum basisType,
         afw::geom::ellipses::Ellipse const & ellipse,
-        ndarray::Array<double,1,1> const & coefficients
+        ndarray::Array<double const,1,1> const & coefficients
     );
 
     /// @brief Copy constructor (deep).
