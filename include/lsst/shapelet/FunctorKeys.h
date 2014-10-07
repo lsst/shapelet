@@ -62,7 +62,7 @@ public:
         std::string const & name,
         std::string const & doc,
         std::string const & ellipseUnit,
-        std::string const & coefficientUnit,
+        std::string const & coeffUnit,
         int order,
         BasisTypeEnum basisType=HERMITE
     );

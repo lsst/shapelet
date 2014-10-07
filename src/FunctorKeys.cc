@@ -30,7 +30,7 @@ ShapeletFunctionKey ShapeletFunctionKey::addFields(
     std::string const & name,
     std::string const & doc,
     std::string const & ellipseUnit,
-    std::string const & coefficientUnit,
+    std::string const & coeffUnit,
     int order,
     BasisTypeEnum basisType
 ) {
@@ -39,7 +39,7 @@ ShapeletFunctionKey ShapeletFunctionKey::addFields(
     result._basisType = basisType;
     result._ellipseKey = afw::table::EllipseKey::addFields(schema, name, doc, ellipseUnit);
     result._coefficientsKey =
-        afw::table::ArrayKey<double>::addFields(schema, name, doc, coefficientUnit, computeSize(order));
+        afw::table::ArrayKey<double>::addFields(schema, name, doc, coeffUnit, computeSize(order));
     return result;
 }
 
