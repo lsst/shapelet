@@ -256,7 +256,7 @@ ndarray::Array<double const,2,2> ImplN::evaluate(
     // kq is zero unless {n+m} is even
     Eigen::VectorXd kq = Eigen::VectorXd::Zero(psfMat.size());
     for (int m = 0, mo = 0; m <= psfOrder; mo += ++m) {
-        for (int n = m, no = mo; n <= psfOrder; (no += ++n) += ++n) {
+        for (int n = m, no = mo; n <= psfOrder; no += ++n, no += ++n) {
             if ((n + m) % 4) { // (n + m) % 4 is always 0 or 2
                 kq.segment(mo, m+1) -= psfMat.block(no, mo, n+1, m+1).adjoint() * psf_coeff.segment(no, n+1);
             } else {
@@ -274,7 +274,7 @@ ndarray::Array<double const,2,2> ImplN::evaluate(
         x[0] = 0;
         for (n[1] = o[1] = 0; n[1] <= _rowOrder; o[1] += ++n[1]) {
             for (n[2] = o[2] = 0; n[2] <= _colOrder; o[2] += ++n[2]) {
-                for (n[0] = o[0] = bool((n[1]+n[2])%2); n[0] <= psfOrder; (o[0] += ++n[0]) += ++n[0]) {
+                for (n[0] = o[0] = bool((n[1]+n[2])%2); n[0] <= psfOrder; o[0] += ++n[0], o[0] += ++n[0]) {
                     if (n[0] + n[2] < n[1]) continue; // b is triangular
                     double factor = ((n[2] - n[0] - n[1]) % 4) ? -1.0 : 1.0;
                     for (x[1] = 0; x[1] <= n[1]; ++x[1]) {
@@ -295,7 +295,7 @@ ndarray::Array<double const,2,2> ImplN::evaluate(
     for (int m = 0, mo = 0; m <= _rowOrder; mo += ++m) {
         for (int n = 0, no = 0; n <= _colOrder; no += ++n) {
             int jo = bool(n % 2);
-            for (int j = jo; j <= n; (jo += ++j) += ++j) {
+            for (int j = jo; j <= n; jo += ++j, jo += ++j) {
                 if ((n - j) % 4) { // (n - j) % 4 is always 0 or 2
                     result.block(mo, no, m+1, n+1)
                         -= kqb.block(mo, jo, m+1, j+1) * modelMat.block(no, jo, n+1, j+1).adjoint();
@@ -480,7 +480,7 @@ ndarray::Array<double const,2,2> Impl0::evaluate(
         ndarray::Array<double,1,0>::Iterator rIter = _r.begin() + n_o;
         for (int n_x = 0; n_x <= n; ++n_x, ++rIter, pnc += incr_n) {
             *rIter = 0;
-            for (int m = n, m_o = computeSize(n-1); m <= psfOrder; (m_o += ++m) += ++m) {
+            for (int m = n, m_o = computeSize(n-1); m <= psfOrder; m_o += ++m, m_o += ++m) {
                 double f2 = ((m-n) % 4) ? -f1 : f1;
                 double const * pc = pnc + idx_00_01*m;
                 ndarray::Array<double const,1,1>::Iterator psfIter = psfCoeff.begin() + m_o;
