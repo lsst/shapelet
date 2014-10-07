@@ -934,7 +934,7 @@ MatrixBuilder<T> MatrixBuilderFactory<T>::operator()(Workspace & workspace) cons
 #define INSTANTIATE(T)                                          \
     template class MatrixBuilder<T>;                            \
     template class MatrixBuilderFactory<T>;                     \
-    template class MatrixBuilderWorkspace<T>;                   \
+    template class MatrixBuilderWorkspace<T>
 
 INSTANTIATE(float);
 INSTANTIATE(double);
