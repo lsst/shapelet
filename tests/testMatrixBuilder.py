@@ -89,7 +89,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         # Finally, check against a completely different implementation (which is tested elsewhere)
         checkEvaluator = function.evaluate()
         checkVector = checkEvaluator(self.xD, self.yD)
-        self.assertClose(numpy.dot(matrix1D, function.getCoefficients()), checkVector, rtol=1E-14)
+        self.assertClose(numpy.dot(matrix1D, function.getCoefficients()), checkVector, rtol=1E-13, atol=1E-14)
 
 
     def testRemappedShapeletMatrixBuilder(self):
@@ -128,7 +128,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         function.getEllipse().scale(radius)
         checkEvaluator = function.evaluate()
         checkVector = checkEvaluator(self.xD, self.yD)
-        self.assertClose(numpy.dot(matrix1D, coefficients), checkVector, rtol=1E-14)
+        self.assertClose(numpy.dot(matrix1D, coefficients), checkVector, rtol=1E-13, atol=1E-14)
 
     def testConvolvedShapeletMatrixBuilder(self):
         function = self.makeRandomShapeletFunction(order=4)
@@ -217,7 +217,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         convolved = function.convolve(psf.getComponents()[0])
         checkEvaluator = convolved.evaluate()
         checkVector = checkEvaluator(self.xD, self.yD)
-        self.assertClose(numpy.dot(matrixD, coefficients), checkVector, rtol=1E-12)
+        self.assertClose(numpy.dot(matrixD, coefficients), checkVector, rtol=1E-12, atol=1E-12)
 
     def testCompoundMatrixBuilder(self):
         ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes(4.0, 3.0, 1.0),
@@ -261,7 +261,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         for function in functions:
             checkEvaluator = function.evaluate()
             checkVector += checkEvaluator(self.xD, self.yD)
-        self.assertClose(numpy.dot(matrix1D, coefficients), checkVector, rtol=1E-14)
+        self.assertClose(numpy.dot(matrix1D, coefficients), checkVector, rtol=1E-13, atol=1E-14)
 
     def testConvolvedCompoundMatrixBuilder(self):
         ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes(4.0, 3.0, 1.0),
@@ -307,7 +307,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         convolved = msf.convolve(psf)
         checkEvaluator = convolved.evaluate()
         checkVector = checkEvaluator(self.xD, self.yD)
-        self.assertClose(numpy.dot(matrix1D, coefficients), checkVector, rtol=1E-14)
+        self.assertClose(numpy.dot(matrix1D, coefficients), checkVector, rtol=1E-13, atol=1E-14)
 
 
 def suite():
