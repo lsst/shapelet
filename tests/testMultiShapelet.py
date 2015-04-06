@@ -107,7 +107,7 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
         for a, s in zip(alpha3, sigma3):
             image3c += evalMultiGaussian(a, s)
         self.assertClose(image3c, image3a, rtol=1E-6, relTo=numpy.max(image3c),
-                         printFailures=True, plotOnFailure=True)
+                         printFailures=True, plotOnFailure=False)
         
         # And the second produced by GalSim
         if False:
@@ -125,7 +125,7 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
             printForGalSim(alpha2, sigma2)
         image3d = lsst.afw.image.ImageF("tests/data/gaussians.fits").getArray().astype(float)
         self.assertClose(image3d, image3a, rtol=1E-6, relTo=numpy.max(image3d),
-                         printFailures=True, plotOnFailure=True)
+                         printFailures=True, plotOnFailure=False)
 
 
     def testBasisNormalize(self):
