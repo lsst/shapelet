@@ -96,13 +96,13 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
             image1 = numpy.zeros(check1.shape, dtype=float)
             matrix = image1.reshape(check1.size, 1)
             builder(matrix, el.Ellipse(ellipse))
-            self.assertClose(check1, image1, plotOnFailure=True, rtol=5E-5, relTo=check1.max())
+            self.assertClose(check1, image1, plotOnFailure=False, rtol=5E-5, relTo=check1.max())
             msf = basis.makeFunction(el.Ellipse(ellipse, lsst.afw.geom.Point2D(xc, yc)),
                                      numpy.array([1.0], dtype=float))
             msf = msf.convolve(psf)
             image2 = numpy.zeros(check1.shape, dtype=float)
             msf.evaluate().addToImage(lsst.afw.image.ImageD(image2, False))
-            self.assertClose(check1, image2, plotOnFailure=True, rtol=5E-5, relTo=check1.max())
+            self.assertClose(check1, image2, plotOnFailure=False, rtol=5E-5, relTo=check1.max())
 
             if name == 'exp':
                 # check2 is the exact profile, again by GalSim.
@@ -112,7 +112,7 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
                 check2 = lsst.afw.image.ImageD(
                     os.path.join("tests", "data", name + "-exact.fits")
                 ).getArray()
-                self.assertClose(check2, image1, plotOnFailure=True, rtol=1E-3, relTo=check2.max())
+                self.assertClose(check2, image1, plotOnFailure=False, rtol=1E-3, relTo=check2.max())
 
             if CHECK_COMPONENT_IMAGES:
                 # This was once useful for debugging test failures, and may be again, but it's
@@ -124,7 +124,7 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
                     ).getArray()
                     image = numpy.zeros(check1.shape, dtype=float)
                     sf.evaluate().addToImage(lsst.afw.image.ImageD(image, False))
-                    self.assertClose(check, image, plotOnFailure=True, rtol=5E-5, relTo=check1.max())
+                    self.assertClose(check, image, plotOnFailure=False, rtol=5E-5, relTo=check1.max())
 
 
 def suite():
