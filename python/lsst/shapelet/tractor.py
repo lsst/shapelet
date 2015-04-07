@@ -78,7 +78,6 @@ registerRadialProfiles()
 def evaluateRadial(basis, r, sbNormalize=False, doComponents=False):
     """Plot a single-element MultiShapeletBasis as a radial profile.
     """
-    from matplotlib import pyplot
     ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes())
     coefficients = numpy.ones(1, dtype=float)
     msf = basis.makeFunction(ellipse, coefficients)
