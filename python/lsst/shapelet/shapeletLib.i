@@ -41,21 +41,18 @@ Python interface to lsst::shapelet classes and functions
 %}
 
 %include "lsst/p_lsstSwig.i"
+%initializeNumPy(shapelet)
+
 %include "std_vector.i"
 
 %{
 #include "lsst/afw/geom.h"
-#define PY_ARRAY_UNIQUE_SYMBOL LSST_AFW_MATH_SHAPELETS_NUMPY_ARRAY_API
-#include "numpy/arrayobject.h"
 #include "ndarray/swig.h"
 #include "ndarray/swig/eigen.h"
 #include "lsst/afw/geom/ellipses/PyPixelRegion.h"
 #include "lsst/afw/table.h"
 %}
 
-%init %{
-    import_array();
-%}
 %pythoncode %{
     import numpy
 %}
