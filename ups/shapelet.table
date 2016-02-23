@@ -1,4 +1,6 @@
 setupRequired(afw)
+setupRequired(numpy)
+
 setupOptional(scipy)  # only needed for examples/sersicApprox.y, optional tests
 
 envPrepend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
