@@ -1,4 +1,9 @@
 setupRequired(afw)
+setupRequired(numpy)
+setupRequired(scons)
+setupRequired(sconsUtils)
+
+# XXX there is presently no eups scipy product...
 setupOptional(scipy)  # only needed for examples/sersicApprox.y, optional tests
 
 envPrepend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
