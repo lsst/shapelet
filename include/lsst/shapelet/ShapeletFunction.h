@@ -93,8 +93,8 @@ public:
         _basisType = basisType;
     }
 
-    /// @brief Normalize the integral of the shapelet function to 1.
-    void normalize();
+    /// @brief Normalize the integral of the shapelet function to the given value.
+    void normalize(double value=1.0);
 
     /// @brief Return the coefficient vector.
     ndarray::Array<double,1,1> const getCoefficients() { return _coefficients; }

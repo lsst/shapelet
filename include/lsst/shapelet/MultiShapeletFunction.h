@@ -51,8 +51,8 @@ public:
 
     ComponentList const & getComponents() const { return _components; }
 
-    /// @brief Normalize the integral of the shapelet function to 1.
-    void normalize();
+    /// @brief Normalize the integral of the shapelet function to the given value.
+    void normalize(double value=1.0);
 
     /// @brief Shift the shapelet function by shifting the ellipse of each component.
     void shiftInPlace(afw::geom::Extent2D const & offset);
