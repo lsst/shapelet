@@ -122,9 +122,35 @@ MatrixBuilderFactory##SUFFIX.Workspace = MatrixBuilderWorkspace##SUFFIX
 %extend lsst::shapelet::ShapeletFunction {
 
 %pythoncode %{
+
+order = property(getOrder, doc="Maximum order of the shapelet expansion.")
+
+ellipse = property(getEllipse, doc="Basis ellipse for the shapelet expansion.")
+
+@property
+def ixx(self): return self.ellipse.getCore().getIxx()
+
+@property
+def iyy(self): return self.ellipse.getCore().getIyy()
+
+@property
+def ixy(self): return self.ellipse.getCore().getIxy()
+
+@property
+def x(self): return self.ellipse.getCenter().getX()
+
+@property
+def y(self): return self.ellipse.getCenter().getY()
+
+coefficients = property(getCoefficients, doc="Array of shapelet coefficients.")
+
 def __reduce__(self):
     return (ShapeletFunction, (self.getOrder(), self.getBasisType(),
                                self.getEllipse(), self.getCoefficients()))
+
+def __str__(self):
+    return ("ShapeletFunction(order={self.order}, ixx={self.ixx}, iyy={self.iyy}, ixy={self.ixy}, "
+            "x={self.x}, y={self.y}, coefficients={self.coefficients})".format(self=self))
 %}
 
 }
