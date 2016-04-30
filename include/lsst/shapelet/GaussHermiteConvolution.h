@@ -73,7 +73,7 @@ public:
 
 private:
 
-    boost::scoped_ptr<Impl> _impl;
+    std::unique_ptr<Impl> _impl;
 };
 
 
