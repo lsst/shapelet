@@ -28,7 +28,7 @@
 #include "lsst/afw/geom/ellipses.h"
 #include "lsst/shapelet/HermiteTransformMatrix.h"
 
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 namespace lsst { namespace shapelet {
 

@@ -38,8 +38,8 @@ class MultiShapeletFunctionEvaluator;
 class MultiShapeletFunction {
 public:
 
-    typedef boost::shared_ptr<MultiShapeletFunction> Ptr;
-    typedef boost::shared_ptr<MultiShapeletFunction const> ConstPtr;
+    typedef std::shared_ptr<MultiShapeletFunction> Ptr;
+    typedef std::shared_ptr<MultiShapeletFunction const> ConstPtr;
 
     typedef MultiShapeletFunctionEvaluator Evaluator;
 
@@ -91,8 +91,8 @@ private:
 class MultiShapeletFunctionEvaluator {
 public:
 
-    typedef boost::shared_ptr<MultiShapeletFunctionEvaluator> Ptr;
-    typedef boost::shared_ptr<MultiShapeletFunctionEvaluator const> ConstPtr;
+    typedef std::shared_ptr<MultiShapeletFunctionEvaluator> Ptr;
+    typedef std::shared_ptr<MultiShapeletFunctionEvaluator const> ConstPtr;
 
     /// @brief Evaluate at the given point.
     double operator()(double x, double y) const {

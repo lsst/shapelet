@@ -65,8 +65,8 @@ class ShapeletFunctionEvaluator;
 class ShapeletFunction {
 public:
 
-    typedef boost::shared_ptr<ShapeletFunction> Ptr;
-    typedef boost::shared_ptr<ShapeletFunction const> ConstPtr;
+    typedef std::shared_ptr<ShapeletFunction> Ptr;
+    typedef std::shared_ptr<ShapeletFunction const> ConstPtr;
 
     typedef ShapeletFunctionEvaluator Evaluator;
 
@@ -177,8 +177,8 @@ private:
 class ShapeletFunctionEvaluator {
 public:
 
-    typedef boost::shared_ptr<ShapeletFunctionEvaluator> Ptr;
-    typedef boost::shared_ptr<ShapeletFunctionEvaluator const> ConstPtr;
+    typedef std::shared_ptr<ShapeletFunctionEvaluator> Ptr;
+    typedef std::shared_ptr<ShapeletFunctionEvaluator const> ConstPtr;
 
     /// @brief Evaluate at the given point.
     double operator()(double x, double y) const {

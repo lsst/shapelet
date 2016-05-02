@@ -81,7 +81,7 @@ MultiShapeletFunctionKey MultiShapeletFunctionKey::addFields(
     result._components.reserve(orders.size());
     for (std::size_t i = 0; i < orders.size(); ++i) {
         result._components.push_back(
-            boost::make_shared<ShapeletFunctionKey>(
+            std::make_shared<ShapeletFunctionKey>(
                 ShapeletFunctionKey::addFields(
                     schema,
                     schema[name][boost::lexical_cast<std::string>(i)].getPrefix(),
@@ -104,7 +104,7 @@ MultiShapeletFunctionKey::MultiShapeletFunctionKey(
     std::size_t i = 0;
     while (true) {
         try {
-            PTR(ShapeletFunctionKey) component = boost::make_shared<ShapeletFunctionKey>(
+            PTR(ShapeletFunctionKey) component = std::make_shared<ShapeletFunctionKey>(
                 s[boost::lexical_cast<std::string>(i)],
                 basisType
             );

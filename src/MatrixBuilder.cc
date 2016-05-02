@@ -218,7 +218,7 @@ public:
         int getLhsOrder() const { return _lhsOrder; }
 
         virtual PTR(typename MatrixBuilder<T>::Impl) makeBuilderImpl(Workspace & workspace) const {
-            return boost::make_shared<ShapeletImpl>(*this, &workspace);
+            return std::make_shared<ShapeletImpl>(*this, &workspace);
         }
 
     private:
@@ -354,7 +354,7 @@ public:
         ShapeletFunction const & getPsf() const { return _psf; }
 
         virtual PTR(typename MatrixBuilder<T>::Impl) makeBuilderImpl(Workspace & workspace) const {
-            return boost::make_shared<ConvolvedShapeletImpl>(*this, &workspace);
+            return std::make_shared<ConvolvedShapeletImpl>(*this, &workspace);
         }
 
     protected:
@@ -450,7 +450,7 @@ public:
         ndarray::Array<double const,2,2> getRemapMatrix() const { return _remapMatrix; }
 
         virtual PTR(typename MatrixBuilder<T>::Impl) makeBuilderImpl(Workspace & workspace) const {
-            return boost::make_shared<RemappedShapeletImpl>(*this, &workspace);
+            return std::make_shared<RemappedShapeletImpl>(*this, &workspace);
         }
 
     protected:
@@ -548,7 +548,7 @@ public:
         ndarray::Array<double const,2,2> getRemapMatrix() const { return _remapMatrix; }
 
         virtual PTR(typename MatrixBuilder<T>::Impl) makeBuilderImpl(Workspace & workspace) const {
-            return boost::make_shared<RemappedConvolvedShapeletImpl>(*this, &workspace);
+            return std::make_shared<RemappedConvolvedShapeletImpl>(*this, &workspace);
         }
 
     protected:
@@ -633,7 +633,7 @@ public:
             _components.reserve(basis.getComponentCount());
             for (MultiShapeletBasis::Iterator i = basis.begin(); i != basis.end(); ++i) {
                 _components.push_back(
-                    boost::make_shared< typename RemappedShapeletImpl<T>::Factory >(
+                    std::make_shared< typename RemappedShapeletImpl<T>::Factory >(
                         x, y, i->getOrder(), i->getRadius(), i->getMatrix()
                     )
                 );
@@ -654,7 +654,7 @@ public:
                     ++j
                 ) {
                     _components.push_back(
-                        boost::make_shared< typename RemappedConvolvedShapeletImpl<T>::Factory >(
+                        std::make_shared< typename RemappedConvolvedShapeletImpl<T>::Factory >(
                             x, y, i->getOrder(), i->getRadius(), i->getMatrix(), *j
                         )
                     );
@@ -688,7 +688,7 @@ public:
             // Now, at the end, we increment the workspace by the amount we claimed we needed, which was
             // the maximum needed by any individual components.
             workspace.increment(computeWorkspace());
-            return boost::make_shared<CompoundImpl>(builders);
+            return std::make_shared<CompoundImpl>(builders);
         }
 
     private:
@@ -842,7 +842,7 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
     ndarray::Array<T const,1,1> const & x,
     ndarray::Array<T const,1,1> const & y,
     int order
-) : _impl(boost::make_shared< typename ShapeletImpl<T>::Factory >(x, y, order))
+) : _impl(std::make_shared< typename ShapeletImpl<T>::Factory >(x, y, order))
 {}
 
 template <typename T>
@@ -851,7 +851,7 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
     ndarray::Array<T const,1,1> const & y,
     int order,
     ShapeletFunction const & psf
-) : _impl(boost::make_shared< typename ConvolvedShapeletImpl<T>::Factory >(x, y, order, psf))
+) : _impl(std::make_shared< typename ConvolvedShapeletImpl<T>::Factory >(x, y, order, psf))
 {}
 
 namespace {
@@ -879,14 +879,14 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
     if (basis.getComponentCount() == 1) {
         MultiShapeletBasisComponent const & component = *basis.begin();
         if (isSimple(component)) {
-            _impl = boost::make_shared< typename ShapeletImpl<T>::Factory >(x, y, component.getOrder());
+            _impl = std::make_shared< typename ShapeletImpl<T>::Factory >(x, y, component.getOrder());
         } else {
-            _impl = boost::make_shared< typename RemappedShapeletImpl<T>::Factory >(
+            _impl = std::make_shared< typename RemappedShapeletImpl<T>::Factory >(
                 x, y, component.getOrder(), component.getRadius(), component.getMatrix()
             );
         }
     } else {
-        _impl = boost::make_shared< typename CompoundImpl<T>::Factory >(x, y, basis);
+        _impl = std::make_shared< typename CompoundImpl<T>::Factory >(x, y, basis);
     }
 }
 
@@ -901,16 +901,16 @@ MatrixBuilderFactory<T>::MatrixBuilderFactory(
         ShapeletFunction const & psfComponent = psf.getComponents().front();
         MultiShapeletBasisComponent const & component = *basis.begin();
         if (isSimple(component)) {
-            _impl = boost::make_shared< typename ConvolvedShapeletImpl<T>::Factory >(
+            _impl = std::make_shared< typename ConvolvedShapeletImpl<T>::Factory >(
                 x, y, component.getOrder(), psfComponent
             );
         } else {
-            _impl = boost::make_shared< typename RemappedConvolvedShapeletImpl<T>::Factory >(
+            _impl = std::make_shared< typename RemappedConvolvedShapeletImpl<T>::Factory >(
                 x, y, component.getOrder(), component.getRadius(), component.getMatrix(), psfComponent
             );
         }
     } else {
-        _impl = boost::make_shared< typename CompoundImpl<T>::Factory >(x, y, basis, psf);
+        _impl = std::make_shared< typename CompoundImpl<T>::Factory >(x, y, basis, psf);
     }
 }
 
