@@ -21,7 +21,7 @@
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
-#include "boost/make_shared.hpp"
+#include <memory>
 #include "boost/math/special_functions/gamma.hpp"
 
 #include "lsst/shapelet/RadialProfile.h"
@@ -68,7 +68,7 @@ public:
     explicit GaussianRadialProfile() :
         SersicRadialProfile("gaussian", 0.5, 0)
     {
-        PTR(MultiShapeletBasis) basis = boost::make_shared<MultiShapeletBasis>(1);
+        PTR(MultiShapeletBasis) basis = std::make_shared<MultiShapeletBasis>(1);
         ndarray::Array<double,2,2> matrix = ndarray::allocate(1,1);
         matrix.deep() = 0.5 / std::sqrt(afw::geom::PI);
         basis->addComponent(_momentsRadiusFactor, 0, matrix);
@@ -172,7 +172,7 @@ PTR(MultiShapeletBasis) RadialProfile::getBasis(int nComponents, int maxRadius) 
     }
     // Ideally, we'd return a const ptr instead of copying, but because Swig casts away the
     // constness, that's not sufficiently safe.
-    return boost::make_shared<MultiShapeletBasis>(*i->second);
+    return std::make_shared<MultiShapeletBasis>(*i->second);
 }
 
 void RadialProfile::registerBasis(PTR(MultiShapeletBasis) basis, int nComponents, int maxRadius) {
