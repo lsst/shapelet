@@ -21,7 +21,7 @@
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
-#include "boost/make_shared.hpp"
+#include <memory>
 #include "boost/math/special_functions/gamma.hpp"
 
 #include "lsst/shapelet/RadialProfile.h"
