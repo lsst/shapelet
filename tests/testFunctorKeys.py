@@ -48,7 +48,7 @@ class FunctorKeyTestCase(lsst.shapelet.tests.ShapeletTestCase):
         schema = lsst.afw.table.Schema()
         order = 4
         k0 = lsst.shapelet.ShapeletFunctionKey.addFields(schema, "s", "shapelet function",
-                                                         "pixels", "dn", order)
+                                                         "pixel", "count", order)
         k1 = lsst.shapelet.ShapeletFunctionKey(k0.getEllipse(), k0.getCoefficients())
         k2 = lsst.shapelet.ShapeletFunctionKey(schema["s"])
         self.assertEqual(k0, k1)
@@ -71,7 +71,7 @@ class FunctorKeyTestCase(lsst.shapelet.tests.ShapeletTestCase):
         msf0 = self.makeRandomMultiShapeletFunction(nComponents=3)
         orders = [s.getOrder() for s in msf0.getComponents()]
         k0 = lsst.shapelet.MultiShapeletFunctionKey.addFields(schema, "s", "shapelet function",
-                                                              "pixels", "dn", orders)
+                                                              "pixel", "count", orders)
         k1 = lsst.shapelet.MultiShapeletFunctionKey([k0[i] for i in range(len(orders))])
         k2 = lsst.shapelet.MultiShapeletFunctionKey(schema["s"])
         self.assertEqual(k0, k1)
