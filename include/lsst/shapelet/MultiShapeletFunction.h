@@ -71,6 +71,8 @@ public:
 
     MultiShapeletFunction() : _components() {}
 
+    MultiShapeletFunction(MultiShapeletFunction const & other) = default;
+
     explicit MultiShapeletFunction(ComponentList const & components) : _components(components) {}
 
     explicit MultiShapeletFunction(ShapeletFunction const & component) : _components(1, component) {}
