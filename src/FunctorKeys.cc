@@ -21,6 +21,8 @@
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
+#include <string>
+
 #include "lsst/shapelet/FunctorKeys.h"
 
 namespace lsst { namespace shapelet {
@@ -84,7 +86,7 @@ MultiShapeletFunctionKey MultiShapeletFunctionKey::addFields(
             std::make_shared<ShapeletFunctionKey>(
                 ShapeletFunctionKey::addFields(
                     schema,
-                    schema[name][boost::lexical_cast<std::string>(i)].getPrefix(),
+                    schema[name][std::to_string(i)].getPrefix(),
                     doc,
                     ellipseUnit,
                     coeffUnit,
@@ -105,7 +107,7 @@ MultiShapeletFunctionKey::MultiShapeletFunctionKey(
     while (true) {
         try {
             PTR(ShapeletFunctionKey) component = std::make_shared<ShapeletFunctionKey>(
-                s[boost::lexical_cast<std::string>(i)],
+                s[std::to_string(i)],
                 basisType
             );
             _components.push_back(component);
