@@ -29,7 +29,6 @@
 #include <boost/format.hpp>
 #include <boost/math/special_functions/binomial.hpp>
 #include <boost/math/special_functions/factorials.hpp>
-#include <boost/noncopyable.hpp>
 
 #include "Eigen/LU"
 
@@ -54,7 +53,7 @@ inline std::complex<double> iPow(int z) {
     return 0.0;
 }
 
-class ConversionSingleton : private boost::noncopyable {
+class ConversionSingleton {
 public:
 
     typedef std::vector<Eigen::MatrixXd> BlockVec;
@@ -134,6 +133,14 @@ public:
 
 private:
     ConversionSingleton() : _max_order(-1) {}
+
+    // No copying
+    ConversionSingleton ( const ConversionSingleton & ) = delete;
+    ConversionSingleton & operator= ( const ConversionSingleton & ) = delete;
+
+    // No moving
+    ConversionSingleton ( ConversionSingleton && ) = delete;
+    ConversionSingleton & operator= ( ConversionSingleton && ) = delete;
 
     int _max_order;
     BlockVec _h2l;

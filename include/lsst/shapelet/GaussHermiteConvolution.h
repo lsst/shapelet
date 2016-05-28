@@ -39,7 +39,7 @@ class ShapeletFunction;
  *
  *  GaussHermiteConvolution is defined only for the HERMITE basis type.
  */
-class GaussHermiteConvolution : private boost::noncopyable {
+class GaussHermiteConvolution {
 public:
 
     static int computeRowOrder(int colOrder, int psfOrder) { return colOrder + psfOrder; }
@@ -66,6 +66,14 @@ public:
 
     // Must be defined in .cc file so it can see Impl dtor.
     ~GaussHermiteConvolution();
+
+    // No copying
+    GaussHermiteConvolution ( const GaussHermiteConvolution & ) = delete;
+    GaussHermiteConvolution & operator= ( const GaussHermiteConvolution & ) = delete;
+
+    // No moving
+    GaussHermiteConvolution ( GaussHermiteConvolution && ) = delete;
+    GaussHermiteConvolution & operator= ( GaussHermiteConvolution && ) = delete;
 
 #ifndef SWIG
     class Impl;
