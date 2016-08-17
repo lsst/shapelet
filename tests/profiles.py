@@ -42,9 +42,10 @@ E2 = -0.2
 PROFILES = [
     ("exp", 9, 8),
     ("dev", 9, 8),
-    ]
+]
 
 CHECK_COMPONENT_IMAGES = False
+
 
 class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
@@ -72,7 +73,7 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
         r = numpy.linspace(0.0, 4.0, 100)
         z1 = profile.evaluate(r)
         basis = profile.getBasis(1)
-        z2 = lsst.shapelet.tractor.evaluateRadial(basis, r, sbNormalize=True)[0,:]
+        z2 = lsst.shapelet.tractor.evaluateRadial(basis, r, sbNormalize=True)[0, :]
         self.assertClose(z1, z2, rtol=1E-8)
 
     def testShapeletApproximations(self):
@@ -136,6 +137,7 @@ def suite():
     suites += unittest.makeSuite(ProfileTestCase)
     suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
     return unittest.TestSuite(suites)
+
 
 def run(shouldExit=False):
     """Run the tests"""

@@ -35,6 +35,7 @@ import lsst.utils.tests
 import lsst.afw.geom
 import lsst.afw.geom.ellipses
 
+
 class ShapeletTestCase(lsst.utils.tests.TestCase):
 
     @staticmethod
@@ -49,7 +50,7 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
         e = function.evaluate()
         for i, py in enumerate(y):
             for j, px in enumerate(x):
-                z[i,j] = e(float(px), float(py))
+                z[i, j] = e(float(px), float(py))
         return z
 
     @staticmethod
@@ -63,9 +64,9 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
                     float(numpy.random.uniform(low=1, high=2)),
                     float(numpy.random.uniform(low=1, high=2)),
                     float(numpy.random.uniform(low=0, high=numpy.pi))
-                    ),
+                ),
                 center
-                )
+            )
         coefficients = numpy.random.randn(lsst.shapelet.computeSize(order))
         result = lsst.shapelet.ShapeletFunction(order, lsst.shapelet.HERMITE, coefficients)
         result.setEllipse(ellipse)
@@ -119,7 +120,7 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
             (gx**2 * z).sum() / m,
             (gy**2 * z).sum() / m,
             (gx * gy * z).sum() / m
-            )
+        )
         imageMoments = lsst.afw.geom.ellipses.Ellipse(quadrupole, dipole)
         shapeletMoments = function.evaluate().computeMoments()
         self.assertClose(imageMoments.getCenter().getX(), shapeletMoments.getCenter().getX(), rtol=1E-3)

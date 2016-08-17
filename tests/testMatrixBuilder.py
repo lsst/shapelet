@@ -32,6 +32,7 @@ import lsst.afw.image
 
 numpy.random.seed(500)
 
+
 class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def setUp(self):
@@ -85,12 +86,11 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         self.assertClose(matrix1F, matrix2F, rtol=0.0, atol=0.0)  # same code, different workspace
         self.assertClose(matrix1F, matrix3F, rtol=0.0, atol=0.0)  # same code, different construction pattern
         self.assertClose(matrix1D, matrix3D, rtol=0.0, atol=0.0)  # same code, different construction pattern
-        self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0) # same code, different precision
+        self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0)  # same code, different precision
         # Finally, check against a completely different implementation (which is tested elsewhere)
         checkEvaluator = function.evaluate()
         checkVector = checkEvaluator(self.xD, self.yD)
         self.assertClose(numpy.dot(matrix1D, function.getCoefficients()), checkVector, rtol=1E-13, atol=1E-14)
-
 
     def testRemappedShapeletMatrixBuilder(self):
         function = self.makeRandomShapeletFunction(order=4)
@@ -123,7 +123,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         matrix2D = builder2D(function.getEllipse())
         self.assertClose(matrix1D, matrix2D, rtol=0.0, atol=0.0)  # same code, different workspace
         self.assertClose(matrix1F, matrix2F, rtol=0.0, atol=0.0)  # same code, different workspace
-        self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0) # same code, different precision
+        self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0)  # same code, different precision
         # Finally, check against a completely different implementation (which is tested elsewhere)
         function.getEllipse().scale(radius)
         checkEvaluator = function.evaluate()
@@ -158,7 +158,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
             matrix2 = builder2(function.getEllipse())
             self.assertClose(matrix1, matrix2, rtol=0.0, atol=0.0)  # same code, different workspace
             if lastF is not None:
-                self.assertClose(matrix1, lastF, rtol=0.0, atol=0.0) # same code, different construction
+                self.assertClose(matrix1, lastF, rtol=0.0, atol=0.0)  # same code, different construction
             lastF = matrix1
         lastD = None
         for factory in factoriesD:
@@ -173,9 +173,9 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
             matrix2 = builder2(function.getEllipse())
             self.assertClose(matrix1, matrix2, rtol=0.0, atol=0.0)  # same code, different workspace
             if lastD is not None:
-                self.assertClose(matrix1, lastD, rtol=0.0, atol=0.0) # same code, different construction
+                self.assertClose(matrix1, lastD, rtol=0.0, atol=0.0)  # same code, different construction
             lastD = matrix1
-        self.assertClose(lastF, lastD, rtol=1E-6, atol=1E-5) # same code, different precision
+        self.assertClose(lastF, lastD, rtol=1E-6, atol=1E-5)  # same code, different precision
 
         # Finally, check against a completely different implementation (which is tested elsewhere)
         convolved = function.convolve(psf.getComponents()[0])
@@ -210,7 +210,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
             if matrixF is None:
                 matrixF = matrix1
         matrixD = matrix1
-        self.assertClose(matrixF, matrixD, rtol=1E-4, atol=0.0) # same code, different precision
+        self.assertClose(matrixF, matrixD, rtol=1E-4, atol=0.0)  # same code, different precision
 
         # Finally, check against a completely different implementation (which is tested elsewhere)
         function.getEllipse().scale(radius)
@@ -255,7 +255,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         matrix2D = builder2D(ellipse)
         self.assertClose(matrix1D, matrix2D, rtol=0.0, atol=0.0)  # same code, different workspace
         self.assertClose(matrix1F, matrix2F, rtol=0.0, atol=0.0)  # same code, different workspace
-        self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0) # same code, different precision
+        self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0)  # same code, different precision
         # Finally, check against a completely different implementation (which is tested elsewhere)
         checkVector = numpy.zeros(self.xD.shape, dtype=float)
         for function in functions:
@@ -301,7 +301,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         matrix2D = builder2D(ellipse)
         self.assertClose(matrix1D, matrix2D, rtol=0.0, atol=0.0)  # same code, different workspace
         self.assertClose(matrix1F, matrix2F, rtol=0.0, atol=0.0)  # same code, different workspace
-        self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0) # same code, different precision
+        self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0)  # same code, different precision
 
         # Finally, check against a completely different implementation (which is tested elsewhere)
         convolved = msf.convolve(psf)
@@ -318,6 +318,7 @@ def suite():
     suites += unittest.makeSuite(MatrixBuilderTestCase)
     suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
     return unittest.TestSuite(suites)
+
 
 def run(shouldExit=False):
     """Run the tests"""

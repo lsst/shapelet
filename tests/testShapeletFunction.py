@@ -39,6 +39,7 @@ import lsst.afw.geom.ellipses as ellipses
 
 numpy.random.seed(500)
 
+
 class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def setUp(self):
@@ -50,11 +51,11 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
         self.bases = [
             lsst.shapelet.BasisEvaluator(order, lsst.shapelet.HERMITE),
             lsst.shapelet.BasisEvaluator(order, lsst.shapelet.LAGUERRE),
-            ]
+        ]
         self.functions = [
             lsst.shapelet.ShapeletFunction(order, lsst.shapelet.HERMITE, self.coefficients),
             lsst.shapelet.ShapeletFunction(order, lsst.shapelet.LAGUERRE, self.coefficients),
-            ]
+        ]
         for function in self.functions:
             function.setEllipse(self.ellipse)
 
@@ -144,6 +145,7 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
         fc2.changeBasisType(lsst.shapelet.HERMITE)
         self.assertClose(fc1.getCoefficients(), fc2.getCoefficients(), 1E-8)
 
+
 def suite():
     """Returns a suite containing all the test cases in this module."""
 
@@ -153,6 +155,7 @@ def suite():
     suites += unittest.makeSuite(ShapeletFunctionTestCase)
     suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
     return unittest.TestSuite(suites)
+
 
 def run(shouldExit=False):
     """Run the tests"""

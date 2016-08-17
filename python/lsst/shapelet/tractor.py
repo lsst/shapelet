@@ -38,6 +38,7 @@ except ImportError:
 
 from .shapeletLib import *
 
+
 def registerRadialProfiles():
     """Register the pickled profiles in the data directory with the RadialProfile singleton registry.
 
@@ -48,7 +49,8 @@ def registerRadialProfiles():
     regex = re.compile(r"([a-z]+\d?)_K(\d+)_MR(\d+)\.pickle")
     for filename in os.listdir(dataDir):
         match = regex.match(filename)
-        if not match: continue
+        if not match:
+            continue
         name = match.group(1)
         nComponents = int(match.group(2))
         maxRadius = int(match.group(3))
@@ -75,6 +77,7 @@ def registerRadialProfiles():
 # without having to later call Python code to unpickle them.
 registerRadialProfiles()
 
+
 def evaluateRadial(basis, r, sbNormalize=False, doComponents=False):
     """Plot a single-element MultiShapeletBasis as a radial profile.
     """
@@ -87,15 +90,16 @@ def evaluateRadial(basis, r, sbNormalize=False, doComponents=False):
         n += len(msf.getComponents())
     z = numpy.zeros((n,) + r.shape, dtype=float)
     for j, x in enumerate(r):
-        z[0,j] = ev(x, 0.0)
+        z[0, j] = ev(x, 0.0)
     if doComponents:
         for i, sf in enumerate(msf.getComponents()):
             evc = sf.evaluate()
             for j, x in enumerate(r):
-                z[i+1,j] = evc(x, 0.0)
+                z[i+1, j] = evc(x, 0.0)
     if sbNormalize:
         z /= ev(1.0, 0.0)
     return z
+
 
 def integrateNormalizedFluxes(maxRadius=20.0, nSteps=5000):
     """!
@@ -113,7 +117,7 @@ def integrateNormalizedFluxes(maxRadius=20.0, nSteps=5000):
     for name, profile in profiles.iteritems():
         evaluated[name] = profile.evaluate(radii)
         basis = profile.getBasis(8)
-        evaluated["g" + name] = evaluateRadial(basis, radii, sbNormalize=True, doComponents=False)[0,:]
+        evaluated["g" + name] = evaluateRadial(basis, radii, sbNormalize=True, doComponents=False)[0, :]
     fluxes = {name: numpy.trapz(z*radii, radii) for name, z in evaluated.iteritems()}
     return fluxes
 
@@ -135,10 +139,10 @@ def plotSuite(doComponents=False):
     r = [r1, r2]
     for i in range(2):
         for j in range(4):
-            axes[i,j] = fig.add_subplot(2, 4, i*4+j+1)
+            axes[i, j] = fig.add_subplot(2, 4, i*4+j+1)
     profiles = {name: RadialProfile.get(name) for name in ("exp", "lux", "dev", "luv")}
     basis = {name: profiles[name].getBasis(8) for name in profiles}
-    z = numpy.zeros((2,4), dtype=object)
+    z = numpy.zeros((2, 4), dtype=object)
     colors = ("k", "g", "b", "r")
     fig.subplots_adjust(wspace=0.025, hspace=0.025, bottom=0.15, left=0.1, right=0.98, top=0.92)
     centers = [None, None]
@@ -149,17 +153,17 @@ def plotSuite(doComponents=False):
             bbox1.x0 = bbox0.x1 - 0.06
             bbox0.x1 = bbox1.x0
             centers[j/2] = 0.5*(bbox0.x0 + bbox1.x1)
-            axes[i,j].set_position(bbox0)
-            axes[i,j+1].set_position(bbox1)
-    for j in range(0,2):
-        z[0,j] = [evaluateRadial(basis[k], r[j], sbNormalize=True, doComponents=doComponents)
-                  for k in ("exp", "lux")]
-        z[0,j][0:0] = [profiles[k].evaluate(r[j])[numpy.newaxis,:] for k in ("exp", "lux")]
-        z[0,j+2] = [evaluateRadial(basis[k], r[j], sbNormalize=True, doComponents=doComponents)
-                    for k in ("dev", "luv")]
-        z[0,j+2][0:0] = [profiles[k].evaluate(r[j])[numpy.newaxis,:] for k in ("dev", "luv")]
+            axes[i, j].set_position(bbox0)
+            axes[i, j+1].set_position(bbox1)
+    for j in range(0, 2):
+        z[0, j] = [evaluateRadial(basis[k], r[j], sbNormalize=True, doComponents=doComponents)
+                   for k in ("exp", "lux")]
+        z[0, j][0:0] = [profiles[k].evaluate(r[j])[numpy.newaxis, :] for k in ("exp", "lux")]
+        z[0, j+2] = [evaluateRadial(basis[k], r[j], sbNormalize=True, doComponents=doComponents)
+                     for k in ("dev", "luv")]
+        z[0, j+2][0:0] = [profiles[k].evaluate(r[j])[numpy.newaxis, :] for k in ("dev", "luv")]
     methodNames = [["loglog", "semilogy"], ["semilogx", "plot"]]
-    for j in range(0, 4): # grid columns
+    for j in range(0, 4):  # grid columns
         y[1, j] = [(y[0, j][0][0, :] - y[0, j][i][0, :])/y[0, j][0][0, :] for i in range(0, 4)]
         handles = []
         method0 = getattr(axes[0, j], methodNames[0][j%2])
@@ -182,7 +186,7 @@ def plotSuite(doComponents=False):
         axes[0, j].set_yticklabels([])
         axes[1, j].set_yticklabels([])
     xticks = [['$\\mathdefault{10^{%d}}$' % i for i in range(-3, 1)],
-               [str(i) for i in range(1, 11)]]
+              [str(i) for i in range(1, 11)]]
     xticks[0][-1] = ""
     xticks[1][-1] = ""
     for j in range(0, 4):

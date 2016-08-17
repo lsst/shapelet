@@ -33,6 +33,7 @@ import lsst.afw.image
 
 numpy.random.seed(500)
 
+
 class ProjectionTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def setUp(self):
@@ -52,10 +53,10 @@ class ProjectionTestCase(lsst.shapelet.tests.ShapeletTestCase):
         # Now we test that we get the same result (up to round-off error) for a bunch of test points.
         inputTestPoints = numpy.random.randn(2, nPoints)
         outputTestPoints = numpy.dot(outputTransform.getMatrix(), inputTestPoints)
-        inputBuilder = lsst.shapelet.MatrixBuilderD.Factory(inputTestPoints[0,:],
-                                                            inputTestPoints[1,:], order)()
-        outputBuilder = lsst.shapelet.MatrixBuilderD.Factory(outputTestPoints[0,:],
-                                                             outputTestPoints[1,:], order)()
+        inputBuilder = lsst.shapelet.MatrixBuilderD.Factory(inputTestPoints[0, :],
+                                                            inputTestPoints[1, :], order)()
+        outputBuilder = lsst.shapelet.MatrixBuilderD.Factory(outputTestPoints[0, :],
+                                                             outputTestPoints[1, :], order)()
         inputBasis = inputBuilder(unitCircle)
         outputBasis = outputBuilder(unitCircle)
         self.assertClose(numpy.dot(outputBasis, m), inputBasis, rtol=1E-13)
@@ -77,8 +78,8 @@ class ProjectionTestCase(lsst.shapelet.tests.ShapeletTestCase):
             outputShapelet.getCoefficients()[:] = numpy.dot(m, inputShapelet.getCoefficients())
             inputEv = inputShapelet.evaluate()
             outputEv = outputShapelet.evaluate()
-            inputZ = numpy.array([inputEv(px,py) for px,py in zip(x,y)])
-            outputZ = numpy.array([outputEv(px,py) for px,py in zip(x,y)])
+            inputZ = numpy.array([inputEv(px, py) for px, py in zip(x, y)])
+            outputZ = numpy.array([outputEv(px, py) for px, py in zip(x, y)])
             # tolerances here aren't rigorous, because we're testing an approximation without
             # computing how good it should be; it's mostly just a regression/sanity test
             self.assertClose(inputZ, outputZ, rtol=5E-3)
@@ -93,7 +94,8 @@ class ProjectionTestCase(lsst.shapelet.tests.ShapeletTestCase):
         ghc0 = lsst.shapelet.GaussHermiteConvolution(0, psf)
         rN = ghcN.evaluate(ellipse1)
         r0 = ghc0.evaluate(ellipse2)
-        self.assertClose(rN[:15,0], r0[:15,0], rtol=1E-14)
+        self.assertClose(rN[:15, 0], r0[:15, 0], rtol=1E-14)
+
 
 def suite():
     """Returns a suite containing all the test cases in this module."""
@@ -104,6 +106,7 @@ def suite():
     suites += unittest.makeSuite(ProjectionTestCase)
     suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
     return unittest.TestSuite(suites)
+
 
 def run(shouldExit=False):
     """Run the tests"""

@@ -28,12 +28,14 @@ from matplotlib import pyplot
 from matplotlib import ticker
 import numpy
 
+
 def makeBasisImages(basis, x, y):
     z = numpy.zeros((y.size, x.size, lsst.shapelet.computeSize(basis.getOrder())), dtype=float)
     for i, py in enumerate(y):
         for j, px in enumerate(x):
-            basis.fillEvaluation(z[i,j,:], float(px), float(py))
+            basis.fillEvaluation(z[i, j, :], float(px), float(py))
     return z
+
 
 def compareMoments(basis, x, y, z):
     e = basis.evaluate()
@@ -45,9 +47,10 @@ def compareMoments(basis, x, y, z):
         (dx**2 * z).sum() / monopole,
         (dy**1 * z).sum() / monopole,
         (dx * dy * z).sum() / monopole
-        )
+    )
     print ellipses.Ellipse(quadrupole, monopole)
     print e.computeMoments()
+
 
 def plotBasisImages(basis, z):
     n = basis.getOrder()
@@ -58,7 +61,7 @@ def plotBasisImages(basis, z):
     for i in range(n+1):
         for j in range(i+1):
             axes = pyplot.subplot(n+1, n+1, (n+1) * i + j + 1)
-            axes.imshow(z[:,:,k], interpolation='nearest', origin='lower', vmin=vmin, vmax=vmax)
+            axes.imshow(z[:, :, k], interpolation='nearest', origin='lower', vmin=vmin, vmax=vmax)
             axes.yaxis.set_major_locator(ticker.NullLocator())
             axes.xaxis.set_major_locator(ticker.NullLocator())
             if basis.getBasisType() == lsst.shapelet.HERMITE:
@@ -67,10 +70,11 @@ def plotBasisImages(basis, z):
                 pyplot.xlabel("p=%d, q=%d (%s)" % (i-j/2, j/2, "Im" if j % 2 else "Re"))
             k += 1
 
+
 def processBasis(basis, x, y):
     z = makeBasisImages(basis, x, y)
     plotBasisImages(basis, z)
-    
+
 
 def main():
     x = numpy.linspace(-5, 5, 101)

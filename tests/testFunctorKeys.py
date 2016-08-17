@@ -33,6 +33,7 @@ import lsst.afw.table
 
 numpy.random.seed(500)
 
+
 class FunctorKeyTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def testComputeOrder(self):
@@ -65,7 +66,6 @@ class FunctorKeyTestCase(lsst.shapelet.tests.ShapeletTestCase):
         self.assertRaises(lsst.pex.exceptions.InvalidParameterError, record.set, k0,
                           self.makeRandomShapeletFunction(order=3))
 
-
     def testMultiShapeletFunctionKey(self):
         schema = lsst.afw.table.Schema()
         msf0 = self.makeRandomMultiShapeletFunction(nComponents=3)
@@ -88,6 +88,7 @@ class FunctorKeyTestCase(lsst.shapelet.tests.ShapeletTestCase):
                           lsst.shapelet.MultiShapeletFunctionKey,
                           schema["a"])
 
+
 def suite():
     """Returns a suite containing all the test cases in this module."""
 
@@ -96,6 +97,7 @@ def suite():
     suites += unittest.makeSuite(FunctorKeyTestCase)
     suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
     return unittest.TestSuite(suites)
+
 
 def run(shouldExit=False):
     """Run the tests"""
