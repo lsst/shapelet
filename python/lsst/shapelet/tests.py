@@ -24,6 +24,7 @@
 Test utility code for shapelets library; here so it can be used
 in multiple test scripts and tests in downstream packages.
 """
+from __future__ import print_function
 
 import numpy
 try:
@@ -148,7 +149,7 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
         self.assertClose(ic1.getArray(), ic2.getArray())
         out = lsst.afw.image.ImageD(bbox)
         if scipy is None:
-            print "Skipping convolution test; scipy could not be imported."
+            print("Skipping convolution test; scipy could not be imported.")
             return
         # I'm using scipy.ndimage to convolve test images, because I can't figure
         # out how to make afw do it (afw can convolve images with kernels, but two similarly-sized

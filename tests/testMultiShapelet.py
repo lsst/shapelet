@@ -22,6 +22,7 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
+from __future__ import print_function
 import unittest
 import numpy
 import cPickle
@@ -116,13 +117,13 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
             # Print inputs to screen so we can make a test image with GalSim (see tests/data/generate.py)
             # Output can be pasted into that file to generate the check image.
             def printForGalSim(alpha, sigma):
-                print "galsim.Add(["
+                print("galsim.Add([")
                 for a, s in zip(alpha, sigma):
                     e = lsst.afw.geom.ellipses.Separable[lsst.afw.geom.ellipses.Distortion,
                                                          lsst.afw.geom.ellipses.DeterminantRadius](s)
                     print("    makeGaussian(flux=%f, e1=%8.8f, e2=%8.8f, sigma=%8.8f),"
                           % (a, e.getE1(), e.getE2(), e.getRadius()))
-                print "])"
+                print("])")
             printForGalSim(alpha1, sigma1)
             printForGalSim(alpha2, sigma2)
         image3d = lsst.afw.image.ImageF("tests/data/gaussians.fits").getArray().astype(float)

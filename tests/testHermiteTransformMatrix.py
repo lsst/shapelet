@@ -22,6 +22,7 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
+from __future__ import print_function
 import unittest
 import numpy
 
@@ -62,7 +63,7 @@ class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
                 self.assertEqual(coeffInv[i, j], 0.0)
         # test coefficient matrix values against scipy Hermite polynomials
         if scipy is None:
-            print "Skipping Hermite polynomial tests that require SciPy"
+            print("Skipping Hermite polynomial tests that require SciPy")
             return
         for n in range(0, self.order+1):
             poly = self.ht(n)
@@ -70,7 +71,7 @@ class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def testTransformMatrix(self):
         if scipy is None:
-            print "Skipping transform tests that require SciPy"
+            print("Skipping transform tests that require SciPy")
             return
 
         s = lsst.afw.geom.LinearTransform.makeScaling(2.0, 1.5)

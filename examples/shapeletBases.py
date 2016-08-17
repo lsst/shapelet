@@ -21,6 +21,7 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
+from __future__ import print_function
 import lsst.shapelet
 from lsst.afw import geom
 from lsst.afw.geom import ellipses
@@ -48,8 +49,8 @@ def compareMoments(basis, x, y, z):
         (dy**1 * z).sum() / monopole,
         (dx * dy * z).sum() / monopole
     )
-    print ellipses.Ellipse(quadrupole, monopole)
-    print e.computeMoments()
+    print(ellipses.Ellipse(quadrupole, monopole))
+    print(e.computeMoments())
 
 
 def plotBasisImages(basis, z):

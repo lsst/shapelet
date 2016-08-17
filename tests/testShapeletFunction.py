@@ -22,6 +22,7 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
+from __future__ import print_function
 import unittest
 import numpy
 import cPickle
@@ -129,7 +130,7 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def testConvolution(self):
         if scipy is None:
-            print "Skipping convolution test; scipy could not be imported."
+            print("Skipping convolution test; scipy could not be imported.")
             return
         e1 = ellipses.Ellipse(ellipses.Axes(10, 8, 0.3), geom.Point2D(1.5, 2.0))
         e2 = ellipses.Ellipse(ellipses.Axes(12, 9, -0.5), geom.Point2D(-1.0, -0.25))
