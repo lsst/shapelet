@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from builtins import range
+from builtins import object
 #
 # LSST Data Management System
 # Copyright 2008, 2009, 2010 LSST Corporation.
@@ -58,8 +60,8 @@ class HermiteIndexGenerator(IndexGenerator):
 
     def __iter__(self):
         i = 0
-        for n in xrange(0, self.order+1):
-            for nx in xrange(0, n+1):
+        for n in range(0, self.order+1):
+            for nx in range(0, n+1):
                 yield (i, nx, n - nx)
                 i += 1
 
@@ -74,7 +76,7 @@ class LaguerreIndexGenerator(IndexGenerator):
 
     def __iter__(self):
         i = 0
-        for n in xrange(0, self.order+1):
+        for n in range(0, self.order+1):
             p = n
             q = 0
             while p > q:

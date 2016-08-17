@@ -22,6 +22,7 @@
 #
 
 from __future__ import print_function
+from builtins import range
 import lsst.shapelet
 from lsst.afw import geom
 from lsst.afw.geom import ellipses

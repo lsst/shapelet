@@ -23,9 +23,13 @@
 #
 
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
+from builtins import range
 import unittest
 import numpy
-import cPickle
+import pickle
 
 import lsst.utils.tests
 import lsst.afw.geom.ellipses as ellipses
@@ -48,8 +52,8 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def testPickle(self):
         function1 = self.makeRandomMultiShapeletFunction()
-        s = cPickle.dumps(function1, protocol=2)
-        function2 = cPickle.loads(s)
+        s = pickle.dumps(function1, protocol=2)
+        function2 = pickle.loads(s)
         for component1, component2 in zip(function1.getComponents(), function2.getComponents()):
             self.assertEqual(component1.getOrder(), component2.getOrder())
             self.assertEqual(component1.getBasisType(), component2.getBasisType())

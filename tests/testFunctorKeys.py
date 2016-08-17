@@ -1,3 +1,4 @@
+from builtins import range
 #!/usr/bin/env python
 
 #
@@ -37,7 +38,7 @@ numpy.random.seed(500)
 class FunctorKeyTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def testComputeOrder(self):
-        invalidSizes = range(1, lsst.shapelet.computeSize(10))
+        invalidSizes = list(range(1, lsst.shapelet.computeSize(10)))
         for order in range(10):
             size = lsst.shapelet.computeSize(order)
             self.assertEqual(order, lsst.shapelet.computeOrder(size))

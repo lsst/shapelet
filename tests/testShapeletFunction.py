@@ -23,9 +23,12 @@
 #
 
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
 import unittest
 import numpy
-import cPickle
+import pickle
 
 try:
     import scipy.special
@@ -62,8 +65,8 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def testPickle(self):
         for function in self.functions:
-            s = cPickle.dumps(function, protocol=2)
-            function2 = cPickle.loads(s)
+            s = pickle.dumps(function, protocol=2)
+            function2 = pickle.loads(s)
             self.assertEqual(function.getOrder(), function2.getOrder())
             self.assertEqual(function.getBasisType(), function2.getBasisType())
             self.assertClose(function.getEllipse().getParameterVector(),

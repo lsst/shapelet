@@ -26,13 +26,19 @@ into a lsst.shapelet.MultiShapeletBasis.
 Please see the README file in the data directory of the lsst.shapelet
 package for more information.
 """
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
+from builtins import str
+from builtins import range
 
 import numpy
 import os
 import re
+import sys
 import warnings
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except ImportError:
     import pickle
 
@@ -59,8 +65,11 @@ def registerRadialProfiles():
         except lsst.pex.exceptions.Exception:
             warnings.warn("No C++ profile for multi-Gaussian pickle file '%s'" % filename)
             continue
-        with open(os.path.join(dataDir, filename), 'r') as stream:
-            array = pickle.load(stream)
+        with open(os.path.join(dataDir, filename), 'rb') as stream:
+            if sys.version_info[0] >= 3:
+                array = pickle.load(stream, encoding='latin1')
+            else:
+                array = pickle.load(stream)
         amplitudes = array[:nComponents]
         amplitudes /= amplitudes.sum()
         variances = array[nComponents:]
@@ -114,11 +123,11 @@ def integrateNormalizedFluxes(maxRadius=20.0, nSteps=5000):
     profiles = {name: RadialProfile.get(name) for name in ("exp", "lux", "dev", "luv",
                                                            "ser2", "ser3", "ser5")}
     evaluated = {}
-    for name, profile in profiles.iteritems():
+    for name, profile in profiles.items():
         evaluated[name] = profile.evaluate(radii)
         basis = profile.getBasis(8)
         evaluated["g" + name] = evaluateRadial(basis, radii, sbNormalize=True, doComponents=False)[0, :]
-    fluxes = {name: numpy.trapz(z*radii, radii) for name, z in evaluated.iteritems()}
+    fluxes = {name: numpy.trapz(z*radii, radii) for name, z in evaluated.items()}
     return fluxes
 
 
