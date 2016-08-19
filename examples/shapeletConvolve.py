@@ -28,15 +28,17 @@ from matplotlib import pyplot
 from matplotlib import ticker
 import numpy
 
+
 def plotShapeletFunction(axes, func, x, y):
     z = numpy.zeros((y.size, x.size), dtype=float)
     ev = func.evaluate()
     for i, py in enumerate(y):
         for j, px in enumerate(x):
-            z[i,j] = ev(float(px), float(py))
+            z[i, j] = ev(float(px), float(py))
     axes.imshow(z, interpolation='nearest', origin='lower')
     axes.yaxis.set_major_locator(ticker.NullLocator())
     axes.xaxis.set_major_locator(ticker.NullLocator())
+
 
 def main():
     x = numpy.linspace(-5, 5, 101)

@@ -22,9 +22,14 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
+from builtins import range
 import unittest
 import numpy
-import cPickle
+import pickle
 
 import lsst.utils.tests
 import lsst.afw.geom.ellipses as ellipses
@@ -32,6 +37,7 @@ import lsst.shapelet.tests
 import lsst.afw.image
 
 numpy.random.seed(500)
+
 
 class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
@@ -46,8 +52,8 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def testPickle(self):
         function1 = self.makeRandomMultiShapeletFunction()
-        s = cPickle.dumps(function1, protocol=2)
-        function2 = cPickle.loads(s)
+        s = pickle.dumps(function1, protocol=2)
+        function2 = pickle.loads(s)
         for component1, component2 in zip(function1.getComponents(), function2.getComponents()):
             self.assertEqual(component1.getOrder(), component2.getOrder())
             self.assertEqual(component1.getBasisType(), component2.getBasisType())
@@ -76,8 +82,8 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
         for a1, s1 in zip(alpha1, sigma1):
             for a2, s2 in zip(alpha2, sigma2):
                 sigma3.append(lsst.afw.geom.ellipses.Quadrupole(s1.getIxx() + s2.getIxx(),
-                                                  s1.getIyy() + s2.getIyy(),
-                                                  s1.getIxy() + s2.getIxy()))
+                                                                s1.getIyy() + s2.getIyy(),
+                                                                s1.getIxy() + s2.getIxy()))
                 alpha3.append(a1 * a2)
         msf1 = makeMultiShapeletFunction(alpha1, sigma1)
         msf2 = makeMultiShapeletFunction(alpha2, sigma2)
@@ -93,52 +99,52 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
         image3a = self.makeImage(msf3a, x, y)
         image3b = self.makeImage(msf3b, x, y)
         self.assertClose(image3a, image3b)
-        
+
         # Now we test against two test images: one implemented right here with numpy calls...
         xg, yg = numpy.meshgrid(x, y)
+
         def evalMultiGaussian(alpha, sigma):
             matQ = numpy.array([[sigma.getIxx(), sigma.getIxy()],
                                 [sigma.getIxy(), sigma.getIyy()]],
                                dtype=float)
             invQ = numpy.linalg.inv(matQ)
             norm = alpha / numpy.linalg.det(2.0 * numpy.pi * matQ)**0.5
-            return norm * numpy.exp(-0.5 * (invQ[0,0]*xg**2 + 2.0*invQ[0,1]*xg*yg + invQ[1,1]*yg**2))
+            return norm * numpy.exp(-0.5 * (invQ[0, 0]*xg**2 + 2.0*invQ[0, 1]*xg*yg + invQ[1, 1]*yg**2))
         image3c = numpy.zeros(xg.shape, dtype=float)
         for a, s in zip(alpha3, sigma3):
             image3c += evalMultiGaussian(a, s)
         self.assertClose(image3c, image3a, rtol=1E-6, relTo=numpy.max(image3c),
                          printFailures=True, plotOnFailure=False)
-        
+
         # And the second produced by GalSim
         if False:
             # Print inputs to screen so we can make a test image with GalSim (see tests/data/generate.py)
             # Output can be pasted into that file to generate the check image.
             def printForGalSim(alpha, sigma):
-                print "galsim.Add(["
+                print("galsim.Add([")
                 for a, s in zip(alpha, sigma):
                     e = lsst.afw.geom.ellipses.Separable[lsst.afw.geom.ellipses.Distortion,
                                                          lsst.afw.geom.ellipses.DeterminantRadius](s)
-                    print ("    makeGaussian(flux=%f, e1=%8.8f, e2=%8.8f, sigma=%8.8f),"
-                           % (a, e.getE1(), e.getE2(), e.getRadius()))
-                print "])"
+                    print("    makeGaussian(flux=%f, e1=%8.8f, e2=%8.8f, sigma=%8.8f),"
+                          % (a, e.getE1(), e.getE2(), e.getRadius()))
+                print("])")
             printForGalSim(alpha1, sigma1)
             printForGalSim(alpha2, sigma2)
         image3d = lsst.afw.image.ImageF("tests/data/gaussians.fits").getArray().astype(float)
         self.assertClose(image3d, image3a, rtol=1E-6, relTo=numpy.max(image3d),
                          printFailures=True, plotOnFailure=False)
 
-
     def testBasisNormalize(self):
         def makePositiveMatrix(*shape):
             """Return a random basis matrix, but with a lot of power
             in the zeroth component to ensure the integral is positve."""
             a = numpy.random.randn(*shape)
-            a[0,:] += 4.0
+            a[0, :] += 4.0
             return a
         basis = lsst.shapelet.MultiShapeletBasis(2)
-        basis.addComponent(0.5, 1, makePositiveMatrix(3,2))
-        basis.addComponent(1.0, 2, makePositiveMatrix(6,2))
-        basis.addComponent(1.2, 0, makePositiveMatrix(1,2))
+        basis.addComponent(0.5, 1, makePositiveMatrix(3, 2))
+        basis.addComponent(1.0, 2, makePositiveMatrix(6, 2))
+        basis.addComponent(1.2, 0, makePositiveMatrix(1, 2))
         basis.normalize()
         for n in range(2):
             coefficients = numpy.zeros(2, dtype=float)
@@ -150,34 +156,35 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
     def testBasisScale(self):
         ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes())
         basis = lsst.shapelet.MultiShapeletBasis(2)
-        basis.addComponent(0.5, 1, numpy.random.randn(3,2))
-        basis.addComponent(1.0, 2, numpy.random.randn(6,2))
-        basis.addComponent(1.2, 0, numpy.random.randn(1,2))
-        msf1 = [basis.makeFunction(ellipse, self.makeUnitVector(i,2)) for i in range(2)]
+        basis.addComponent(0.5, 1, numpy.random.randn(3, 2))
+        basis.addComponent(1.0, 2, numpy.random.randn(6, 2))
+        basis.addComponent(1.2, 0, numpy.random.randn(1, 2))
+        msf1 = [basis.makeFunction(ellipse, self.makeUnitVector(i, 2)) for i in range(2)]
         basis.scale(2.0)
         ellipse.getCore().scale(0.5)
-        msf2 = [basis.makeFunction(ellipse, self.makeUnitVector(i,2)) for i in range(2)]
+        msf2 = [basis.makeFunction(ellipse, self.makeUnitVector(i, 2)) for i in range(2)]
         for a, b in zip(msf1, msf2):
             self.compareMultiShapeletFunctions(a, b)
 
     def testBasisMerge(self):
         ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes())
         basis1 = lsst.shapelet.MultiShapeletBasis(2)
-        basis1.addComponent(0.5, 1, numpy.random.randn(3,2))
-        basis1.addComponent(1.0, 2, numpy.random.randn(6,2))
-        basis1.addComponent(1.2, 0, numpy.random.randn(1,2))
+        basis1.addComponent(0.5, 1, numpy.random.randn(3, 2))
+        basis1.addComponent(1.0, 2, numpy.random.randn(6, 2))
+        basis1.addComponent(1.2, 0, numpy.random.randn(1, 2))
         basis2 = lsst.shapelet.MultiShapeletBasis(3)
-        basis2.addComponent(0.4, 1, numpy.random.randn(3,3))
-        basis2.addComponent(1.1, 2, numpy.random.randn(6,3))
-        basis2.addComponent(1.6, 0, numpy.random.randn(1,3))
+        basis2.addComponent(0.4, 1, numpy.random.randn(3, 3))
+        basis2.addComponent(1.1, 2, numpy.random.randn(6, 3))
+        basis2.addComponent(1.6, 0, numpy.random.randn(1, 3))
         basis3 = lsst.shapelet.MultiShapeletBasis(basis1)
         basis3.merge(basis2)
         self.assertEqual(basis3.getSize(), 5)
-        msf1 = [basis1.makeFunction(ellipse, self.makeUnitVector(i,2)) for i in range(2)]
-        msf2 = [basis2.makeFunction(ellipse, self.makeUnitVector(i,3)) for i in range(3)]
-        msf3 = [basis3.makeFunction(ellipse, self.makeUnitVector(i,5)) for i in range(5)]
+        msf1 = [basis1.makeFunction(ellipse, self.makeUnitVector(i, 2)) for i in range(2)]
+        msf2 = [basis2.makeFunction(ellipse, self.makeUnitVector(i, 3)) for i in range(3)]
+        msf3 = [basis3.makeFunction(ellipse, self.makeUnitVector(i, 5)) for i in range(5)]
         for a, b in zip(msf3, msf1+msf2):
             self.compareMultiShapeletFunctions(a, b)
+
 
 def suite():
     """Returns a suite containing all the test cases in this module."""
@@ -188,6 +195,7 @@ def suite():
     suites += unittest.makeSuite(MultiShapeletTestCase)
     suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
     return unittest.TestSuite(suites)
+
 
 def run(shouldExit=False):
     """Run the tests"""

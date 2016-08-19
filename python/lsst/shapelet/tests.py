@@ -24,6 +24,9 @@
 Test utility code for shapelets library; here so it can be used
 in multiple test scripts and tests in downstream packages.
 """
+from __future__ import print_function
+from builtins import zip
+from builtins import range
 
 import numpy
 try:
@@ -34,6 +37,7 @@ except ImportError:
 import lsst.utils.tests
 import lsst.afw.geom
 import lsst.afw.geom.ellipses
+
 
 class ShapeletTestCase(lsst.utils.tests.TestCase):
 
@@ -49,7 +53,7 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
         e = function.evaluate()
         for i, py in enumerate(y):
             for j, px in enumerate(x):
-                z[i,j] = e(float(px), float(py))
+                z[i, j] = e(float(px), float(py))
         return z
 
     @staticmethod
@@ -63,9 +67,9 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
                     float(numpy.random.uniform(low=1, high=2)),
                     float(numpy.random.uniform(low=1, high=2)),
                     float(numpy.random.uniform(low=0, high=numpy.pi))
-                    ),
+                ),
                 center
-                )
+            )
         coefficients = numpy.random.randn(lsst.shapelet.computeSize(order))
         result = lsst.shapelet.ShapeletFunction(order, lsst.shapelet.HERMITE, coefficients)
         result.setEllipse(ellipse)
@@ -119,7 +123,7 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
             (gx**2 * z).sum() / m,
             (gy**2 * z).sum() / m,
             (gx * gy * z).sum() / m
-            )
+        )
         imageMoments = lsst.afw.geom.ellipses.Ellipse(quadrupole, dipole)
         shapeletMoments = function.evaluate().computeMoments()
         self.assertClose(imageMoments.getCenter().getX(), shapeletMoments.getCenter().getX(), rtol=1E-3)
@@ -147,7 +151,7 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
         self.assertClose(ic1.getArray(), ic2.getArray())
         out = lsst.afw.image.ImageD(bbox)
         if scipy is None:
-            print "Skipping convolution test; scipy could not be imported."
+            print("Skipping convolution test; scipy could not be imported.")
             return
         # I'm using scipy.ndimage to convolve test images, because I can't figure
         # out how to make afw do it (afw can convolve images with kernels, but two similarly-sized

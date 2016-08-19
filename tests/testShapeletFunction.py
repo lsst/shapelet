@@ -22,9 +22,13 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
 import unittest
 import numpy
-import cPickle
+import pickle
 
 try:
     import scipy.special
@@ -39,6 +43,7 @@ import lsst.afw.geom.ellipses as ellipses
 
 numpy.random.seed(500)
 
+
 class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def setUp(self):
@@ -50,18 +55,18 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
         self.bases = [
             lsst.shapelet.BasisEvaluator(order, lsst.shapelet.HERMITE),
             lsst.shapelet.BasisEvaluator(order, lsst.shapelet.LAGUERRE),
-            ]
+        ]
         self.functions = [
             lsst.shapelet.ShapeletFunction(order, lsst.shapelet.HERMITE, self.coefficients),
             lsst.shapelet.ShapeletFunction(order, lsst.shapelet.LAGUERRE, self.coefficients),
-            ]
+        ]
         for function in self.functions:
             function.setEllipse(self.ellipse)
 
     def testPickle(self):
         for function in self.functions:
-            s = cPickle.dumps(function, protocol=2)
-            function2 = cPickle.loads(s)
+            s = pickle.dumps(function, protocol=2)
+            function2 = pickle.loads(s)
             self.assertEqual(function.getOrder(), function2.getOrder())
             self.assertEqual(function.getBasisType(), function2.getBasisType())
             self.assertClose(function.getEllipse().getParameterVector(),
@@ -128,7 +133,7 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def testConvolution(self):
         if scipy is None:
-            print "Skipping convolution test; scipy could not be imported."
+            print("Skipping convolution test; scipy could not be imported.")
             return
         e1 = ellipses.Ellipse(ellipses.Axes(10, 8, 0.3), geom.Point2D(1.5, 2.0))
         e2 = ellipses.Ellipse(ellipses.Axes(12, 9, -0.5), geom.Point2D(-1.0, -0.25))
@@ -144,6 +149,7 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
         fc2.changeBasisType(lsst.shapelet.HERMITE)
         self.assertClose(fc1.getCoefficients(), fc2.getCoefficients(), 1E-8)
 
+
 def suite():
     """Returns a suite containing all the test cases in this module."""
 
@@ -153,6 +159,7 @@ def suite():
     suites += unittest.makeSuite(ShapeletFunctionTestCase)
     suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
     return unittest.TestSuite(suites)
+
 
 def run(shouldExit=False):
     """Run the tests"""

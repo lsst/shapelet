@@ -22,6 +22,8 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
+from __future__ import print_function
+from builtins import range
 import unittest
 import numpy
 
@@ -35,6 +37,7 @@ import lsst.afw.geom
 import lsst.shapelet.tests
 
 numpy.random.seed(500)
+
 
 class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
@@ -57,19 +60,19 @@ class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
         # Both matrices should be lower-triangular
         for i in range(0, self.order+1):
             for j in range(i+1, self.order+1):
-                self.assertEqual(coeff[i,j], 0.0)
-                self.assertEqual(coeffInv[i,j], 0.0)
+                self.assertEqual(coeff[i, j], 0.0)
+                self.assertEqual(coeffInv[i, j], 0.0)
         # test coefficient matrix values against scipy Hermite polynomials
         if scipy is None:
-            print "Skipping Hermite polynomial tests that require SciPy"
+            print("Skipping Hermite polynomial tests that require SciPy")
             return
         for n in range(0, self.order+1):
             poly = self.ht(n)
-            self.assertClose(coeff[n,:n+1], poly.c[::-1], atol=1E-15)
+            self.assertClose(coeff[n, :n+1], poly.c[::-1], atol=1E-15)
 
     def testTransformMatrix(self):
         if scipy is None:
-            print "Skipping transform tests that require SciPy"
+            print("Skipping transform tests that require SciPy")
             return
 
         s = lsst.afw.geom.LinearTransform.makeScaling(2.0, 1.5)
@@ -86,8 +89,9 @@ class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
                     v1 = self.ht(inx)(transPoint.getX()) * self.ht(iny)(transPoint.getY())
                     v2 = 0.0
                     for j, jnx, jny in lsst.shapelet.HermiteIndexGenerator(self.order):
-                        v2 += m[i,j] * self.ht(jnx)(origPoint.getX()) * self.ht(jny)(origPoint.getY())
+                        v2 += m[i, j] * self.ht(jnx)(origPoint.getX()) * self.ht(jny)(origPoint.getY())
                     self.assertClose(v1, v2, rtol=1E-11)
+
 
 def suite():
     """Returns a suite containing all the test cases in this module."""
@@ -98,6 +102,7 @@ def suite():
     suites += unittest.makeSuite(HermiteTransformMatrixTestCase)
     suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
     return unittest.TestSuite(suites)
+
 
 def run(shouldExit=False):
     """Run the tests"""
