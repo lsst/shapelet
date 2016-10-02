@@ -36,7 +36,7 @@
 #define PY_ARRAY_UNIQUE_SYMBOL LSST_SHAPELET_TIMEMODELS_NUMPY_ARRAY_API
 #include "numpy/arrayobject.h"
 #include "ndarray/swig.h"
-#include "ndarray/swig/eigen.h"
+#include "ndarray/converter/eigen.h"
 %}
 
 %import "lsst/afw/table/tableLib.i"
