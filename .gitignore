@@ -7,8 +7,6 @@ config.log
 *.dylib
 *.cfgc
 *.pyc
-*_wrap.cc
-*Lib.py
 doc/html
 doc/*.tag
 doc/*.inc
@@ -16,4 +14,3 @@ doc/doxygen.conf
 doc/xml
 tests/.tests
 version.py
-examples/timeModels.py

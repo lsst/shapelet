@@ -77,7 +77,7 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
                 f = lsst.shapelet.ShapeletFunction(0, lsst.shapelet.HERMITE,
                                                    lsst.afw.geom.ellipses.Ellipse(s))
                 f.getCoefficients()[0] = a / lsst.shapelet.ShapeletFunction.FLUX_FACTOR
-                msf.getComponents().push_back(f)
+                msf.addComponent(f)
             return msf
         for a1, s1 in zip(alpha1, sigma1):
             for a2, s2 in zip(alpha2, sigma2):
