@@ -14,4 +14,3 @@ doc/doxygen.conf
 doc/xml
 tests/.tests
 version.py
-examples/timeModels.py
