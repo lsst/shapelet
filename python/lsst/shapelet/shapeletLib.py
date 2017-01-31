@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import lsst.afw.geom
 
 from ._constants import *
+from .constants import *
 from ._shapeletFunction import *
 from .shapeletFunction import *
 from ._basisEvaluator import *
