@@ -80,7 +80,7 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
         psf0 = lsst.shapelet.ShapeletFunction(0, lsst.shapelet.HERMITE, PSF_SIGMA)
         psf0.getCoefficients()[:] = 1.0 / lsst.shapelet.ShapeletFunction.FLUX_FACTOR
         psf = lsst.shapelet.MultiShapeletFunction()
-        psf.getComponents().push_back(psf0)
+        psf.addComponent(psf0)
         psf.normalize()
         ellipse = el.Separable[el.Distortion, el.DeterminantRadius](E1, E2, GALAXY_RADIUS)
         for name, nComponents, maxRadius in PROFILES:
