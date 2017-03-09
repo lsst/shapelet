@@ -32,8 +32,10 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(_hermiteTransformMatrix) {
-    py::module mod("_hermiteTransformMatrix");
+PYBIND11_PLUGIN(hermiteTransformMatrix) {
+    py::module::import("lsst.afw.geom");
+
+    py::module mod("hermiteTransformMatrix");
 
     if (_import_array() < 0) {
         PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
@@ -70,5 +72,6 @@ PYBIND11_PLUGIN(_hermiteTransformMatrix) {
 
     return mod.ptr();
 }
-}
-}  // lsst::shapelet
+
+}  // shapelet
+}  // lsst

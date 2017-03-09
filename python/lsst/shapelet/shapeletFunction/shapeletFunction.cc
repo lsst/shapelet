@@ -32,8 +32,11 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(_shapeletFunction) {
-    py::module mod("_shapeletFunction");
+PYBIND11_PLUGIN(shapeletFunction) {
+    py::module::import("lsst.afw.geom");
+    py::module::import("lsst.afw.image");
+
+    py::module mod("shapeletFunction");
 
     if (_import_array() < 0) {
         PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
@@ -109,5 +112,6 @@ PYBIND11_PLUGIN(_shapeletFunction) {
 
     return mod.ptr();
 }
-}
-}  // lsst::shapelet
+
+}  // shapelet
+}  // lsst

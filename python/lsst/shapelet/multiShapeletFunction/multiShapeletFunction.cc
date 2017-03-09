@@ -89,10 +89,14 @@ void declareMultiShapeletFunctionEvaluatorMembers(PyClass &cls) {
     cls.def("computeMoments", &Class::computeMoments);
     cls.def("update", &Class::update);
 }
-}
 
-PYBIND11_PLUGIN(_multiShapeletFunction) {
-    py::module mod("_multiShapeletFunction");
+}  // <anonymous>
+
+PYBIND11_PLUGIN(multiShapeletFunction) {
+    py::module::import("lsst.afw.geom");
+    py::module::import("lsst.afw.image");
+
+    py::module mod("multiShapeletFunction");
 
     if (_import_array() < 0) {
         PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
@@ -109,5 +113,6 @@ PYBIND11_PLUGIN(_multiShapeletFunction) {
 
     return mod.ptr();
 }
-}
-}  // lsst::shapelet
+
+}  // shapelet
+}  // lsst

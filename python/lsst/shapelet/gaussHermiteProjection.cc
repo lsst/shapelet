@@ -32,8 +32,9 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(_gaussHermiteProjection) {
-    py::module mod("_gaussHermiteProjection");
+PYBIND11_PLUGIN(gaussHermiteProjection) {
+    py::module::import("lsst.afw.geom");
+    py::module mod("gaussHermiteProjection");
 
     if (_import_array() < 0) {
         PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
@@ -64,5 +65,6 @@ PYBIND11_PLUGIN(_gaussHermiteProjection) {
 
     return mod.ptr();
 }
-}
-}  // lsst::shapelet
+
+}  // shapelet
+}  // lsst

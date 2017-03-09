@@ -1,6 +1,6 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function
 from builtins import range, object
-from ._constants import HERMITE, LAGUERRE, computeSize
+from .constants import HERMITE, LAGUERRE, computeSize
 
 class IndexGenerator(object):
     """

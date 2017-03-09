@@ -101,9 +101,9 @@ py::class_<MatrixBuilderFactory<T>, std::shared_ptr<MatrixBuilderFactory<T>>> de
                      MultiShapeletBasis const &, MultiShapeletFunction const &>(),
             "x"_a, "y"_a, "basis"_a, "psf"_a);
 
-    cls.def("__call__", (MatrixBuilder<T> (Class::*)() const) & Class::operator(), py::is_operator());
+    cls.def("__call__", (MatrixBuilder<T> (Class::*)() const) & Class::operator());
     cls.def("__call__", (MatrixBuilder<T> (Class::*)(typename Class::Workspace &) const) & Class::operator(),
-            py::is_operator(), "workspace"_a);
+            "workspace"_a);
 
     cls.def("getDataSize", &Class::getDataSize);
     cls.def("getBasisSize", &Class::getBasisSize);
@@ -124,10 +124,12 @@ void declareMatrixBuilderTemplates(py::module &mod, std::string const &suffix) {
     clsMatrixBuilderFactory.attr("Workspace") = clsMatrixBuilderWorkspace;
     clsMatrixBuilderFactory.attr("Builder") = clsMatrixBuilder;
 }
-}
 
-PYBIND11_PLUGIN(_matrixBuilder) {
-    py::module mod("_matrixBuilder");
+}  // <anonymous>
+
+PYBIND11_PLUGIN(matrixBuilder) {
+    py::module::import("lsst.afw.geom");
+    py::module mod("matrixBuilder");
 
     if (_import_array() < 0) {
         PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
@@ -139,5 +141,6 @@ PYBIND11_PLUGIN(_matrixBuilder) {
 
     return mod.ptr();
 }
-}
-}  // lsst::shapelet
+
+}  // shapelet
+}  // lsst

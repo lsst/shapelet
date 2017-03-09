@@ -31,8 +31,9 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(_functorKeys) {
-    py::module mod("_functorKeys");
+PYBIND11_PLUGIN(functorKeys) {
+    py::module::import("lsst.afw.table");
+    py::module mod("functorKeys");
 
     py::class_<ShapeletFunctionKey, std::shared_ptr<ShapeletFunctionKey>> clsShapeletFunctionKey(
             mod, "ShapeletFunctionKey");
@@ -74,8 +75,8 @@ PYBIND11_PLUGIN(_functorKeys) {
 
     clsMultiShapeletFunctionKey.def("__eq__", &MultiShapeletFunctionKey::operator==, py::is_operator());
     clsMultiShapeletFunctionKey.def("__ne__", &MultiShapeletFunctionKey::operator!=, py::is_operator());
-    clsMultiShapeletFunctionKey.def(
-            "__getitem__", [](MultiShapeletFunctionKey &self, int i) { return self[i]; }, py::is_operator());
+    clsMultiShapeletFunctionKey.def("__getitem__",
+                                    [](MultiShapeletFunctionKey &self, int i) { return self[i]; });
 
     clsMultiShapeletFunctionKey.def("get", &MultiShapeletFunctionKey::get);
     clsMultiShapeletFunctionKey.def("set", &MultiShapeletFunctionKey::set);
@@ -83,5 +84,6 @@ PYBIND11_PLUGIN(_functorKeys) {
 
     return mod.ptr();
 }
-}
-}  // lsst::shapelet
+
+}  // shapelet
+}  // lsst

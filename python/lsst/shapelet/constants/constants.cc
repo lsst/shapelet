@@ -29,8 +29,8 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(_constants) {
-    py::module mod("_constants");
+PYBIND11_PLUGIN(constants) {
+    py::module mod("constants");
 
     py::enum_<BasisTypeEnum>(mod, "BasisTypeEnum")
             .value("HERMITE", BasisTypeEnum::HERMITE)
@@ -45,5 +45,6 @@ PYBIND11_PLUGIN(_constants) {
 
     return mod.ptr();
 }
-}
-}  // lsst::shapelet
+
+}  // shapelet
+}  // lsst
