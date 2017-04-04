@@ -165,5 +165,6 @@ def run(shouldExit=False):
     """Run the tests"""
     lsst.utils.tests.run(suite(), shouldExit)
 
+
 if __name__ == "__main__":
     run(True)
