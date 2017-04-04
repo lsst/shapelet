@@ -1,9 +1,6 @@
-from builtins import zip
-#!/usr/bin/env python
-
 #
 # LSST Data Management System
-# Copyright 2008-2013 LSST Corporation.
+# Copyright 2008-2017 LSST Corporation.
 #
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
@@ -22,9 +19,12 @@ from builtins import zip
 # the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
+from __future__ import absolute_import, division, print_function
 
+from builtins import zip
 import unittest
-import numpy
+
+import numpy as np
 
 import lsst.utils.tests
 import lsst.pex.exceptions
@@ -32,7 +32,7 @@ import lsst.afw.geom.ellipses
 import lsst.shapelet.tests
 import lsst.afw.image
 
-numpy.random.seed(500)
+np.random.seed(500)
 
 
 class ProjectionTestCase(lsst.shapelet.tests.ShapeletTestCase):
@@ -47,20 +47,21 @@ class ProjectionTestCase(lsst.shapelet.tests.ShapeletTestCase):
         unitCircle = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Quadrupole(1.0, 1.0, 0.0))
         # This matrix should represent a pure rotation in shapelet space, which can be done exactly.
         inputTransform = lsst.afw.geom.LinearTransform.makeRotation(0.0*lsst.afw.geom.radians)
-        outputTransform = lsst.afw.geom.LinearTransform.makeRotation(numpy.pi/3*lsst.afw.geom.radians)
+        outputTransform = lsst.afw.geom.LinearTransform.makeRotation(np.pi/3*lsst.afw.geom.radians)
         m = self.ghp.compute(inputTransform, order, outputTransform, order)
-        # If we apply a rotation by numpy.pi/3 six times, we should get back where we started with.
-        self.assertClose(numpy.linalg.matrix_power(m, 6), numpy.identity(size), rtol=1E-14, atol=1E-14)
+        # If we apply a rotation by np.pi/3 six times, we should get back where we started with.
+        self.assertFloatsAlmostEqual(np.linalg.matrix_power(m, 6),
+                                     np.identity(size), rtol=1E-14, atol=1E-14)
         # Now we test that we get the same result (up to round-off error) for a bunch of test points.
-        inputTestPoints = numpy.random.randn(2, nPoints)
-        outputTestPoints = numpy.dot(outputTransform.getMatrix(), inputTestPoints)
+        inputTestPoints = np.random.randn(2, nPoints)
+        outputTestPoints = np.dot(outputTransform.getMatrix(), inputTestPoints)
         inputBuilder = lsst.shapelet.MatrixBuilderD.Factory(inputTestPoints[0, :],
                                                             inputTestPoints[1, :], order)()
         outputBuilder = lsst.shapelet.MatrixBuilderD.Factory(outputTestPoints[0, :],
                                                              outputTestPoints[1, :], order)()
         inputBasis = inputBuilder(unitCircle)
         outputBasis = outputBuilder(unitCircle)
-        self.assertClose(numpy.dot(outputBasis, m), inputBasis, rtol=1E-13)
+        self.assertFloatsAlmostEqual(np.dot(outputBasis, m), inputBasis, rtol=1E-13)
 
     def testPerturbation(self):
         inputEllipse = lsst.afw.geom.ellipses.Quadrupole(2.0, 2.0, 0.0)
@@ -71,19 +72,19 @@ class ProjectionTestCase(lsst.shapelet.tests.ShapeletTestCase):
                                                         lsst.afw.geom.ellipses.Ellipse(outputEllipse))
         m = self.ghp.compute(inputEllipse, inputShapelet.getOrder(),
                              outputEllipse, outputShapelet.getOrder())
-        x = numpy.random.randn(50)
-        y = numpy.random.randn(50)
+        x = np.random.randn(50)
+        y = np.random.randn(50)
         for i, nx, ny in lsst.shapelet.HermiteIndexGenerator(2):
             inputShapelet.getCoefficients()[:] = 0.0
             inputShapelet.getCoefficients()[i] = 1.0
-            outputShapelet.getCoefficients()[:] = numpy.dot(m, inputShapelet.getCoefficients())
+            outputShapelet.getCoefficients()[:] = np.dot(m, inputShapelet.getCoefficients())
             inputEv = inputShapelet.evaluate()
             outputEv = outputShapelet.evaluate()
-            inputZ = numpy.array([inputEv(px, py) for px, py in zip(x, y)])
-            outputZ = numpy.array([outputEv(px, py) for px, py in zip(x, y)])
+            inputZ = np.array([inputEv(px, py) for px, py in zip(x, y)])
+            outputZ = np.array([outputEv(px, py) for px, py in zip(x, y)])
             # tolerances here aren't rigorous, because we're testing an approximation without
             # computing how good it should be; it's mostly just a regression/sanity test
-            self.assertClose(inputZ, outputZ, rtol=5E-3)
+            self.assertFloatsAlmostEqual(inputZ, outputZ, rtol=5E-3)
 
     def testConvolution0(self):
         """Test that the specialization for zeroth-order convolution produces the same tensor
@@ -95,7 +96,7 @@ class ProjectionTestCase(lsst.shapelet.tests.ShapeletTestCase):
         ghc0 = lsst.shapelet.GaussHermiteConvolution(0, psf)
         rN = ghcN.evaluate(ellipse1)
         r0 = ghc0.evaluate(ellipse2)
-        self.assertClose(rN[:15, 0], r0[:15, 0], rtol=1E-14)
+        self.assertFloatsAlmostEqual(rN[:15, 0], r0[:15, 0], rtol=1E-14)
 
 
 def suite():

@@ -1,6 +1,6 @@
 #
 # LSST Data Management System
-# Copyright 2008-2013 LSST Corporation.
+# Copyright 2008-2017 LSST Corporation.
 #
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
@@ -87,9 +87,11 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
                                  atolEllipse=1E-14, atolCoeff=1E-14):
         self.assertEqual(a.getOrder(), b.getOrder())
         self.assertEqual(a.getBasisType(), b.getBasisType())
-        self.assertClose(a.getEllipse().getParameterVector(), b.getEllipse().getParameterVector(),
-                         rtol=rtolEllipse, atol=atolEllipse)
-        self.assertClose(a.getCoefficients(), b.getCoefficients(), rtol=rtolCoeff, atol=atolCoeff)
+        self.assertFloatsAlmostEqual(a.getEllipse().getParameterVector(),
+                                     b.getEllipse().getParameterVector(),
+                                     rtol=rtolEllipse, atol=atolEllipse)
+        self.assertFloatsAlmostEqual(a.getCoefficients(), b.getCoefficients(),
+                                     rtol=rtolCoeff, atol=atolCoeff)
 
     def simplifyMultiShapeletFunction(self, msf):
         keep = []
@@ -126,29 +128,34 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
         )
         imageMoments = lsst.afw.geom.ellipses.Ellipse(quadrupole, dipole)
         shapeletMoments = function.evaluate().computeMoments()
-        self.assertClose(imageMoments.getCenter().getX(), shapeletMoments.getCenter().getX(), rtol=1E-3)
-        self.assertClose(imageMoments.getCenter().getY(), shapeletMoments.getCenter().getY(), rtol=1E-3)
-        self.assertClose(imageMoments.getCore().getIxx(), shapeletMoments.getCore().getIxx(), rtol=1E-3)
-        self.assertClose(imageMoments.getCore().getIyy(), shapeletMoments.getCore().getIyy(), rtol=1E-3)
-        self.assertClose(imageMoments.getCore().getIxy(), shapeletMoments.getCore().getIxy(), rtol=1E-3)
+        self.assertFloatsAlmostEqual(imageMoments.getCenter().getX(),
+                                     shapeletMoments.getCenter().getX(), rtol=1E-3)
+        self.assertFloatsAlmostEqual(imageMoments.getCenter().getY(),
+                                     shapeletMoments.getCenter().getY(), rtol=1E-3)
+        self.assertFloatsAlmostEqual(imageMoments.getCore().getIxx(),
+                                     shapeletMoments.getCore().getIxx(), rtol=1E-3)
+        self.assertFloatsAlmostEqual(imageMoments.getCore().getIyy(),
+                                     shapeletMoments.getCore().getIyy(), rtol=1E-3)
+        self.assertFloatsAlmostEqual(imageMoments.getCore().getIxy(),
+                                     shapeletMoments.getCore().getIxy(), rtol=1E-3)
         integral = numpy.trapz(numpy.trapz(z, gx, axis=1), y, axis=0)
-        self.assertClose(integral, function.evaluate().integrate(), rtol=1E-3)
+        self.assertFloatsAlmostEqual(integral, function.evaluate().integrate(), rtol=1E-3)
 
     def checkConvolution(self, f1, f2):
         bbox = lsst.afw.geom.Box2I(lsst.afw.geom.Point2I(-50, -50), lsst.afw.geom.Point2I(50, 50))
         i1 = lsst.afw.image.ImageD(bbox)
         f1.evaluate().addToImage(i1)
-        self.assertClose(i1.getArray().sum(), f1.evaluate().integrate(), rtol=1E-3)
+        self.assertFloatsAlmostEqual(i1.getArray().sum(), f1.evaluate().integrate(), rtol=1E-3)
         i2 = lsst.afw.image.ImageD(bbox)
         f2.evaluate().addToImage(i2)
-        self.assertClose(i2.getArray().sum(), f2.evaluate().integrate(), rtol=1E-3)
+        self.assertFloatsAlmostEqual(i2.getArray().sum(), f2.evaluate().integrate(), rtol=1E-3)
         fc1 = f1.convolve(f2)
         fc2 = f2.convolve(f1)
         ic1 = lsst.afw.image.ImageD(bbox)
         fc1.evaluate().addToImage(ic1)
         ic2 = lsst.afw.image.ImageD(bbox)
         fc2.evaluate().addToImage(ic2)
-        self.assertClose(ic1.getArray(), ic2.getArray())
+        self.assertFloatsAlmostEqual(ic1.getArray(), ic2.getArray())
         out = lsst.afw.image.ImageD(bbox)
         if scipy is None:
             print("Skipping convolution test; scipy could not be imported.")
@@ -159,6 +166,6 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
         # I can't even make the operation commutative, let alone correct.
         scipy.ndimage.convolve(i1.getArray(), i2.getArray(), output=out.getArray(),
                                mode="constant", cval=0.0)
-        self.assertClose(out.getArray(), ic1.getArray(), rtol=1E-4, atol=1E-5)
-        self.assertClose(out.getArray(), ic2.getArray(), rtol=1E-4, atol=1E-5)
+        self.assertFloatsAlmostEqual(out.getArray(), ic1.getArray(), rtol=1E-4, atol=1E-5)
+        self.assertFloatsAlmostEqual(out.getArray(), ic2.getArray(), rtol=1E-4, atol=1E-5)
         return fc1, fc2

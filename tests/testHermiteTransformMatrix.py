@@ -1,8 +1,6 @@
-#!/usr/bin/env python
-
 #
 # LSST Data Management System
-# Copyright 2008-2013 LSST Corporation.
+# Copyright 2008-2017 LSST Corporation.
 #
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
@@ -25,7 +23,8 @@
 from __future__ import print_function
 from builtins import range
 import unittest
-import numpy
+
+import numpy as np
 
 try:
     import scipy.special
@@ -36,7 +35,7 @@ import lsst.utils.tests
 import lsst.afw.geom
 import lsst.shapelet.tests
 
-numpy.random.seed(500)
+np.random.seed(500)
 
 
 class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
@@ -50,13 +49,13 @@ class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
     def ht(n):
         """return a scipy poly1d for the nth 'alternate' Hermite polynomial (i.e. Hermite polynomial
         with shapeley normalization)"""
-        return (scipy.poly1d([(2**n * numpy.pi**0.5 * scipy.special.gamma(n+1))**(-0.5)])
-                * scipy.special.hermite(n))
+        return (scipy.poly1d([(2**n * np.pi**0.5 * scipy.special.gamma(n+1))**(-0.5)]) *
+                scipy.special.hermite(n))
 
     def testCoefficientMatrices(self):
         coeff = self.htm.getCoefficientMatrix()
         coeffInv = self.htm.getInverseCoefficientMatrix()
-        self.assertClose(numpy.identity(self.order+1), numpy.dot(coeff, coeffInv))
+        self.assertFloatsAlmostEqual(np.identity(self.order+1), np.dot(coeff, coeffInv))
         # Both matrices should be lower-triangular
         for i in range(0, self.order+1):
             for j in range(i+1, self.order+1):
@@ -68,7 +67,7 @@ class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
             return
         for n in range(0, self.order+1):
             poly = self.ht(n)
-            self.assertClose(coeff[n, :n+1], poly.c[::-1], atol=1E-15)
+            self.assertFloatsAlmostEqual(coeff[n, :n+1], poly.c[::-1], atol=1E-15)
 
     def testTransformMatrix(self):
         if scipy is None:
@@ -78,7 +77,7 @@ class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
         s = lsst.afw.geom.LinearTransform.makeScaling(2.0, 1.5)
         r = lsst.afw.geom.LinearTransform.makeRotation(0.30*lsst.afw.geom.radians)
         transforms = [s, r, s*r*s]
-        testPoints = numpy.random.randn(10, 2)
+        testPoints = np.random.randn(10, 2)
         for transform in transforms:
             m = self.htm.compute(transform)
             for testPoint in testPoints:
@@ -90,7 +89,7 @@ class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
                     v2 = 0.0
                     for j, jnx, jny in lsst.shapelet.HermiteIndexGenerator(self.order):
                         v2 += m[i, j] * self.ht(jnx)(origPoint.getX()) * self.ht(jny)(origPoint.getY())
-                    self.assertClose(v1, v2, rtol=1E-11)
+                    self.assertFloatsAlmostEqual(v1, v2, rtol=1E-11)
 
 
 def suite():

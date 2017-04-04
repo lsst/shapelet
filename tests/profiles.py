@@ -1,8 +1,6 @@
-#!/usr/bin/env python
-
 #
 # LSST Data Management System
-# Copyright 2008-2014 LSST Corporation.
+# Copyright 2008-2017 LSST Corporation.
 #
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
@@ -21,10 +19,11 @@
 # the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
-
+from __future__ import absolute_import, division, print_function
 import unittest
-import numpy
 import os
+
+import numpy as np
 
 import lsst.utils.tests
 import lsst.afw.geom
@@ -52,8 +51,8 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
     def testRadii(self):
         """Check RadialProfile definitions of moments and half-light radii.
         """
-        s = numpy.linspace(-20.0, 20.0, 1000)
-        x, y = numpy.meshgrid(s, s)
+        s = np.linspace(-20.0, 20.0, 1000)
+        x, y = np.meshgrid(s, s)
         r = (x**2 + y**2)**0.5
         dxdy = (s[1] - s[0])**2
         for name in ["gaussian", "exp", "ser2", "luv", "lux"]:
@@ -62,19 +61,20 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
             # lux and luv don't use the true half-light radius; instead they use the half-light radius
             # of the exp and dev profiles they approximate
             if not name.startswith("lu"):
-                self.assertClose(z[r < 1].sum(), 0.5*z.sum(), rtol=0.01)
+                self.assertFloatsAlmostEqual(z[r < 1].sum(), 0.5*z.sum(), rtol=0.01)
             # lhs of this comparison is the moments radius (using a sum approximation to the integral)
-            self.assertClose(((z*x**2).sum() / z.sum())**0.5, profile.getMomentsRadiusFactor(), rtol=0.01)
+            self.assertFloatsAlmostEqual(((z*x**2).sum() / z.sum())**0.5,
+                                         profile.getMomentsRadiusFactor(), rtol=0.01)
 
     def testGaussian(self):
         """Test that the Gaussian profile's shapelet 'approximation' is actually exact.
         """
         profile = lsst.shapelet.RadialProfile.get("gaussian")
-        r = numpy.linspace(0.0, 4.0, 100)
+        r = np.linspace(0.0, 4.0, 100)
         z1 = profile.evaluate(r)
         basis = profile.getBasis(1)
         z2 = lsst.shapelet.tractor.evaluateRadial(basis, r, sbNormalize=True)[0, :]
-        self.assertClose(z1, z2, rtol=1E-8)
+        self.assertFloatsAlmostEqual(z1, z2, rtol=1E-8)
 
     def testShapeletApproximations(self):
         psf0 = lsst.shapelet.ShapeletFunction(0, lsst.shapelet.HERMITE, PSF_SIGMA)
@@ -88,22 +88,22 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
             check1 = lsst.afw.image.ImageD(os.path.join("tests", "data", name + "-approx.fits")).getArray()
             xc = check1.shape[1] // 2
             yc = check1.shape[0] // 2
-            xb = numpy.arange(check1.shape[1], dtype=float) - xc
-            yb = numpy.arange(check1.shape[0], dtype=float) - yc
-            xg, yg = numpy.meshgrid(xb, yb)
+            xb = np.arange(check1.shape[1], dtype=float) - xc
+            yb = np.arange(check1.shape[0], dtype=float) - yc
+            xg, yg = np.meshgrid(xb, yb)
 
             basis = lsst.shapelet.RadialProfile.get(name).getBasis(nComponents, maxRadius)
             builder = lsst.shapelet.MatrixBuilderD.Factory(xg.ravel(), yg.ravel(), basis, psf)()
-            image1 = numpy.zeros(check1.shape, dtype=float)
+            image1 = np.zeros(check1.shape, dtype=float)
             matrix = image1.reshape(check1.size, 1)
             builder(matrix, el.Ellipse(ellipse))
-            self.assertClose(check1, image1, plotOnFailure=False, rtol=5E-5, relTo=check1.max())
+            self.assertFloatsAlmostEqual(check1, image1, plotOnFailure=False, rtol=5E-5, relTo=check1.max())
             msf = basis.makeFunction(el.Ellipse(ellipse, lsst.afw.geom.Point2D(xc, yc)),
-                                     numpy.array([1.0], dtype=float))
+                                     np.array([1.0], dtype=float))
             msf = msf.convolve(psf)
-            image2 = numpy.zeros(check1.shape, dtype=float)
+            image2 = np.zeros(check1.shape, dtype=float)
             msf.evaluate().addToImage(lsst.afw.image.ImageD(image2, False))
-            self.assertClose(check1, image2, plotOnFailure=False, rtol=5E-5, relTo=check1.max())
+            self.assertFloatsAlmostEqual(check1, image2, plotOnFailure=False, rtol=5E-5, relTo=check1.max())
 
             if name == 'exp':
                 # check2 is the exact profile, again by GalSim.
@@ -113,7 +113,8 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
                 check2 = lsst.afw.image.ImageD(
                     os.path.join("tests", "data", name + "-exact.fits")
                 ).getArray()
-                self.assertClose(check2, image1, plotOnFailure=False, rtol=1E-3, relTo=check2.max())
+                self.assertFloatsAlmostEqual(check2, image1, plotOnFailure=False,
+                                             rtol=1E-3, relTo=check2.max())
 
             if CHECK_COMPONENT_IMAGES:
                 # This was once useful for debugging test failures, and may be again, but it's
@@ -123,9 +124,10 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
                     check = lsst.afw.image.ImageD(
                         os.path.join("tests", "data", "%s-approx-%0d.fits" % (name, n))
                     ).getArray()
-                    image = numpy.zeros(check1.shape, dtype=float)
+                    image = np.zeros(check1.shape, dtype=float)
                     sf.evaluate().addToImage(lsst.afw.image.ImageD(image, False))
-                    self.assertClose(check, image, plotOnFailure=False, rtol=5E-5, relTo=check1.max())
+                    self.assertFloatsAlmostEqual(check, image, plotOnFailure=False,
+                                                 rtol=5E-5, relTo=check1.max())
 
 
 def suite():
