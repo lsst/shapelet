@@ -1,8 +1,6 @@
-#!/usr/bin/env python
-
 #
 # LSST Data Management System
-# Copyright 2008-2013 LSST Corporation.
+# Copyright 2008-2017 LSST Corporation.
 #
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
@@ -21,14 +19,14 @@
 # the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
-
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 from future import standard_library
-standard_library.install_aliases()
+standard_library.install_aliases()  # noqa E402
 from builtins import zip
 import unittest
-import numpy
 import pickle
+
+import numpy as np
 
 try:
     import scipy.special
@@ -41,7 +39,7 @@ import lsst.afw.image
 import lsst.afw.geom as geom
 import lsst.afw.geom.ellipses as ellipses
 
-numpy.random.seed(500)
+np.random.seed(500)
 
 
 class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
@@ -49,9 +47,9 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
     def setUp(self):
         order = 4
         self.ellipse = ellipses.Ellipse(ellipses.Axes(2.2, 0.8, 0.3), geom.Point2D(0.12, -0.08))
-        self.coefficients = numpy.random.randn(lsst.shapelet.computeSize(order))
-        self.x = numpy.random.randn(25)
-        self.y = numpy.random.randn(25)
+        self.coefficients = np.random.randn(lsst.shapelet.computeSize(order))
+        self.x = np.random.randn(25)
+        self.y = np.random.randn(25)
         self.bases = [
             lsst.shapelet.BasisEvaluator(order, lsst.shapelet.HERMITE),
             lsst.shapelet.BasisEvaluator(order, lsst.shapelet.LAGUERRE),
@@ -69,28 +67,28 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
             function2 = pickle.loads(s)
             self.assertEqual(function.getOrder(), function2.getOrder())
             self.assertEqual(function.getBasisType(), function2.getBasisType())
-            self.assertClose(function.getEllipse().getParameterVector(),
-                             function2.getEllipse().getParameterVector())
-            self.assertClose(function.getCoefficients(), function2.getCoefficients())
+            self.assertFloatsAlmostEqual(function.getEllipse().getParameterVector(),
+                                         function2.getEllipse().getParameterVector())
+            self.assertFloatsAlmostEqual(function.getCoefficients(), function2.getCoefficients())
 
     def testConversion(self):
         for basis, function in zip(self.bases, self.functions):
             evaluator = function.evaluate()
-            v = numpy.zeros(self.coefficients.shape, dtype=float)
+            v = np.zeros(self.coefficients.shape, dtype=float)
             t = self.ellipse.getGridTransform()
             for x, y in zip(self.x, self.y):
                 basis.fillEvaluation(v, t(geom.Point2D(x, y)))
                 p1 = evaluator(x, y)
-                p2 = numpy.dot(v, self.coefficients) * t.getLinear().computeDeterminant()
-                self.assertClose(p1, p2, rtol=1E-8)
-            v = numpy.zeros(self.coefficients.shape, dtype=float)
+                p2 = np.dot(v, self.coefficients) * t.getLinear().computeDeterminant()
+                self.assertFloatsAlmostEqual(p1, p2, rtol=1E-8)
+            v = np.zeros(self.coefficients.shape, dtype=float)
             basis.fillIntegration(v)
             p1 = evaluator.integrate()
-            p2 = numpy.dot(v, self.coefficients)
-            self.assertClose(p1, p2, rtol=1E-8)
+            p2 = np.dot(v, self.coefficients)
+            self.assertFloatsAlmostEqual(p1, p2, rtol=1E-8)
 
     def testMoments(self):
-        x = numpy.linspace(-15, 15, 151)
+        x = np.linspace(-15, 15, 151)
         y = x
         for function in self.functions:
             z = self.makeImage(function, x, y)
@@ -98,11 +96,11 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def testDerivatives(self):
         eps = 1E-7
-        v = numpy.zeros(self.coefficients.shape, dtype=float)
-        v_lo = numpy.zeros(self.coefficients.shape, dtype=float)
-        v_hi = numpy.zeros(self.coefficients.shape, dtype=float)
-        dx_a = numpy.zeros(self.coefficients.shape, dtype=float)
-        dy_a = numpy.zeros(self.coefficients.shape, dtype=float)
+        v = np.zeros(self.coefficients.shape, dtype=float)
+        v_lo = np.zeros(self.coefficients.shape, dtype=float)
+        v_hi = np.zeros(self.coefficients.shape, dtype=float)
+        dx_a = np.zeros(self.coefficients.shape, dtype=float)
+        dy_a = np.zeros(self.coefficients.shape, dtype=float)
         for basis in self.bases:
             for x, y in zip(self.x, self.y):
                 basis.fillEvaluation(v, x, y, dx_a, dy_a)
@@ -112,15 +110,15 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
                 basis.fillEvaluation(v_hi, x, y+eps)
                 basis.fillEvaluation(v_lo, x, y-eps)
                 dy_n = 0.5 * (v_hi - v_lo) / eps
-                self.assertClose(dx_n, dx_a, rtol=1E-5)
-                self.assertClose(dy_n, dy_a, rtol=1E-5)
+                self.assertFloatsAlmostEqual(dx_n, dx_a, rtol=1E-5)
+                self.assertFloatsAlmostEqual(dy_n, dy_a, rtol=1E-5)
 
     def testAddToImage(self):
         bbox = geom.Box2I(geom.Point2I(5, 6), geom.Extent2I(20, 30))
         image = lsst.afw.image.ImageD(bbox)
-        x = numpy.arange(bbox.getBeginX(), bbox.getEndX(), dtype=float)
-        y = numpy.arange(bbox.getBeginY(), bbox.getEndY(), dtype=float)
-        array = numpy.zeros((bbox.getHeight(), bbox.getWidth()), dtype=float)
+        x = np.arange(bbox.getBeginX(), bbox.getEndX(), dtype=float)
+        y = np.arange(bbox.getBeginY(), bbox.getEndY(), dtype=float)
+        array = np.zeros((bbox.getHeight(), bbox.getWidth()), dtype=float)
         for f in self.functions:
             image.getArray()[:] = 0.0
             array[:] = 0.0
@@ -128,8 +126,8 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
             ev.addToImage(image)
             ev.addToImage(array, bbox.getMin())
             check = self.makeImage(f, x, y)
-            self.assertClose(image.getArray(), check)
-            self.assertClose(array, check)
+            self.assertFloatsAlmostEqual(image.getArray(), check)
+            self.assertFloatsAlmostEqual(array, check)
 
     def testConvolution(self):
         if scipy is None:
@@ -139,15 +137,16 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
         e2 = ellipses.Ellipse(ellipses.Axes(12, 9, -0.5), geom.Point2D(-1.0, -0.25))
         f1 = lsst.shapelet.ShapeletFunction(3, lsst.shapelet.HERMITE, e1)
         f2 = lsst.shapelet.ShapeletFunction(2, lsst.shapelet.LAGUERRE, e2)
-        f1.getCoefficients()[:] = numpy.random.randn(*f1.getCoefficients().shape)
-        f2.getCoefficients()[:] = numpy.random.randn(*f2.getCoefficients().shape)
+        f1.getCoefficients()[:] = np.random.randn(*f1.getCoefficients().shape)
+        f2.getCoefficients()[:] = np.random.randn(*f2.getCoefficients().shape)
         fc1, fc2 = self.checkConvolution(f1, f2)
         self.assertEqual(fc1.getBasisType(), lsst.shapelet.HERMITE)
         self.assertEqual(fc2.getBasisType(), lsst.shapelet.LAGUERRE)
-        self.assertClose(fc1.getEllipse().getParameterVector(), fc2.getEllipse().getParameterVector())
+        self.assertFloatsAlmostEqual(fc1.getEllipse().getParameterVector(),
+                                     fc2.getEllipse().getParameterVector())
         self.assertEqual(fc1.getOrder(), fc2.getOrder())
         fc2.changeBasisType(lsst.shapelet.HERMITE)
-        self.assertClose(fc1.getCoefficients(), fc2.getCoefficients(), 1E-8)
+        self.assertFloatsAlmostEqual(fc1.getCoefficients(), fc2.getCoefficients(), 1E-8)
 
 
 def suite():
@@ -164,6 +163,7 @@ def suite():
 def run(shouldExit=False):
     """Run the tests"""
     lsst.utils.tests.run(suite(), shouldExit)
+
 
 if __name__ == "__main__":
     run(True)

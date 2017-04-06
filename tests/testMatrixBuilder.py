@@ -1,9 +1,6 @@
-from builtins import zip
-#!/usr/bin/env python
-
 #
 # LSST Data Management System
-# Copyright 2008-2014 LSST Corporation.
+# Copyright 2008-2017 LSST Corporation.
 #
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
@@ -22,25 +19,27 @@ from builtins import zip
 # the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
-
+from __future__ import absolute_import, division, print_function
+from builtins import zip
 import unittest
-import numpy
+
+import numpy as np
 
 import lsst.utils.tests
 import lsst.afw.geom.ellipses
 import lsst.shapelet.tests
 import lsst.afw.image
 
-numpy.random.seed(500)
+np.random.seed(500)
 
 
 class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def setUp(self):
-        self.xD = numpy.random.randn(50)
-        self.yD = numpy.random.randn(50)
-        self.xF = self.xD.astype(numpy.float32)
-        self.yF = self.yD.astype(numpy.float32)
+        self.xD = np.random.randn(50)
+        self.yD = np.random.randn(50)
+        self.xF = self.xD.astype(np.float32)
+        self.yF = self.yD.astype(np.float32)
 
     def checkAccessors(self, obj, basisSize):
         self.assertEqual(obj.getDataSize(), self.xD.size)
@@ -49,9 +48,9 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
     def testShapeletMatrixBuilder(self):
         function = self.makeRandomShapeletFunction(order=4)
         size = function.getCoefficients().size
-        function.getCoefficients()[:] = numpy.random.randn(size)
+        function.getCoefficients()[:] = np.random.randn(size)
         basis = lsst.shapelet.MultiShapeletBasis(size)
-        basis.addComponent(1.0, function.getOrder(), numpy.identity(size))
+        basis.addComponent(1.0, function.getOrder(), np.identity(size))
         factoryF = lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, function.getOrder())
         factoryD = lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, function.getOrder())
         # we should get the same results with an appropriately simple MultiShapeletBasis
@@ -83,23 +82,29 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         matrix2D = builder2D(function.getEllipse())
         matrix3F = builder3F(function.getEllipse())
         matrix3D = builder3D(function.getEllipse())
-        self.assertClose(matrix1D, matrix2D, rtol=0.0, atol=0.0)  # same code, different workspace
-        self.assertClose(matrix1F, matrix2F, rtol=0.0, atol=0.0)  # same code, different workspace
-        self.assertClose(matrix1F, matrix3F, rtol=0.0, atol=0.0)  # same code, different construction pattern
-        self.assertClose(matrix1D, matrix3D, rtol=0.0, atol=0.0)  # same code, different construction pattern
-        self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0)  # same code, different precision
+        # same code, different workspace
+        self.assertFloatsAlmostEqual(matrix1D, matrix2D, rtol=0.0, atol=0.0)
+        # same code, different workspace
+        self.assertFloatsAlmostEqual(matrix1F, matrix2F, rtol=0.0, atol=0.0)
+        # same code, different construction pattern
+        self.assertFloatsAlmostEqual(matrix1F, matrix3F, rtol=0.0, atol=0.0)
+        # same code, different construction pattern
+        self.assertFloatsAlmostEqual(matrix1D, matrix3D, rtol=0.0, atol=0.0)
+        # same code, different construction pattern
+        self.assertFloatsAlmostEqual(matrix1F, matrix2F, rtol=1E-7, atol=0.0)
         # Finally, check against a completely different implementation (which is tested elsewhere)
         checkEvaluator = function.evaluate()
         checkVector = checkEvaluator(self.xD, self.yD)
-        self.assertClose(numpy.dot(matrix1D, function.getCoefficients()), checkVector, rtol=1E-13, atol=1E-14)
+        self.assertFloatsAlmostEqual(np.dot(matrix1D, function.getCoefficients()),
+                                     checkVector, rtol=1E-13, atol=1E-14)
 
     def testRemappedShapeletMatrixBuilder(self):
         function = self.makeRandomShapeletFunction(order=4)
         size = 6
         radius = 3.2
-        remapMatrix = numpy.random.randn(function.getCoefficients().size, size)
-        coefficients = numpy.random.randn(size)
-        function.getCoefficients()[:] = numpy.dot(remapMatrix, coefficients)
+        remapMatrix = np.random.randn(function.getCoefficients().size, size)
+        coefficients = np.random.randn(size)
+        function.getCoefficients()[:] = np.dot(remapMatrix, coefficients)
         basis = lsst.shapelet.MultiShapeletBasis(size)
         basis.addComponent(radius, function.getOrder(), remapMatrix)
         factoryF = lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, basis)
@@ -122,22 +127,25 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         matrix1D = builder1D(function.getEllipse())
         matrix2F = builder2F(function.getEllipse())
         matrix2D = builder2D(function.getEllipse())
-        self.assertClose(matrix1D, matrix2D, rtol=0.0, atol=0.0)  # same code, different workspace
-        self.assertClose(matrix1F, matrix2F, rtol=0.0, atol=0.0)  # same code, different workspace
-        self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0)  # same code, different precision
+        # same code, different workspace
+        self.assertFloatsAlmostEqual(matrix1D, matrix2D, rtol=0.0, atol=0.0)
+        # same code, different workspace
+        self.assertFloatsAlmostEqual(matrix1F, matrix2F, rtol=0.0, atol=0.0)
+        # same code, different precision
+        self.assertFloatsAlmostEqual(matrix1F, matrix2F, rtol=1E-7, atol=0.0)
         # Finally, check against a completely different implementation (which is tested elsewhere)
         function.getEllipse().scale(radius)
         checkEvaluator = function.evaluate()
         checkVector = checkEvaluator(self.xD, self.yD)
-        self.assertClose(numpy.dot(matrix1D, coefficients), checkVector, rtol=1E-13, atol=1E-14)
+        self.assertFloatsAlmostEqual(np.dot(matrix1D, coefficients), checkVector, rtol=1E-13, atol=1E-14)
 
     def testConvolvedShapeletMatrixBuilder(self):
         function = self.makeRandomShapeletFunction(order=4)
         psf = self.makeRandomMultiShapeletFunction(nComponents=1)
         size = function.getCoefficients().size
-        function.getCoefficients()[:] = numpy.random.randn(size)
+        function.getCoefficients()[:] = np.random.randn(size)
         basis = lsst.shapelet.MultiShapeletBasis(size)
-        basis.addComponent(1.0, function.getOrder(), numpy.identity(size))
+        basis.addComponent(1.0, function.getOrder(), np.identity(size))
         factoriesF = [lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, function.getOrder(),
                                                            psf.getComponents()[0]),
                       lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, basis, psf),
@@ -157,9 +165,11 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
             self.assertEqual(workspace.getRemaining(), 0)
             matrix1 = builder1(function.getEllipse())
             matrix2 = builder2(function.getEllipse())
-            self.assertClose(matrix1, matrix2, rtol=0.0, atol=0.0)  # same code, different workspace
+            # same code, different workspace
+            self.assertFloatsAlmostEqual(matrix1, matrix2, rtol=0.0, atol=0.0)
             if lastF is not None:
-                self.assertClose(matrix1, lastF, rtol=0.0, atol=0.0)  # same code, different construction
+                # same code, different construction
+                self.assertFloatsAlmostEqual(matrix1, lastF, rtol=0.0, atol=0.0)
             lastF = matrix1
         lastD = None
         for factory in factoriesD:
@@ -172,26 +182,29 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
             self.assertEqual(workspace.getRemaining(), 0)
             matrix1 = builder1(function.getEllipse())
             matrix2 = builder2(function.getEllipse())
-            self.assertClose(matrix1, matrix2, rtol=0.0, atol=0.0)  # same code, different workspace
+            # same code, different workspace
+            self.assertFloatsAlmostEqual(matrix1, matrix2, rtol=0.0, atol=0.0)
             if lastD is not None:
-                self.assertClose(matrix1, lastD, rtol=0.0, atol=0.0)  # same code, different construction
+                # same code, different construction
+                self.assertFloatsAlmostEqual(matrix1, lastD, rtol=0.0, atol=0.0)
             lastD = matrix1
-        self.assertClose(lastF, lastD, rtol=1E-6, atol=1E-5)  # same code, different precision
+        # same code, different precision
+        self.assertFloatsAlmostEqual(lastF, lastD, rtol=1E-6, atol=1E-5)
 
         # Finally, check against a completely different implementation (which is tested elsewhere)
         convolved = function.convolve(psf.getComponents()[0])
         checkEvaluator = convolved.evaluate()
         checkVector = checkEvaluator(self.xD, self.yD)
-        self.assertClose(numpy.dot(lastD, function.getCoefficients()), checkVector, rtol=1E-13)
+        self.assertFloatsAlmostEqual(np.dot(lastD, function.getCoefficients()), checkVector, rtol=1E-13)
 
     def testRemappedConvolvedShapeletMatrixBuilder(self):
         function = self.makeRandomShapeletFunction(order=4)
         psf = self.makeRandomMultiShapeletFunction(nComponents=1)
         size = 6
         radius = 3.2
-        remapMatrix = numpy.random.randn(function.getCoefficients().size, size)
-        coefficients = numpy.random.randn(size)
-        function.getCoefficients()[:] = numpy.dot(remapMatrix, coefficients)
+        remapMatrix = np.random.randn(function.getCoefficients().size, size)
+        coefficients = np.random.randn(size)
+        function.getCoefficients()[:] = np.dot(remapMatrix, coefficients)
         basis = lsst.shapelet.MultiShapeletBasis(size)
         basis.addComponent(radius, function.getOrder(), remapMatrix)
         factoryF = lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, basis, psf)
@@ -207,18 +220,20 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
             self.assertEqual(workspace.getRemaining(), 0)
             matrix1 = builder1(function.getEllipse())
             matrix2 = builder2(function.getEllipse())
-            self.assertClose(matrix1, matrix2, rtol=0.0, atol=0.0)  # same code, different workspace
+            # same code, different workspace
+            self.assertFloatsAlmostEqual(matrix1, matrix2, rtol=0.0, atol=0.0)
             if matrixF is None:
                 matrixF = matrix1
         matrixD = matrix1
-        self.assertClose(matrixF, matrixD, rtol=1E-4, atol=0.0)  # same code, different precision
+        # same code, different precision
+        self.assertFloatsAlmostEqual(matrixF, matrixD, rtol=1E-4, atol=0.0)
 
         # Finally, check against a completely different implementation (which is tested elsewhere)
         function.getEllipse().scale(radius)
         convolved = function.convolve(psf.getComponents()[0])
         checkEvaluator = convolved.evaluate()
         checkVector = checkEvaluator(self.xD, self.yD)
-        self.assertClose(numpy.dot(matrixD, coefficients), checkVector, rtol=1E-12, atol=1E-12)
+        self.assertFloatsAlmostEqual(np.dot(matrixD, coefficients), checkVector, rtol=1E-12, atol=1E-12)
 
     def testCompoundMatrixBuilder(self):
         ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes(4.0, 3.0, 1.0),
@@ -228,11 +243,11 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         size = 8
         functions = [self.makeRandomShapeletFunction(order=order, ellipse=ellipse, scale=radius)
                      for radius, order in zip(radii, orders)]
-        remapMatrices = [numpy.random.randn(f.getCoefficients().size, size) for f in functions]
-        coefficients = numpy.random.randn(size)
+        remapMatrices = [np.random.randn(f.getCoefficients().size, size) for f in functions]
+        coefficients = np.random.randn(size)
         basis = lsst.shapelet.MultiShapeletBasis(size)
         for radius, function, matrix in zip(radii, functions, remapMatrices):
-            function.getCoefficients()[:] = numpy.dot(matrix, coefficients)
+            function.getCoefficients()[:] = np.dot(matrix, coefficients)
             basis.addComponent(radius, function.getOrder(), matrix)
         factoryF = lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, basis)
         factoryD = lsst.shapelet.MatrixBuilderD.Factory(self.xD, self.yD, basis)
@@ -254,15 +269,18 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         matrix1D = builder1D(ellipse)
         matrix2F = builder2F(ellipse)
         matrix2D = builder2D(ellipse)
-        self.assertClose(matrix1D, matrix2D, rtol=0.0, atol=0.0)  # same code, different workspace
-        self.assertClose(matrix1F, matrix2F, rtol=0.0, atol=0.0)  # same code, different workspace
-        self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0)  # same code, different precision
+        # same code, different workspace
+        self.assertFloatsAlmostEqual(matrix1D, matrix2D, rtol=0.0, atol=0.0)
+        # same code, different workspace
+        self.assertFloatsAlmostEqual(matrix1F, matrix2F, rtol=0.0, atol=0.0)
+        # same code, different precision
+        self.assertFloatsAlmostEqual(matrix1F, matrix2F, rtol=1E-7, atol=0.0)
         # Finally, check against a completely different implementation (which is tested elsewhere)
-        checkVector = numpy.zeros(self.xD.shape, dtype=float)
+        checkVector = np.zeros(self.xD.shape, dtype=float)
         for function in functions:
             checkEvaluator = function.evaluate()
             checkVector += checkEvaluator(self.xD, self.yD)
-        self.assertClose(numpy.dot(matrix1D, coefficients), checkVector, rtol=1E-13, atol=1E-14)
+        self.assertFloatsAlmostEqual(np.dot(matrix1D, coefficients), checkVector, rtol=1E-13, atol=1E-14)
 
     def testConvolvedCompoundMatrixBuilder(self):
         ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes(4.0, 3.0, 1.0),
@@ -273,11 +291,11 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         functions = [self.makeRandomShapeletFunction(order=order, ellipse=ellipse, scale=radius)
                      for radius, order in zip(radii, orders)]
         psf = self.makeRandomMultiShapeletFunction()
-        remapMatrices = [numpy.random.randn(f.getCoefficients().size, size) for f in functions]
-        coefficients = numpy.random.randn(size)
+        remapMatrices = [np.random.randn(f.getCoefficients().size, size) for f in functions]
+        coefficients = np.random.randn(size)
         basis = lsst.shapelet.MultiShapeletBasis(size)
         for radius, function, matrix in zip(radii, functions, remapMatrices):
-            function.getCoefficients()[:] = numpy.dot(matrix, coefficients)
+            function.getCoefficients()[:] = np.dot(matrix, coefficients)
             basis.addComponent(radius, function.getOrder(), matrix)
         msf = lsst.shapelet.MultiShapeletFunction(functions)
         factoryF = lsst.shapelet.MatrixBuilderF.Factory(self.xF, self.yF, basis, psf)
@@ -300,15 +318,18 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
         matrix1D = builder1D(ellipse)
         matrix2F = builder2F(ellipse)
         matrix2D = builder2D(ellipse)
-        self.assertClose(matrix1D, matrix2D, rtol=0.0, atol=0.0)  # same code, different workspace
-        self.assertClose(matrix1F, matrix2F, rtol=0.0, atol=0.0)  # same code, different workspace
-        self.assertClose(matrix1F, matrix2F, rtol=1E-7, atol=0.0)  # same code, different precision
+        # same code, different workspace
+        self.assertFloatsAlmostEqual(matrix1D, matrix2D, rtol=0.0, atol=0.0)
+        # same code, different workspace
+        self.assertFloatsAlmostEqual(matrix1F, matrix2F, rtol=0.0, atol=0.0)
+        # same code, different precision
+        self.assertFloatsAlmostEqual(matrix1F, matrix2F, rtol=1E-7, atol=0.0)
 
         # Finally, check against a completely different implementation (which is tested elsewhere)
         convolved = msf.convolve(psf)
         checkEvaluator = convolved.evaluate()
         checkVector = checkEvaluator(self.xD, self.yD)
-        self.assertClose(numpy.dot(matrix1D, coefficients), checkVector, rtol=1E-13, atol=1E-14)
+        self.assertFloatsAlmostEqual(np.dot(matrix1D, coefficients), checkVector, rtol=1E-13, atol=1E-14)
 
 
 def suite():
@@ -324,6 +345,7 @@ def suite():
 def run(shouldExit=False):
     """Run the tests"""
     lsst.utils.tests.run(suite(), shouldExit)
+
 
 if __name__ == "__main__":
     run(True)

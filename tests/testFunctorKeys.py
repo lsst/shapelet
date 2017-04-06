@@ -1,9 +1,6 @@
-from builtins import range
-#!/usr/bin/env python
-
 #
 # LSST Data Management System
-# Copyright 2008-2014 LSST Corporation.
+# Copyright 2008-2017 LSST Corporation.
 #
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
@@ -22,9 +19,11 @@ from builtins import range
 # the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
-
+from __future__ import absolute_import, division, print_function
+from builtins import range
 import unittest
-import numpy
+
+import numpy as np
 
 import lsst.utils.tests
 import lsst.afw.geom.ellipses
@@ -32,7 +31,7 @@ import lsst.shapelet.tests
 import lsst.afw.image
 import lsst.afw.table
 
-numpy.random.seed(500)
+np.random.seed(500)
 
 
 class FunctorKeyTestCase(lsst.shapelet.tests.ShapeletTestCase):
@@ -103,6 +102,7 @@ def suite():
 def run(shouldExit=False):
     """Run the tests"""
     lsst.utils.tests.run(suite(), shouldExit)
+
 
 if __name__ == "__main__":
     run(True)

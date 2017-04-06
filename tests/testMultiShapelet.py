@@ -1,8 +1,6 @@
-#!/usr/bin/env python
-
 #
 # LSST Data Management System
-# Copyright 2008-2013 LSST Corporation.
+# Copyright 2008-2017 LSST Corporation.
 #
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
@@ -21,31 +19,31 @@
 # the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
-
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 from future import standard_library
-standard_library.install_aliases()
+standard_library.install_aliases()  # noqa E402
 from builtins import zip
 from builtins import range
-import unittest
-import numpy
 import pickle
+import unittest
+
+import numpy as np
 
 import lsst.utils.tests
-import lsst.afw.geom.ellipses as ellipses
+import lsst.afw.geom.ellipses
 import lsst.shapelet.tests
 import lsst.afw.image
 
-numpy.random.seed(500)
+np.random.seed(500)
 
 
 class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def testMoments(self):
-        x = numpy.linspace(-50, 50, 1001)
+        x = np.linspace(-50, 50, 1001)
         y = x
         function = self.makeRandomMultiShapeletFunction()
-        x = numpy.linspace(-10, 10, 101)
+        x = np.linspace(-10, 10, 101)
         y = x
         z = self.makeImage(function, x, y)
         self.checkMoments(function, x, y, z)
@@ -57,9 +55,9 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
         for component1, component2 in zip(function1.getComponents(), function2.getComponents()):
             self.assertEqual(component1.getOrder(), component2.getOrder())
             self.assertEqual(component1.getBasisType(), component2.getBasisType())
-            self.assertClose(component1.getEllipse().getParameterVector(),
-                             component2.getEllipse().getParameterVector())
-            self.assertClose(component1.getCoefficients(), component2.getCoefficients())
+            self.assertFloatsAlmostEqual(component1.getEllipse().getParameterVector(),
+                                         component2.getEllipse().getParameterVector())
+            self.assertFloatsAlmostEqual(component1.getCoefficients(), component2.getCoefficients())
 
     def testConvolveGaussians(self):
         sigma1 = [lsst.afw.geom.ellipses.Quadrupole(6.0, 5.0, 2.0),
@@ -94,27 +92,27 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
         self.compareMultiShapeletFunctions(msf3a, msf3b)
 
         # Just to be extra sure, we test that the images are also the same
-        x = numpy.linspace(-20, 20, 41)
-        y = numpy.linspace(-20, 20, 41)
+        x = np.linspace(-20, 20, 41)
+        y = np.linspace(-20, 20, 41)
         image3a = self.makeImage(msf3a, x, y)
         image3b = self.makeImage(msf3b, x, y)
-        self.assertClose(image3a, image3b)
+        self.assertFloatsAlmostEqual(image3a, image3b)
 
         # Now we test against two test images: one implemented right here with numpy calls...
-        xg, yg = numpy.meshgrid(x, y)
+        xg, yg = np.meshgrid(x, y)
 
         def evalMultiGaussian(alpha, sigma):
-            matQ = numpy.array([[sigma.getIxx(), sigma.getIxy()],
-                                [sigma.getIxy(), sigma.getIyy()]],
-                               dtype=float)
-            invQ = numpy.linalg.inv(matQ)
-            norm = alpha / numpy.linalg.det(2.0 * numpy.pi * matQ)**0.5
-            return norm * numpy.exp(-0.5 * (invQ[0, 0]*xg**2 + 2.0*invQ[0, 1]*xg*yg + invQ[1, 1]*yg**2))
-        image3c = numpy.zeros(xg.shape, dtype=float)
+            matQ = np.array([[sigma.getIxx(), sigma.getIxy()],
+                             [sigma.getIxy(), sigma.getIyy()]],
+                            dtype=float)
+            invQ = np.linalg.inv(matQ)
+            norm = alpha / np.linalg.det(2.0 * np.pi * matQ)**0.5
+            return norm * np.exp(-0.5 * (invQ[0, 0]*xg**2 + 2.0*invQ[0, 1]*xg*yg + invQ[1, 1]*yg**2))
+        image3c = np.zeros(xg.shape, dtype=float)
         for a, s in zip(alpha3, sigma3):
             image3c += evalMultiGaussian(a, s)
-        self.assertClose(image3c, image3a, rtol=1E-6, relTo=numpy.max(image3c),
-                         printFailures=True, plotOnFailure=False)
+        self.assertFloatsAlmostEqual(image3c, image3a, rtol=1E-6, relTo=np.max(image3c),
+                                     printFailures=True, plotOnFailure=False)
 
         # And the second produced by GalSim
         if False:
@@ -131,14 +129,14 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
             printForGalSim(alpha1, sigma1)
             printForGalSim(alpha2, sigma2)
         image3d = lsst.afw.image.ImageF("tests/data/gaussians.fits").getArray().astype(float)
-        self.assertClose(image3d, image3a, rtol=1E-6, relTo=numpy.max(image3d),
-                         printFailures=True, plotOnFailure=False)
+        self.assertFloatsAlmostEqual(image3d, image3a, rtol=1E-6, relTo=np.max(image3d),
+                                     printFailures=True, plotOnFailure=False)
 
     def testBasisNormalize(self):
         def makePositiveMatrix(*shape):
             """Return a random basis matrix, but with a lot of power
             in the zeroth component to ensure the integral is positve."""
-            a = numpy.random.randn(*shape)
+            a = np.random.randn(*shape)
             a[0, :] += 4.0
             return a
         basis = lsst.shapelet.MultiShapeletBasis(2)
@@ -147,18 +145,18 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
         basis.addComponent(1.2, 0, makePositiveMatrix(1, 2))
         basis.normalize()
         for n in range(2):
-            coefficients = numpy.zeros(2, dtype=float)
+            coefficients = np.zeros(2, dtype=float)
             coefficients[n] = 1.0
             msf = basis.makeFunction(lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes()),
                                      coefficients)
-            self.assertClose(msf.evaluate().integrate(), 1.0)
+            self.assertFloatsAlmostEqual(msf.evaluate().integrate(), 1.0)
 
     def testBasisScale(self):
         ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes())
         basis = lsst.shapelet.MultiShapeletBasis(2)
-        basis.addComponent(0.5, 1, numpy.random.randn(3, 2))
-        basis.addComponent(1.0, 2, numpy.random.randn(6, 2))
-        basis.addComponent(1.2, 0, numpy.random.randn(1, 2))
+        basis.addComponent(0.5, 1, np.random.randn(3, 2))
+        basis.addComponent(1.0, 2, np.random.randn(6, 2))
+        basis.addComponent(1.2, 0, np.random.randn(1, 2))
         msf1 = [basis.makeFunction(ellipse, self.makeUnitVector(i, 2)) for i in range(2)]
         basis.scale(2.0)
         ellipse.getCore().scale(0.5)
@@ -169,13 +167,13 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
     def testBasisMerge(self):
         ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes())
         basis1 = lsst.shapelet.MultiShapeletBasis(2)
-        basis1.addComponent(0.5, 1, numpy.random.randn(3, 2))
-        basis1.addComponent(1.0, 2, numpy.random.randn(6, 2))
-        basis1.addComponent(1.2, 0, numpy.random.randn(1, 2))
+        basis1.addComponent(0.5, 1, np.random.randn(3, 2))
+        basis1.addComponent(1.0, 2, np.random.randn(6, 2))
+        basis1.addComponent(1.2, 0, np.random.randn(1, 2))
         basis2 = lsst.shapelet.MultiShapeletBasis(3)
-        basis2.addComponent(0.4, 1, numpy.random.randn(3, 3))
-        basis2.addComponent(1.1, 2, numpy.random.randn(6, 3))
-        basis2.addComponent(1.6, 0, numpy.random.randn(1, 3))
+        basis2.addComponent(0.4, 1, np.random.randn(3, 3))
+        basis2.addComponent(1.1, 2, np.random.randn(6, 3))
+        basis2.addComponent(1.6, 0, np.random.randn(1, 3))
         basis3 = lsst.shapelet.MultiShapeletBasis(basis1)
         basis3.merge(basis2)
         self.assertEqual(basis3.getSize(), 5)
@@ -200,6 +198,7 @@ def suite():
 def run(shouldExit=False):
     """Run the tests"""
     lsst.utils.tests.run(suite(), shouldExit)
+
 
 if __name__ == "__main__":
     run(True)
