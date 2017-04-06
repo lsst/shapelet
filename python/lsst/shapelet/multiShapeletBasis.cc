@@ -32,8 +32,8 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(_multiShapeletBasis) {
-    py::module mod("_multiShapeletBasis");
+PYBIND11_PLUGIN(multiShapeletBasis) {
+    py::module mod("multiShapeletBasis");
 
     if (_import_array() < 0) {
         PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
@@ -68,5 +68,6 @@ PYBIND11_PLUGIN(_multiShapeletBasis) {
 
     return mod.ptr();
 }
-}
-}  // lsst::shapelet
+
+}  // shapelet
+}  // lsst

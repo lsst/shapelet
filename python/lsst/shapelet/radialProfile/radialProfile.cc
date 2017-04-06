@@ -32,8 +32,8 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(_radialProfile) {
-    py::module mod("_radialProfile");
+PYBIND11_PLUGIN(radialProfile) {
+    py::module mod("radialProfile");
 
     if (_import_array() < 0) {
         PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
@@ -54,5 +54,6 @@ PYBIND11_PLUGIN(_radialProfile) {
 
     return mod.ptr();
 }
-}
-}  // lsst::shapelet
+
+}  // shapelet
+}  // lsst

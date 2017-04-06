@@ -27,7 +27,7 @@ Please see the README file in the data directory of the lsst.shapelet
 package for more information.
 """
 from future import standard_library
-standard_library.install_aliases()
+standard_library.install_aliases() # noqa
 from builtins import zip
 from builtins import str
 from builtins import range
@@ -37,13 +37,12 @@ import os
 import re
 import sys
 import warnings
-try:
-    import pickle as pickle
-except ImportError:
-    import pickle
+import pickle
 
-from .shapeletLib import *
-
+import lsst.pex.exceptions
+from .radialProfile import RadialProfile
+from .multiShapeletBasis import MultiShapeletBasis
+from .shapeletFunction import ShapeletFunction
 
 def registerRadialProfiles():
     """Register the pickled profiles in the data directory with the RadialProfile singleton registry.

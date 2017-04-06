@@ -33,8 +33,8 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(_gaussHermiteConvolution) {
-    py::module mod("_gaussHermiteConvolution");
+PYBIND11_PLUGIN(gaussHermiteConvolution) {
+    py::module mod("gaussHermiteConvolution");
 
     if (_import_array() < 0) {
         PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
@@ -53,5 +53,6 @@ PYBIND11_PLUGIN(_gaussHermiteConvolution) {
 
     return mod.ptr();
 }
-}
-}  // lsst::shapelet
+
+}  // shapelet
+}  // lsst
