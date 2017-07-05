@@ -1,9 +1,9 @@
 // -*- LSST-C++ -*-
 
-/* 
+/*
  * LSST Data Management System
  * Copyright 2008, 2009, 2010, 2011 LSST Corporation.
- * 
+ *
  * This product includes software developed by the
  * LSST Project (http://www.lsst.org/).
  *
@@ -11,14 +11,14 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the LSST License Statement and 
- * the GNU General Public License along with this program.  If not, 
+ *
+ * You should have received a copy of the LSST License Statement and
+ * the GNU General Public License along with this program.  If not,
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
@@ -40,13 +40,13 @@ void MultiShapeletFunction::normalize(double value) {
 void MultiShapeletFunction::shiftInPlace(afw::geom::Extent2D const & offset) {
     for (ComponentList::iterator i = _components.begin(); i != _components.end(); ++i) {
         i->shiftInPlace(offset);
-    }    
+    }
 }
 
 void MultiShapeletFunction::transformInPlace(afw::geom::AffineTransform const & transform) {
     for (ComponentList::iterator i = _components.begin(); i != _components.end(); ++i) {
         i->transformInPlace(transform);
-    }    
+    }
 }
 
 MultiShapeletFunction MultiShapeletFunction::convolve(ShapeletFunction const & other) const {
@@ -70,7 +70,7 @@ MultiShapeletFunction MultiShapeletFunction::convolve(MultiShapeletFunction cons
 void MultiShapeletFunctionEvaluator::update(MultiShapeletFunction const & function) {
     _components.clear();
     for (
-        MultiShapeletFunction::ComponentList::const_iterator i = function.getComponents().begin(); 
+        MultiShapeletFunction::ComponentList::const_iterator i = function.getComponents().begin();
         i != function.getComponents().end();
         ++i
     ) {
@@ -105,8 +105,9 @@ ndarray::Array<double,1,1> MultiShapeletFunctionEvaluator::operator()(
     return output;
 }
 
+template <typename PixelT>
 void MultiShapeletFunctionEvaluator::addToImage(
-    ndarray::Array<double,2,1> const & array,
+    ndarray::Array<PixelT,2,1> const & array,
     afw::geom::Point2I const & xy0
 ) const {
     for (ComponentList::const_iterator i = _components.begin(); i != _components.end(); ++i) {
@@ -143,5 +144,13 @@ afw::geom::ellipses::Ellipse MultiShapeletFunctionEvaluator::computeMoments() co
         afw::geom::Point2D(q1)
     );
 }
+
+#define INSTANTIATE_PIXEL_TYPE(T)                                                                     \
+    template void MultiShapeletFunctionEvaluator::addToImage<T>(ndarray::Array<T,2,1> const & array,  \
+                                                           afw::geom::Point2I const & xy0) const;     \
+    template void MultiShapeletFunctionEvaluator::addToImage<T>(afw::image::Image<T> & image) const;
+
+INSTANTIATE_PIXEL_TYPE(float);
+INSTANTIATE_PIXEL_TYPE(double);
 
 }} // namespace lsst::shapelet

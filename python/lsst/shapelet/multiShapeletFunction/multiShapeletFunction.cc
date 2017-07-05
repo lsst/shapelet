@@ -64,6 +64,18 @@ void declareMultiShapeletFunctionMembers(PyClass &cls) {
     cls.def("evaluate", &Class::evaluate);
 }
 
+template <typename PixelT, typename PyClass>
+void declareMultiShapeletFunctionEvaluatorAddToImageTypes(PyClass &cls){
+    cls.def("addToImage",
+            (void (MultiShapeletFunctionEvaluator::*)(ndarray::Array<PixelT, 2, 1> const &, afw::geom::Point2I const &) const) &
+                    MultiShapeletFunctionEvaluator::addToImage<PixelT>,
+            "array"_a, "xy0"_a = afw::geom::Point2I());
+    cls.def("addToImage",
+            (void (MultiShapeletFunctionEvaluator::*)(afw::image::Image<PixelT> &) const) &
+                    MultiShapeletFunctionEvaluator::addToImage<PixelT>,
+            "image"_a);
+}
+
 template <typename PyClass>
 void declareMultiShapeletFunctionEvaluatorMembers(PyClass &cls) {
     using Class = MultiShapeletFunctionEvaluator;
@@ -78,12 +90,8 @@ void declareMultiShapeletFunctionEvaluatorMembers(PyClass &cls) {
                                                      ndarray::Array<double const, 1> const &) const) &
                     Class::operator());
 
-    cls.def("addToImage",
-            (void (Class::*)(ndarray::Array<double, 2, 1> const &, afw::geom::Point2I const &) const) &
-                    Class::addToImage,
-            "array"_a, "xy0"_a = afw::geom::Point2I());
-    cls.def("addToImage", (void (Class::*)(afw::image::Image<double> &) const) & Class::addToImage,
-            "image"_a);
+    declareMultiShapeletFunctionEvaluatorAddToImageTypes<float>(cls);
+    declareMultiShapeletFunctionEvaluatorAddToImageTypes<double>(cls);
 
     cls.def("integrate", &Class::integrate);
     cls.def("computeMoments", &Class::computeMoments);

@@ -1,9 +1,9 @@
 // -*- LSST-C++ -*-
 
-/* 
+/*
  * LSST Data Management System
  * Copyright 2008, 2009, 2010, 2011 LSST Corporation.
- * 
+ *
  * This product includes software developed by the
  * LSST Project (http://www.lsst.org/).
  *
@@ -11,17 +11,17 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the LSST License Statement and 
- * the GNU General Public License along with this program.  If not, 
+ *
+ * You should have received a copy of the LSST License Statement and
+ * the GNU General Public License along with this program.  If not,
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
- 
+
 #ifndef LSST_AFW_MATH_SHAPELETS_SHAPELETFUNCTION_H
 #define LSST_AFW_MATH_SHAPELETS_SHAPELETFUNCTION_H
 
@@ -83,7 +83,7 @@ public:
 
     /// @brief Set the ellipse.
     void setEllipse(afw::geom::ellipses::Ellipse const & ellipse) { _ellipse = ellipse; }
-    
+
     /// @brief Return the basis type (HERMITE or LAGUERRE).
     BasisTypeEnum getBasisType() const { return _basisType; }
 
@@ -202,13 +202,15 @@ public:
     ) const;
 
     /// @brief Add the function to the given image-like array.
+    template <typename PixelT>
     void addToImage(
-        ndarray::Array<double,2,1> const & array,
+        ndarray::Array<PixelT,2,1> const & array,
         afw::geom::Point2I const & xy0 = afw::geom::Point2I()
     ) const;
 
     /// @brief Evaluate the function on the given image.
-    void addToImage(afw::image::Image<double> & image) const {
+    template <typename PixelT>
+    void addToImage(afw::image::Image<PixelT> & image) const {
         addToImage(image.getArray(), image.getXY0());
     }
 
@@ -227,7 +229,7 @@ public:
     explicit ShapeletFunctionEvaluator(ShapeletFunction const & function);
 
 private:
-    
+
     friend class MultiShapeletFunctionEvaluator;
 
     void _computeRawMoments(double & q0, Eigen::Vector2d & q1, Eigen::Matrix2d & q2) const;

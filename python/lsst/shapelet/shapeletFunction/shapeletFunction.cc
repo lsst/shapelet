@@ -32,6 +32,24 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
+namespace {
+
+template <typename PixelT, typename PyClass>
+void declareShapeletFunctionEvaluatorAddToImageTypes(PyClass & cls){
+    cls.def(
+            "addToImage", (void (ShapeletFunctionEvaluator::*)(ndarray::Array<PixelT, 2, 1> const &,
+                                                               afw::geom::Point2I const &) const) &
+                                  ShapeletFunctionEvaluator::addToImage<PixelT>,
+            "array"_a, "xy0"_a = afw::geom::Point2D());
+    cls.def(
+            "addToImage", (void (ShapeletFunctionEvaluator::*)(afw::image::Image<PixelT> &) const) &
+                                  ShapeletFunctionEvaluator::addToImage<PixelT>,
+            "image"_a);
+}
+
+} // end anonymous namespace
+
+
 PYBIND11_PLUGIN(shapeletFunction) {
     py::module::import("lsst.afw.geom");
     py::module::import("lsst.afw.image");
@@ -97,15 +115,9 @@ PYBIND11_PLUGIN(shapeletFunction) {
                                                          ndarray::Array<double const, 1> const &) const) &
                                                          ShapeletFunctionEvaluator::operator());
 
-    clsShapeletFunctionEvaluator.def(
-            "addToImage", (void (ShapeletFunctionEvaluator::*)(ndarray::Array<double, 2, 1> const &,
-                                                               afw::geom::Point2I const &) const) &
-                                  ShapeletFunctionEvaluator::addToImage,
-            "array"_a, "xy0"_a = afw::geom::Point2D());
-    clsShapeletFunctionEvaluator.def(
-            "addToImage", (void (ShapeletFunctionEvaluator::*)(afw::image::Image<double> &) const) &
-                                  ShapeletFunctionEvaluator::addToImage,
-            "image"_a);
+    declareShapeletFunctionEvaluatorAddToImageTypes<float>(clsShapeletFunctionEvaluator);
+    declareShapeletFunctionEvaluatorAddToImageTypes<double>(clsShapeletFunctionEvaluator);
+
     clsShapeletFunctionEvaluator.def("integrate", &ShapeletFunctionEvaluator::integrate);
     clsShapeletFunctionEvaluator.def("computeMoments", &ShapeletFunctionEvaluator::computeMoments);
     clsShapeletFunctionEvaluator.def("update", &ShapeletFunctionEvaluator::update);

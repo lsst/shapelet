@@ -1,9 +1,9 @@
 // -*- LSST-C++ -*-
 
-/* 
+/*
  * LSST Data Management System
  * Copyright 2008, 2009, 2010, 2011 LSST Corporation.
- * 
+ *
  * This product includes software developed by the
  * LSST Project (http://www.lsst.org/).
  *
@@ -11,14 +11,14 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the LSST License Statement and 
- * the GNU General Public License along with this program.  If not, 
+ *
+ * You should have received a copy of the LSST License Statement and
+ * the GNU General Public License along with this program.  If not,
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
@@ -49,9 +49,9 @@ static inline void validateSize(int expected, int actual) {
 
 double const ShapeletFunction::FLUX_FACTOR = 2.0 * std::sqrt(afw::geom::PI);
 
-ShapeletFunction::ShapeletFunction() : 
+ShapeletFunction::ShapeletFunction() :
     _order(0), _basisType(HERMITE),
-    _ellipse(EllipseCore(1.0, 1.0, 0.0), afw::geom::Point2D()), 
+    _ellipse(EllipseCore(1.0, 1.0, 0.0), afw::geom::Point2D()),
     _coefficients(ndarray::allocate(1))
 {
     _coefficients[0] = 0.0;
@@ -73,7 +73,7 @@ ShapeletFunction::ShapeletFunction(
 {
     validateSize(computeSize(order), _coefficients.getSize<0>());
 }
- 
+
 ShapeletFunction::ShapeletFunction(
     int order, BasisTypeEnum basisType, double radius,
     afw::geom::Point2D const & center
@@ -95,7 +95,7 @@ ShapeletFunction::ShapeletFunction(
     _ellipse.getCore().scale(radius);
     validateSize(computeSize(order), _coefficients.getSize<0>());
 }
- 
+
 ShapeletFunction::ShapeletFunction(
     int order, BasisTypeEnum basisType, afw::geom::ellipses::Ellipse const & ellipse
 ) :
@@ -194,13 +194,14 @@ ndarray::Array<double,1,1> ShapeletFunctionEvaluator::operator()(
     return output;
 }
 
+template <typename PixelT>
 void ShapeletFunctionEvaluator::addToImage(
-    ndarray::Array<double,2,1> const & array,
+    ndarray::Array<PixelT,2,1> const & array,
     afw::geom::Point2I const & xy0
 ) const {
-    ndarray::Array<double,2,1>::Iterator yIter = array.begin();
+    typename ndarray::Array<PixelT,2,1>::Iterator yIter = array.begin();
     for (int y = xy0.getY(); yIter != array.end(); ++y, ++yIter) {
-        ndarray::Array<double,2,1>::Reference::Iterator xIter = yIter->begin();
+        typename ndarray::Array<PixelT,2,1>::Reference::Iterator xIter = yIter->begin();
         for (int x = xy0.getX(); xIter != yIter->end(); ++x, ++xIter) {
             *xIter += (*this)(x, y);
         }
@@ -242,5 +243,12 @@ afw::geom::ellipses::Ellipse ShapeletFunctionEvaluator::computeMoments() const {
         afw::geom::Point2D(q1)
     );
 }
+// Explicit instantiations
+#define INSTANTIATE_PIXEL_TYPE(T)                                                                \
+    template void ShapeletFunctionEvaluator::addToImage<T>(ndarray::Array<T,2,1> const & array,  \
+                                                           afw::geom::Point2I const & xy0) const;\
+    template void ShapeletFunctionEvaluator::addToImage<T>(afw::image::Image<T> & image) const;
 
+INSTANTIATE_PIXEL_TYPE(float);
+INSTANTIATE_PIXEL_TYPE(double);
 }} // namespace lsst::shapelet
