@@ -34,10 +34,11 @@ import lsst.afw.geom.ellipses
 import lsst.shapelet.tests
 import lsst.afw.image
 
-np.random.seed(500)
-
 
 class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
+
+    def setUp(self):
+        np.random.seed(500)
 
     def testMoments(self):
         x = np.linspace(-50, 50, 1001)
@@ -184,21 +185,14 @@ class MultiShapeletTestCase(lsst.shapelet.tests.ShapeletTestCase):
             self.compareMultiShapeletFunctions(a, b)
 
 
-def suite():
-    """Returns a suite containing all the test cases in this module."""
+class MemoryTester(lsst.utils.tests.MemoryTestCase):
+    pass
 
+
+def setup_module(module):
     lsst.utils.tests.init()
-
-    suites = []
-    suites += unittest.makeSuite(MultiShapeletTestCase)
-    suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
-    return unittest.TestSuite(suites)
-
-
-def run(shouldExit=False):
-    """Run the tests"""
-    lsst.utils.tests.run(suite(), shouldExit)
 
 
 if __name__ == "__main__":
-    run(True)
+    lsst.utils.tests.init()
+    unittest.main()

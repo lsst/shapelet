@@ -32,12 +32,11 @@ import lsst.afw.geom.ellipses
 import lsst.shapelet.tests
 import lsst.afw.image
 
-np.random.seed(500)
-
 
 class ProjectionTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def setUp(self):
+        np.random.seed(500)
         self.ghp = lsst.shapelet.GaussHermiteProjection(16)
 
     def testRotation(self):
@@ -99,21 +98,14 @@ class ProjectionTestCase(lsst.shapelet.tests.ShapeletTestCase):
         self.assertFloatsAlmostEqual(rN[:15, 0], r0[:15, 0], rtol=1E-14)
 
 
-def suite():
-    """Returns a suite containing all the test cases in this module."""
+class MemoryTester(lsst.utils.tests.MemoryTestCase):
+    pass
 
+
+def setup_module(module):
     lsst.utils.tests.init()
-
-    suites = []
-    suites += unittest.makeSuite(ProjectionTestCase)
-    suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
-    return unittest.TestSuite(suites)
-
-
-def run(shouldExit=False):
-    """Run the tests"""
-    lsst.utils.tests.run(suite(), shouldExit)
 
 
 if __name__ == "__main__":
-    run(True)
+    lsst.utils.tests.init()
+    unittest.main()
