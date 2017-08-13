@@ -31,10 +31,11 @@ import lsst.shapelet.tests
 import lsst.afw.image
 import lsst.afw.table
 
-np.random.seed(500)
-
 
 class FunctorKeyTestCase(lsst.shapelet.tests.ShapeletTestCase):
+
+    def setUp(self):
+        np.random.seed(500)
 
     def testComputeOrder(self):
         invalidSizes = list(range(1, lsst.shapelet.computeSize(10)))
@@ -89,20 +90,14 @@ class FunctorKeyTestCase(lsst.shapelet.tests.ShapeletTestCase):
                           schema["a"])
 
 
-def suite():
-    """Returns a suite containing all the test cases in this module."""
+class MemoryTester(lsst.utils.tests.MemoryTestCase):
+    pass
 
+
+def setup_module(module):
     lsst.utils.tests.init()
-    suites = []
-    suites += unittest.makeSuite(FunctorKeyTestCase)
-    suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
-    return unittest.TestSuite(suites)
-
-
-def run(shouldExit=False):
-    """Run the tests"""
-    lsst.utils.tests.run(suite(), shouldExit)
 
 
 if __name__ == "__main__":
-    run(True)
+    lsst.utils.tests.init()
+    unittest.main()

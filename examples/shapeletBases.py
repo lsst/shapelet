@@ -81,7 +81,7 @@ def processBasis(basis, x, y):
 def main():
     x = numpy.linspace(-5, 5, 101)
     y = numpy.linspace(-5, 5, 101)
-    ellipse = ellipses.Quadrupole(ellipses.Axes(1.2, 0.8, 0.3))
+    ellipses.Quadrupole(ellipses.Axes(1.2, 0.8, 0.3))
     hermiteBasis = lsst.shapelet.BasisEvaluator(4, lsst.shapelet.HERMITE)
     laguerreBasis = lsst.shapelet.BasisEvaluator(4, lsst.shapelet.LAGUERRE)
     processBasis(hermiteBasis, x, y)

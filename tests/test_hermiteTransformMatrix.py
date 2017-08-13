@@ -35,12 +35,11 @@ import lsst.utils.tests
 import lsst.afw.geom
 import lsst.shapelet.tests
 
-np.random.seed(500)
-
 
 class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def setUp(self):
+        np.random.seed(500)
         self.order = 4
         self.size = lsst.shapelet.computeSize(self.order)
         self.htm = lsst.shapelet.HermiteTransformMatrix(self.order)
@@ -92,21 +91,14 @@ class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
                     self.assertFloatsAlmostEqual(v1, v2, rtol=1E-11)
 
 
-def suite():
-    """Returns a suite containing all the test cases in this module."""
+class MemoryTester(lsst.utils.tests.MemoryTestCase):
+    pass
 
+
+def setup_module(module):
     lsst.utils.tests.init()
-
-    suites = []
-    suites += unittest.makeSuite(HermiteTransformMatrixTestCase)
-    suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
-    return unittest.TestSuite(suites)
-
-
-def run(shouldExit=False):
-    """Run the tests"""
-    lsst.utils.tests.run(suite(), shouldExit)
 
 
 if __name__ == "__main__":
-    run(True)
+    lsst.utils.tests.init()
+    unittest.main()

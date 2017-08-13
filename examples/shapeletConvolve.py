@@ -22,7 +22,6 @@
 #
 
 import lsst.shapelet
-from lsst.afw import geom
 from lsst.afw.geom import ellipses
 from matplotlib import pyplot
 from matplotlib import ticker

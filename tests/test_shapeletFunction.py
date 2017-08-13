@@ -39,12 +39,11 @@ import lsst.afw.image
 import lsst.afw.geom as geom
 import lsst.afw.geom.ellipses as ellipses
 
-np.random.seed(500)
-
 
 class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def setUp(self):
+        np.random.seed(500)
         order = 4
         self.ellipse = ellipses.Ellipse(ellipses.Axes(2.2, 0.8, 0.3), geom.Point2D(0.12, -0.08))
         self.coefficients = np.random.randn(lsst.shapelet.computeSize(order))
@@ -149,21 +148,14 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
         self.assertFloatsAlmostEqual(fc1.getCoefficients(), fc2.getCoefficients(), 1E-8)
 
 
-def suite():
-    """Returns a suite containing all the test cases in this module."""
+class MemoryTester(lsst.utils.tests.MemoryTestCase):
+    pass
 
+
+def setup_module(module):
     lsst.utils.tests.init()
-
-    suites = []
-    suites += unittest.makeSuite(ShapeletFunctionTestCase)
-    suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
-    return unittest.TestSuite(suites)
-
-
-def run(shouldExit=False):
-    """Run the tests"""
-    lsst.utils.tests.run(suite(), shouldExit)
 
 
 if __name__ == "__main__":
-    run(True)
+    lsst.utils.tests.init()
+    unittest.main()
