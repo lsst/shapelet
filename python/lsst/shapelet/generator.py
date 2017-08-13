@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 from builtins import range, object
 from .constants import HERMITE, LAGUERRE, computeSize
 
+
 class IndexGenerator(object):
     """
     Base class for shapelet index generators.

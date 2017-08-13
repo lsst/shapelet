@@ -44,6 +44,7 @@ from .radialProfile import RadialProfile
 from .multiShapeletBasis import MultiShapeletBasis
 from .shapeletFunction import ShapeletFunction
 
+
 def registerRadialProfiles():
     """Register the pickled profiles in the data directory with the RadialProfile singleton registry.
 

@@ -8,11 +8,11 @@ from lsst.utils import continueClass
 
 __all__ = []
 
-@continueClass
+
+@continueClass  # noqa F811
 class RadialProfile:
     def evaluate(self, r):
         if isinstance(r, np.ndarray):
             return self._evaluate(r.ravel()).reshape(r.shape)
         else:
             return self._evaluate(r)
-

@@ -3,13 +3,13 @@ from __future__ import absolute_import, division, print_function
 import numpy
 import pickle
 import os
-import sys
 import argparse
 import time
 import resource
 import lsst.shapelet.tractor
 
-from _timeModels import *
+from _timeModels import buildModelsD, buildModelsF
+
 
 def main():
     parser = argparse.ArgumentParser(description="Benchmark shapelet-based galaxy model evaluation")
@@ -62,8 +62,7 @@ def main():
         (cpuTime2 - cpuTime1) / factor,
         (res2.ru_utime - res1.ru_utime) / factor,
         (res2.ru_stime - res1.ru_stime) / factor
-        ))
+    ))
 
 if __name__ == "__main__":
     main()
-
