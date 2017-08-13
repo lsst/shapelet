@@ -173,17 +173,17 @@ def plotSuite(doComponents=False):
         z[0, j+2][0:0] = [profiles[k].evaluate(r[j])[numpy.newaxis, :] for k in ("dev", "luv")]
     methodNames = [["loglog", "semilogy"], ["semilogx", "plot"]]
     for j in range(0, 4):  # grid columns
-        y[1, j] = [(y[0, j][0][0, :] - y[0, j][i][0, :])/y[0, j][0][0, :] for i in range(0, 4)]
+        z[1, j] = [(z[0, j][0][0, :] - z[0, j][i][0, :])/z[0, j][0][0, :] for i in range(0, 4)]
         handles = []
         method0 = getattr(axes[0, j], methodNames[0][j%2])
         method1 = getattr(axes[1, j], methodNames[1][j%2])
         for k in range(4):
-            y0 = y[0, j][k]
+            y0 = z[0, j][k]
             handles.append(method0(r[j%2], y0[0, :], color=colors[k])[0])
             if doComponents:
                 for l in range(1, y0.shape[0]):
                     method0(r[j%2], y0[l, :], color=colors[k], alpha=0.25)
-            method1(r[j%2], y[1, j][k], color=colors[k])
+            method1(r[j%2], z[1, j][k], color=colors[k])
         axes[0, j].set_xticklabels([])
         axes[0, j].set_ylim(1E-6, 1E3)
         axes[1, j].set_ylim(-0.2, 1.0)
