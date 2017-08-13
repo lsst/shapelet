@@ -2,6 +2,7 @@ _build.*
 .sconsign.dblite
 config.log
 .sconf_temp
+.cache
 *.o
 *.os
 *.so
