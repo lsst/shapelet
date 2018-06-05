@@ -82,6 +82,8 @@ def registerRadialProfiles():
             matrix = numpy.array([[amplitude / ShapeletFunction.FLUX_FACTOR]], dtype=float)
             basis.addComponent(radius, 0, matrix)
         profile.registerBasis(basis, nComponents, maxRadius)
+
+
 # We register all the profiles at module import time, to allow C++ code to access all available profiles
 # without having to later call Python code to unpickle them.
 registerRadialProfiles()

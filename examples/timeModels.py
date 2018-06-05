@@ -64,5 +64,6 @@ def main():
         (res2.ru_stime - res1.ru_stime) / factor
     ))
 
+
 if __name__ == "__main__":
     main()
