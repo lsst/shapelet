@@ -21,7 +21,6 @@
  */
 #include "pybind11/pybind11.h"
 
-#include "numpy/arrayobject.h"
 #include "ndarray/pybind11.h"
 
 #include "lsst/shapelet/BasisEvaluator.h"
@@ -36,11 +35,6 @@ PYBIND11_PLUGIN(basisEvaluator) {
     py::module::import("lsst.afw.geom");
 
     py::module mod("basisEvaluator");
-
-    if (_import_array() < 0) {
-        PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
-        return nullptr;
-    }
 
     py::class_<BasisEvaluator, std::shared_ptr<BasisEvaluator>> clsBasisEvaluator(mod, "BasisEvaluator");
 

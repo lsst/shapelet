@@ -21,7 +21,6 @@
  */
 #include <pybind11/pybind11.h>
 //#include <pybind11/stl.h>
-#include "numpy/arrayobject.h"
 #include "ndarray/pybind11.h"
 
 #include "lsst/shapelet.h"
@@ -81,11 +80,6 @@ void buildModelsD(
 
 PYBIND11_PLUGIN(_timeModels) {
     py::module mod("_timeModels", "");
-
-    if (_import_array() < 0) {
-        PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
-        return nullptr;
-    }
 
     mod.def("buildModelsF", buildModelsF);
     mod.def("buildModelsD", buildModelsD);

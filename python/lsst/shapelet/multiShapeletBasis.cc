@@ -21,7 +21,6 @@
  */
 #include "pybind11/pybind11.h"
 
-#include "numpy/arrayobject.h"
 #include "ndarray/pybind11.h"
 
 #include "lsst/shapelet/MultiShapeletBasis.h"
@@ -34,11 +33,6 @@ namespace shapelet {
 
 PYBIND11_PLUGIN(multiShapeletBasis) {
     py::module mod("multiShapeletBasis");
-
-    if (_import_array() < 0) {
-        PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
-        return nullptr;
-    }
 
     py::class_<MultiShapeletBasisComponent, std::shared_ptr<MultiShapeletBasisComponent>>
             clsMultiShapeletBasisComponent(mod, "MultiShapeletBasisComponent");

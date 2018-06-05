@@ -21,7 +21,6 @@
  */
 #include "pybind11/pybind11.h"
 
-#include "numpy/arrayobject.h"
 #include "ndarray/pybind11.h"
 
 #include "lsst/shapelet/GaussHermiteConvolution.h"
@@ -35,11 +34,6 @@ namespace shapelet {
 
 PYBIND11_PLUGIN(gaussHermiteConvolution) {
     py::module mod("gaussHermiteConvolution");
-
-    if (_import_array() < 0) {
-        PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
-        return nullptr;
-    }
 
     py::class_<GaussHermiteConvolution, std::shared_ptr<GaussHermiteConvolution>> clsGaussHermiteConvolution(
             mod, "GaussHermiteConvolution");
