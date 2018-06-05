@@ -3,6 +3,9 @@ _build.*
 config.log
 .sconf_temp
 .cache
+.pytest_cache
+pytest_session.txt
+.coverage
 *.o
 *.os
 *.so
