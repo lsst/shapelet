@@ -190,7 +190,7 @@ void ConversionMatrix::multiplyOnLeft(
     } else {
         i = ConversionSingleton::get().getL2H().begin();
     }
-    ndarray::EigenView<double,1,0> vector(array);
+    auto vector = array.asEigen();
     for (int offset = 0; offset < vector.size(); ++i) {
         vector.segment(offset, i->rows()).transpose() *= i->transpose();
         offset += i->rows();
@@ -214,7 +214,7 @@ void ConversionMatrix::multiplyOnRight(
     } else {
         i = ConversionSingleton::get().getL2H().begin();
     }
-    ndarray::EigenView<double,1,0> vector(array);
+    auto vector = array.asEigen();
     for (int offset = 0; offset < vector.size(); ++i) {
         vector.segment(offset, i->rows()).transpose() *= (*i);
         offset += i->rows();

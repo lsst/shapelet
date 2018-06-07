@@ -169,7 +169,7 @@ ShapeletFunctionEvaluator::ShapeletFunctionEvaluator(
 ShapeletFunction ShapeletFunction::convolve(ShapeletFunction const & other) const {
     GaussHermiteConvolution convolution(getOrder(), other);
     afw::geom::ellipses::Ellipse newEllipse(_ellipse);
-    ndarray::EigenView<double const,2,2> matrix(convolution.evaluate(newEllipse));
+    auto matrix = convolution.evaluate(newEllipse).asEigen();
     if (_basisType == LAGUERRE) {
         ConversionMatrix::convertCoefficientVector(_coefficients, LAGUERRE, HERMITE, getOrder());
     }
