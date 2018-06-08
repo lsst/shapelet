@@ -859,7 +859,7 @@ namespace {
 // helper function for the next two ctors: test if a MultiShapeletBasisComponent has unit scaling
 // and identity remap matrix
 bool isSimple(MultiShapeletBasisComponent const & component) {
-    ndarray::EigenView<double const,2,2> matrix(component.getMatrix());
+    auto matrix = component.getMatrix().asEigen();
     return std::abs(component.getRadius() - 1.0) < std::numeric_limits<double>::epsilon() &&
         matrix.rows() == matrix.cols() &&
         matrix.isApprox(

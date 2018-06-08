@@ -237,8 +237,8 @@ ImplN::ImplN(
 ndarray::Array<double const,2,2> ImplN::evaluate(
     afw::geom::ellipses::Ellipse & ellipse
 ) const {
-    ndarray::EigenView<double,2,2> result(_result);
-    ndarray::EigenView<double const,1,1> psf_coeff(_psf.getCoefficients());
+    auto result = _result.asEigen();
+    auto psf_coeff = _psf.getCoefficients().asEigen();
 
     Eigen::Matrix2d psfT = _psf.getEllipse().getCore().getGridTransform().invert().getMatrix();
     Eigen::Matrix2d modelT = ellipse.getCore().getGridTransform().invert().getMatrix();
