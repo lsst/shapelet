@@ -56,6 +56,7 @@ def main():
     plotShapeletFunction(pyplot.subplot(1, 3, 3), fC, x, y)
     pyplot.show()
 
+
 if __name__ == "__main__":
     numpy.set_printoptions(suppress=True)
     main()

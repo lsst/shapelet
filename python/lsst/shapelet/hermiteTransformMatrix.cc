@@ -21,7 +21,6 @@
  */
 #include "pybind11/pybind11.h"
 
-#include "numpy/arrayobject.h"
 #include "ndarray/pybind11.h"
 
 #include "lsst/shapelet/HermiteTransformMatrix.h"
@@ -36,11 +35,6 @@ PYBIND11_PLUGIN(hermiteTransformMatrix) {
     py::module::import("lsst.afw.geom");
 
     py::module mod("hermiteTransformMatrix");
-
-    if (_import_array() < 0) {
-        PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
-        return nullptr;
-    }
 
     py::class_<HermiteTransformMatrix, std::shared_ptr<HermiteTransformMatrix>> clsHermiteTransformMatrix(
             mod, "HermiteTransformMatrix");

@@ -91,5 +91,6 @@ def main():
     f3.draw(image, dx=1.0)
     image.write("gaussians.fits")
 
+
 if __name__ == "__main__":
     main()

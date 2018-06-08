@@ -21,7 +21,6 @@
  */
 #include "pybind11/pybind11.h"
 
-#include "numpy/arrayobject.h"
 #include "ndarray/pybind11.h"
 
 #include "lsst/shapelet/ShapeletFunction.h"
@@ -37,11 +36,6 @@ PYBIND11_PLUGIN(shapeletFunction) {
     py::module::import("lsst.afw.image");
 
     py::module mod("shapeletFunction");
-
-    if (_import_array() < 0) {
-        PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
-        return nullptr;
-    }
 
     py::class_<ShapeletFunction, std::shared_ptr<ShapeletFunction>> clsShapeletFunction(mod,
                                                                                         "ShapeletFunction");

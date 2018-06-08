@@ -21,7 +21,6 @@
  */
 #include "pybind11/pybind11.h"
 
-#include "numpy/arrayobject.h"
 #include "ndarray/pybind11.h"
 
 #include "lsst/shapelet/MatrixBuilder.h"
@@ -130,11 +129,6 @@ void declareMatrixBuilderTemplates(py::module &mod, std::string const &suffix) {
 PYBIND11_PLUGIN(matrixBuilder) {
     py::module::import("lsst.afw.geom");
     py::module mod("matrixBuilder");
-
-    if (_import_array() < 0) {
-        PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
-        return nullptr;
-    }
 
     declareMatrixBuilderTemplates<float>(mod, "F");
     declareMatrixBuilderTemplates<double>(mod, "D");

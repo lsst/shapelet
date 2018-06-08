@@ -21,7 +21,6 @@
  */
 #include "pybind11/pybind11.h"
 
-#include "numpy/arrayobject.h"
 #include "ndarray/pybind11.h"
 
 #include "lsst/shapelet/GaussHermiteProjection.h"
@@ -35,11 +34,6 @@ namespace shapelet {
 PYBIND11_PLUGIN(gaussHermiteProjection) {
     py::module::import("lsst.afw.geom");
     py::module mod("gaussHermiteProjection");
-
-    if (_import_array() < 0) {
-        PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
-        return nullptr;
-    }
 
     py::class_<GaussHermiteProjection, std::shared_ptr<GaussHermiteProjection>> clsGaussHermiteProjection(
             mod, "GaussHermiteProjection");

@@ -21,7 +21,6 @@
  */
 #include "pybind11/pybind11.h"
 
-#include "numpy/arrayobject.h"
 #include "ndarray/pybind11.h"
 
 #include "lsst/shapelet/RadialProfile.h"
@@ -34,11 +33,6 @@ namespace shapelet {
 
 PYBIND11_PLUGIN(radialProfile) {
     py::module mod("radialProfile");
-
-    if (_import_array() < 0) {
-        PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
-        return nullptr;
-    }
 
     py::class_<RadialProfile, std::shared_ptr<RadialProfile>> clsRadialProfile(mod, "RadialProfile");
 
