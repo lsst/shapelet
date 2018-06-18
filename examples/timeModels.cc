@@ -52,9 +52,9 @@ double buildModelsImpl(
     ndarray::Array<T,2,-2> matrix = matrixT.transpose();
     double result = 0.0;
     for (ndarray::Array<double const,2>::Iterator i = parameters.begin(); i != parameters.end(); ++i) {
-        ellipse.setParameterVector(i->asEigen());
+        ellipse.setParameterVector(ndarray::asEigenMatrix(*i));
         builder(matrix, ellipse);
-        result += matrix.asEigen().norm();
+        result += ndarray::asEigenMatrix(matrix).norm();
     }
     return result;
 }

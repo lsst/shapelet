@@ -70,7 +70,7 @@ void MultiShapeletBasis::normalize() {
     for (ComponentVector::iterator i = _components.begin(); i != _components.end(); ++i) {
         ndarray::Array<double,2,2> newMatrix = ndarray::copy(i->getMatrix());
         for (int n = 0; n < _size; ++n) {
-            newMatrix.asEigen().col(n) /= totals[n];
+            ndarray::asEigenMatrix(newMatrix).col(n) /= totals[n];
         }
         i->_matrix = newMatrix;
     }
@@ -109,8 +109,8 @@ MultiShapeletFunction MultiShapeletBasis::makeFunction(
     for (Iterator i = begin(); i != end(); ++i) {
         result.getComponents().push_back(ShapeletFunction(i->getOrder(), HERMITE, ellipse));
         result.getComponents().back().getEllipse().getCore().scale(i->getRadius());
-        result.getComponents().back().getCoefficients().asEigen()
-            = i->getMatrix().asEigen() * coefficients.asEigen();
+        ndarray::asEigenMatrix(result.getComponents().back().getCoefficients())
+            = ndarray::asEigenMatrix(i->getMatrix()) * ndarray::asEigenMatrix(coefficients);
     }
     return result;
 }

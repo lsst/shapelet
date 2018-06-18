@@ -147,11 +147,11 @@ public:
 
     void readEllipse(afw::geom::ellipses::Ellipse const & ellipse) {
         afw::geom::AffineTransform transform = ellipse.getGridTransform();
-        _xt = _x.template asEigen<Eigen::ArrayXpr>() * transform[afw::geom::AffineTransform::XX]
-            + _y.template asEigen<Eigen::ArrayXpr>() * transform[afw::geom::AffineTransform::XY]
+        _xt = ndarray::asEigenArray(_x) * transform[afw::geom::AffineTransform::XX]
+            + ndarray::asEigenArray(_y) * transform[afw::geom::AffineTransform::XY]
             + transform[afw::geom::AffineTransform::X];
-        _yt = _x.template asEigen<Eigen::ArrayXpr>() * transform[afw::geom::AffineTransform::YX]
-            + _y.template asEigen<Eigen::ArrayXpr>() * transform[afw::geom::AffineTransform::YY]
+        _yt = ndarray::asEigenArray(_x) * transform[afw::geom::AffineTransform::YX]
+            + ndarray::asEigenArray(_y) * transform[afw::geom::AffineTransform::YY]
             + transform[afw::geom::AffineTransform::Y];
         _detFactor = transform.getLinear().computeDeterminant();
     }
@@ -239,7 +239,7 @@ public:
         ndarray::Array<T,2,-1> const & output,
         afw::geom::ellipses::Ellipse const & ellipse
     ) {
-        buildMatrix(output.template asEigen<Eigen::ArrayXpr>(), ellipse);
+        buildMatrix(ndarray::asEigenArray(output), ellipse);
     }
 
     template <typename EigenArrayT>
@@ -383,7 +383,7 @@ public:
         }
         _ellipse = ellipse;
         ndarray::Array<double const,2,2> rhs = computeTerms();
-        output.asEigen() += _lhs.matrix() * rhs.asEigen().cast<T>();
+        ndarray::asEigenMatrix(output) += _lhs.matrix() * ndarray::asEigenMatrix(rhs).cast<T>();
     }
 
     ndarray::Array<double const,2,2> computeTerms() {
@@ -465,7 +465,7 @@ public:
         _ellipse(afw::geom::ellipses::Quadrupole()),
         _radius(factory.getRadius()),
         // transpose the remap matrix to preserve memory order when we copy it; will untranspose later
-        _remapMatrix(factory.getRemapMatrix().asEigen().template cast<T>().transpose()),
+        _remapMatrix(ndarray::asEigenMatrix(factory.getRemapMatrix()).template cast<T>().transpose()),
         _lhs(workspace->makeMatrix(factory.getDataSize(), computeSize(factory.getLhsOrder())))
     {}
 
@@ -479,7 +479,8 @@ public:
         _ellipse.scale(_radius);
         _lhs.setZero();
         ShapeletImpl<T>::buildMatrix(_lhs, _ellipse);
-        output.asEigen() += _lhs.matrix() * _remapMatrix.transpose(); // undo the transpose in the ctor
+        // undo the transpose in the constructor
+        ndarray::asEigenMatrix(output) += _lhs.matrix() * _remapMatrix.transpose();
     }
 
 protected:
@@ -560,7 +561,7 @@ public:
         ConvolvedShapeletImpl<T>(factory, workspace),
         _radius(factory.getRadius()),
         // transpose the remap matrix to preserve memory order when we copy it; will untranspose later
-        _remapMatrix(factory.getRemapMatrix().asEigen().template cast<T>().transpose()),
+        _remapMatrix(ndarray::asEigenMatrix(factory.getRemapMatrix()).template cast<T>().transpose()),
         _rhs(workspace->makeMatrix(computeSize(factory.getLhsOrder()), factory.getBasisSize()))
     {}
 
@@ -573,8 +574,8 @@ public:
         this->_ellipse = ellipse;
         this->_ellipse.scale(_radius);
         ndarray::Array<double const,2,2> convolutionMatrix = this->computeTerms();
-        _rhs.matrix() = convolutionMatrix.asEigen().cast<T>() * _remapMatrix.transpose();  // untranspose
-        output.asEigen() += this->_lhs.matrix() * _rhs.matrix();
+        _rhs.matrix() = ndarray::asEigenMatrix(convolutionMatrix).cast<T>() * _remapMatrix.transpose();  // untranspose
+        ndarray::asEigenMatrix(output) += this->_lhs.matrix() * _rhs.matrix();
     }
 
 protected:
@@ -859,7 +860,7 @@ namespace {
 // helper function for the next two ctors: test if a MultiShapeletBasisComponent has unit scaling
 // and identity remap matrix
 bool isSimple(MultiShapeletBasisComponent const & component) {
-    auto matrix = component.getMatrix().asEigen();
+    auto matrix = ndarray::asEigenMatrix(component.getMatrix());
     return std::abs(component.getRadius() - 1.0) < std::numeric_limits<double>::epsilon() &&
         matrix.rows() == matrix.cols() &&
         matrix.isApprox(
