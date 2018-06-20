@@ -20,7 +20,7 @@
  * see <https://www.lsstcorp.org/LegalNotices/>.
  */
 #include "pybind11/pybind11.h"
-
+#include "pybind11/eigen.h"
 #include "ndarray/pybind11.h"
 
 #include "lsst/shapelet/HermiteTransformMatrix.h"
