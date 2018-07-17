@@ -29,21 +29,17 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(constants) {
-    py::module mod("constants");
-
+PYBIND11_MODULE(constants, mod) {
     py::enum_<BasisTypeEnum>(mod, "BasisTypeEnum")
-            .value("HERMITE", BasisTypeEnum::HERMITE)
-            .value("LAGUERRE", BasisTypeEnum::LAGUERRE)
-            .export_values();
+        .value("HERMITE", BasisTypeEnum::HERMITE)
+        .value("LAGUERRE", BasisTypeEnum::LAGUERRE)
+        .export_values();
 
     mod.def("computeOffset", computeOffset);
     mod.def("computeSize", computeSize);
     mod.def("computeOrder", computeOrder);
     mod.def("intSqrt", intSqrt);
     mod.def("rationalSqrt", rationalSqrt);
-
-    return mod.ptr();
 }
 
 }  // shapelet

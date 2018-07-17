@@ -31,10 +31,8 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(basisEvaluator) {
+PYBIND11_MODULE(basisEvaluator, mod) {
     py::module::import("lsst.afw.geom");
-
-    py::module mod("basisEvaluator");
 
     py::class_<BasisEvaluator, std::shared_ptr<BasisEvaluator>> clsBasisEvaluator(mod, "BasisEvaluator");
 
@@ -81,8 +79,6 @@ PYBIND11_PLUGIN(basisEvaluator) {
             "array"_a, "extent"_a, "dx"_a, "dy"_a);
     clsBasisEvaluator.def("fillIntegration", &BasisEvaluator::fillIntegration, "array"_a, "xMoment"_a = 0,
                           "yMoment"_a = 0);
-
-    return mod.ptr();
 }
 
 }  // shapelet

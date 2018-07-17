@@ -31,11 +31,9 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(gaussHermiteProjection) {
+PYBIND11_MODULE(gaussHermiteProjection, mod) {
     py::module::import("lsst.afw.geom");
-    py::module mod("gaussHermiteProjection");
-
-    py::class_<GaussHermiteProjection, std::shared_ptr<GaussHermiteProjection>> clsGaussHermiteProjection(
+        py::class_<GaussHermiteProjection, std::shared_ptr<GaussHermiteProjection>> clsGaussHermiteProjection(
             mod, "GaussHermiteProjection");
 
     clsGaussHermiteProjection.def(py::init<int>(), "maxOrder"_a);
@@ -56,8 +54,6 @@ PYBIND11_PLUGIN(gaussHermiteProjection) {
                                GaussHermiteProjection::compute);
 
     clsGaussHermiteProjection.def("getMaxOrder", &GaussHermiteProjection::getMaxOrder);
-
-    return mod.ptr();
 }
 
 }  // shapelet

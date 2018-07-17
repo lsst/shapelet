@@ -31,11 +31,9 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(shapeletFunction) {
+PYBIND11_MODULE(shapeletFunction, mod) {
     py::module::import("lsst.afw.geom");
     py::module::import("lsst.afw.image");
-
-    py::module mod("shapeletFunction");
 
     py::class_<ShapeletFunction, std::shared_ptr<ShapeletFunction>> clsShapeletFunction(mod,
                                                                                         "ShapeletFunction");
@@ -103,8 +101,6 @@ PYBIND11_PLUGIN(shapeletFunction) {
     clsShapeletFunctionEvaluator.def("integrate", &ShapeletFunctionEvaluator::integrate);
     clsShapeletFunctionEvaluator.def("computeMoments", &ShapeletFunctionEvaluator::computeMoments);
     clsShapeletFunctionEvaluator.def("update", &ShapeletFunctionEvaluator::update);
-
-    return mod.ptr();
 }
 
 }  // shapelet

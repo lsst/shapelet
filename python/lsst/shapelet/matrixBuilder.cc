@@ -126,14 +126,10 @@ void declareMatrixBuilderTemplates(py::module &mod, std::string const &suffix) {
 
 }  // <anonymous>
 
-PYBIND11_PLUGIN(matrixBuilder) {
+PYBIND11_MODULE(matrixBuilder, mod) {
     py::module::import("lsst.afw.geom");
-    py::module mod("matrixBuilder");
-
-    declareMatrixBuilderTemplates<float>(mod, "F");
+        declareMatrixBuilderTemplates<float>(mod, "F");
     declareMatrixBuilderTemplates<double>(mod, "D");
-
-    return mod.ptr();
 }
 
 }  // shapelet
