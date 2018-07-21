@@ -78,13 +78,9 @@ void buildModelsD(
 }
 }
 
-PYBIND11_PLUGIN(_timeModels) {
-    py::module mod("_timeModels", "");
-
+PYBIND11_MODULE(_timeModels, mod) {
     mod.def("buildModelsF", buildModelsF);
     mod.def("buildModelsD", buildModelsD);
-
-    return mod.ptr();
 }
 
 }} // lsst::shapelet

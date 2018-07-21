@@ -31,11 +31,9 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(multiShapeletBasis) {
-    py::module mod("multiShapeletBasis");
-
+PYBIND11_MODULE(multiShapeletBasis, mod) {
     py::class_<MultiShapeletBasisComponent, std::shared_ptr<MultiShapeletBasisComponent>>
-            clsMultiShapeletBasisComponent(mod, "MultiShapeletBasisComponent");
+        clsMultiShapeletBasisComponent(mod, "MultiShapeletBasisComponent");
 
     clsMultiShapeletBasisComponent.def(py::init<double, int, ndarray::Array<double const, 2, 2> const &>(),
                                        "radius"_a, "order"_a, "matrix"_a);
@@ -59,8 +57,6 @@ PYBIND11_PLUGIN(multiShapeletBasis) {
     clsMultiShapeletBasis.def("normalize", &MultiShapeletBasis::normalize);
     clsMultiShapeletBasis.def("merge", &MultiShapeletBasis::merge);
     clsMultiShapeletBasis.def("makeFunction", &MultiShapeletBasis::makeFunction);
-
-    return mod.ptr();
 }
 
 }  // shapelet

@@ -32,11 +32,9 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(gaussHermiteConvolution) {
-    py::module mod("gaussHermiteConvolution");
-
+PYBIND11_MODULE(gaussHermiteConvolution, mod) {
     py::class_<GaussHermiteConvolution, std::shared_ptr<GaussHermiteConvolution>> clsGaussHermiteConvolution(
-            mod, "GaussHermiteConvolution");
+        mod, "GaussHermiteConvolution");
 
     clsGaussHermiteConvolution.def(py::init<int, ShapeletFunction const &>(), "colOrder"_a, "psf"_a);
 
@@ -44,8 +42,6 @@ PYBIND11_PLUGIN(gaussHermiteConvolution) {
     clsGaussHermiteConvolution.def("evaluate", &GaussHermiteConvolution::evaluate);
     clsGaussHermiteConvolution.def("getColOrder", &GaussHermiteConvolution::getColOrder);
     clsGaussHermiteConvolution.def("getRowOrder", &GaussHermiteConvolution::getRowOrder);
-
-    return mod.ptr();
 }
 
 }  // shapelet

@@ -31,9 +31,7 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(radialProfile) {
-    py::module mod("radialProfile");
-
+PYBIND11_MODULE(radialProfile, mod) {
     py::class_<RadialProfile, std::shared_ptr<RadialProfile>> clsRadialProfile(mod, "RadialProfile");
 
     clsRadialProfile.def_static("get", &RadialProfile::get, py::return_value_policy::reference);
@@ -45,8 +43,6 @@ PYBIND11_PLUGIN(radialProfile) {
     clsRadialProfile.def("getMomentsRadiusFactor", &RadialProfile::getMomentsRadiusFactor);
     clsRadialProfile.def("getBasis", &RadialProfile::getBasis, "nComponents"_a, "maxRadius"_a = 0);
     clsRadialProfile.def("registerBasis", &RadialProfile::registerBasis);
-
-    return mod.ptr();
 }
 
 }  // shapelet

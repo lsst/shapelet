@@ -31,13 +31,11 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_PLUGIN(hermiteTransformMatrix) {
+PYBIND11_MODULE(hermiteTransformMatrix, mod) {
     py::module::import("lsst.afw.geom");
 
-    py::module mod("hermiteTransformMatrix");
-
     py::class_<HermiteTransformMatrix, std::shared_ptr<HermiteTransformMatrix>> clsHermiteTransformMatrix(
-            mod, "HermiteTransformMatrix");
+        mod, "HermiteTransformMatrix");
 
     clsHermiteTransformMatrix.def(py::init<int>(), "order"_a);
 
@@ -63,8 +61,6 @@ PYBIND11_PLUGIN(hermiteTransformMatrix) {
     clsHermiteTransformMatrix.def("getInverseCoefficientMatrix",
                                   &HermiteTransformMatrix::getInverseCoefficientMatrix);
     clsHermiteTransformMatrix.def("getOrder", &HermiteTransformMatrix::getOrder);
-
-    return mod.ptr();
 }
 
 }  // shapelet

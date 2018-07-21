@@ -91,21 +91,17 @@ void declareMultiShapeletFunctionEvaluatorMembers(PyClass &cls) {
 
 }  // <anonymous>
 
-PYBIND11_PLUGIN(multiShapeletFunction) {
+PYBIND11_MODULE(multiShapeletFunction, mod) {
     py::module::import("lsst.afw.geom");
     py::module::import("lsst.afw.image");
 
-    py::module mod("multiShapeletFunction");
-
-    py::class_<MultiShapeletFunction, std::shared_ptr<MultiShapeletFunction>> clsMultiShapeletFunction(
+        py::class_<MultiShapeletFunction, std::shared_ptr<MultiShapeletFunction>> clsMultiShapeletFunction(
             mod, "MultiShapeletFunction");
     py::class_<MultiShapeletFunctionEvaluator, std::shared_ptr<MultiShapeletFunctionEvaluator>>
             clsMultiShapeletFunctionEvaluator(mod, "MultiShapeletFunctionEvaluator");
 
     declareMultiShapeletFunctionMembers(clsMultiShapeletFunction);
     declareMultiShapeletFunctionEvaluatorMembers(clsMultiShapeletFunctionEvaluator);
-
-    return mod.ptr();
 }
 
 }  // shapelet
