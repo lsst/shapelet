@@ -113,7 +113,7 @@ class ShapeletFunctionTestCase(lsst.shapelet.tests.ShapeletTestCase):
                 self.assertFloatsAlmostEqual(dy_n, dy_a, rtol=1E-5)
 
     def testAddToImage(self):
-        bbox = geom.Box2I(geom.Point2I(5, 6), geom.Extent2I(20, 30))
+        bbox = geom.Box2I(geom.Point2I(5, 6), geom.Extent2I(20, 30), invert=False)
         image = lsst.afw.image.ImageD(bbox)
         x = np.arange(bbox.getBeginX(), bbox.getEndX(), dtype=float)
         y = np.arange(bbox.getBeginY(), bbox.getEndY(), dtype=float)

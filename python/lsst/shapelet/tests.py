@@ -142,7 +142,8 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
         self.assertFloatsAlmostEqual(integral, function.evaluate().integrate(), rtol=1E-3)
 
     def checkConvolution(self, f1, f2):
-        bbox = lsst.afw.geom.Box2I(lsst.afw.geom.Point2I(-50, -50), lsst.afw.geom.Point2I(50, 50))
+        bbox = lsst.afw.geom.Box2I(lsst.afw.geom.Point2I(-50, -50), lsst.afw.geom.Point2I(50, 50),
+                                   invert=False)
         i1 = lsst.afw.image.ImageD(bbox)
         f1.evaluate().addToImage(i1)
         self.assertFloatsAlmostEqual(i1.getArray().sum(), f1.evaluate().integrate(), rtol=1E-3)
