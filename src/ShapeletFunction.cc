@@ -211,7 +211,7 @@ void ShapeletFunctionEvaluator::addToImage(
 void ShapeletFunctionEvaluator::_computeRawMoments(
     double & q0, Eigen::Vector2d & q1, Eigen::Matrix2d & q2
 ) const {
-    Eigen::Matrix2d a = _transform.getLinear().invert().getMatrix();
+    Eigen::Matrix2d a = _transform.getLinear().inverted().getMatrix();
     Eigen::Vector2d b = _transform.getTranslation().asEigen();
 
     double m0 = _h.sumIntegration(_coefficients, 0, 0);
