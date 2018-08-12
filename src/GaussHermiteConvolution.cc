@@ -240,8 +240,8 @@ ndarray::Array<double const,2,2> ImplN::evaluate(
     auto result = ndarray::asEigenMatrix(_result);
     auto psf_coeff = ndarray::asEigenMatrix(_psf.getCoefficients());
 
-    Eigen::Matrix2d psfT = _psf.getEllipse().getCore().getGridTransform().invert().getMatrix();
-    Eigen::Matrix2d modelT = ellipse.getCore().getGridTransform().invert().getMatrix();
+    Eigen::Matrix2d psfT = _psf.getEllipse().getCore().getGridTransform().inverted().getMatrix();
+    Eigen::Matrix2d modelT = ellipse.getCore().getGridTransform().inverted().getMatrix();
     ellipse.convolve(_psf.getEllipse()).inPlace();
     Eigen::Matrix2d convolvedTI = ellipse.getCore().getGridTransform().getMatrix() * std::sqrt(2.0);
     Eigen::Matrix2d psfArg = (convolvedTI * psfT).transpose();
@@ -345,7 +345,7 @@ ndarray::Array<double const,2,2> Impl0::evaluate(
 ) const {
     ndarray::Array<double const,1,1> psfCoeff(_psf.getCoefficients());
 
-    Eigen::Matrix2d psfT = _psf.getEllipse().getCore().getGridTransform().invert().getMatrix();
+    Eigen::Matrix2d psfT = _psf.getEllipse().getCore().getGridTransform().inverted().getMatrix();
     ellipse.convolve(_psf.getEllipse()).inPlace();
     Eigen::Matrix2d convolvedTI = ellipse.getCore().getGridTransform().getMatrix();
     Eigen::Matrix2d psfArg = (convolvedTI * psfT).transpose();
