@@ -4,11 +4,19 @@ from .constants import HERMITE, LAGUERRE, computeSize
 
 
 class IndexGenerator(object):
-    """
-    Base class for shapelet index generators.
+    """Base class for shapelet index generators.
+
+    Parameters
+    ----------
+    order: `int`
+       Order of the function indices to generate.
     """
 
     __slots__ = "order", "size"
+
+    def __init__(self, order):
+        self.order = order
+        self.size = computeSize(self.order)
 
     @staticmethod
     def make(self, order, basisType):
@@ -17,21 +25,22 @@ class IndexGenerator(object):
         elif basisType == LAGUERRE:
             return LaguerreIndexGenerator(order)
 
-    def __init__(self, order):
-        self.order = order
-        self.size = computeSize(self.order)
-
     def __len__(self):
         return self.size
 
 
 class HermiteIndexGenerator(IndexGenerator):
+    """Iterable that generates tuples of indices.
+
+    Yields
+    ------
+    i : `int`
+        the overall coefficient index for a 2-d shapelet expansion (just counts from zero)
+    nx : `int`
+        the order of the x expansion
+    ny : `int`
+        the order of the y expansion
     """
-    Iterable that generates tuples of (i, nx, ny) in which:
-     - 'i' is the overall coefficient index for a 2-d shapelet expansion (just counts from zero)
-     - 'nx' is the order of the x expansion
-     - 'ny' is the order of the y expansion
-     """
 
     def __iter__(self):
         i = 0
@@ -42,12 +51,17 @@ class HermiteIndexGenerator(IndexGenerator):
 
 
 class LaguerreIndexGenerator(IndexGenerator):
+    """Iterable that generates tuples of indices.
+
+    Yields
+    ------
+    i : `int`
+        the overall coefficient index for a 2-d shapelet expansion (just counts from zero)
+    p, q : `int`
+        indices of the polar shapelet expansion (see BasisTypeEnum).
+    re : `bool`
+        True, if this is the real part of the coefficient.
     """
-    Iterable that generates tuples of (i, p, q, re) in which:
-     - 'i' is the overall coefficient index for a 2-d shapelet expansion (just counts from zero)
-     - 'p' and 'q' are the indices of the polar shapelet expansion (see BasisTypeEnum).
-     - 're' is True if this the real part of the coefficient
-     """
 
     def __iter__(self):
         i = 0
