@@ -24,10 +24,6 @@
 Test utility code for shapelets library; here so it can be used
 in multiple test scripts and tests in downstream packages.
 """
-from __future__ import absolute_import, division, print_function
-from builtins import zip
-from builtins import range
-
 import numpy
 try:
     import scipy.ndimage
