@@ -41,5 +41,4 @@ from .functorKeys import *
 from .generator import *
 
 from . import tractor
-from lsst.afw.geom.ellipses import Quadrupole as EllipseCore
 
