@@ -19,8 +19,7 @@
 # the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
-"""
-Code to load multi-Gaussian approximations to profiles from "The Tractor"
+"""Code to load multi-Gaussian approximations to profiles from "The Tractor"
 into a lsst.shapelet.MultiShapeletBasis.
 
 Please see the README file in the data directory of the lsst.shapelet
@@ -46,10 +45,11 @@ from .shapeletFunction import ShapeletFunction
 
 
 def registerRadialProfiles():
-    """Register the pickled profiles in the data directory with the RadialProfile singleton registry.
+    """Register the pickled profiles in the data directory with the RadialProfile
+    singleton registry.
 
-    This should only be called at import time by this module; it's only a function to avoid polluting
-    the module namespace with all the local variables used here.
+    This should only be called at import time by this module; it's only a function to
+    avoid polluting the module namespace with all the local variables used here.
     """
     dataDir = os.path.join(os.environ["SHAPELET_DIR"], "data")
     regex = re.compile(r"([a-z]+\d?)_K(\d+)_MR(\d+)\.pickle")
@@ -91,6 +91,13 @@ registerRadialProfiles()
 
 def evaluateRadial(basis, r, sbNormalize=False, doComponents=False):
     """Plot a single-element MultiShapeletBasis as a radial profile.
+
+    Parameters
+    ----------
+    sbNormalize : `bool`
+        `True` to normalize.
+    doComponents : `bool`
+        `True` to evaluate components.
     """
     ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes())
     coefficients = numpy.ones(1, dtype=float)
@@ -113,13 +120,25 @@ def evaluateRadial(basis, r, sbNormalize=False, doComponents=False):
 
 
 def integrateNormalizedFluxes(maxRadius=20.0, nSteps=5000):
-    """!
+    """Integrate the profiles to compare relative fluxes between the true profiles
+    and their approximations.
+
     After normalizing by surface brightness at r=1 r_e, integrate the profiles to compare
     relative fluxes between the true profiles and their approximations.
 
-    @param[in] maxRadius   Maximum radius to integrate the profile, in units of r_e.
-    @param[in] nSteps      Number of concrete points at which to evaluate the profile to
-                           do the integration (we just use the trapezoidal rule).
+    Parameters
+    ----------
+    maxRadius : `float`, optional
+        Maximum radius to integrate the profile, in units of r_e.
+    nSteps : `int`, optional
+        Number of concrete points at which to evaluate the profile to
+        do the integration (we just use the trapezoidal rule).
+
+    Returns
+    -------
+    fluxes : `dict` of `float` values
+        Dictionary of fluxes (``exp``, ``lux``, ``dev``, ``luv``, ``ser2``, ``ser3``,
+        ``ser5``, ``gexp``,  ``glux``, ``gdev``, ``gluv``, ``gser2``, ``gser3``, ``gser5``)
     """
     radii = numpy.linspace(0.0, maxRadius, nSteps)
     profiles = {name: RadialProfile.get(name) for name in ("exp", "lux", "dev", "luv",
@@ -134,13 +153,23 @@ def integrateNormalizedFluxes(maxRadius=20.0, nSteps=5000):
 
 
 def plotSuite(doComponents=False):
-    """Plot all the profiles defined in this module together: true exp and dev, the SDSS softended/truncated
-    lux and luv, and the multi-Gaussian approximations to all of these.
+    """Plot all the profiles defined in this module together.
 
-    To plot the individual Gaussians that form the multi-Gaussian approximations, pass doComponents=True.
+    Plot all the profiles defined in this module together: true exp and dev,
+    the SDSS softened/truncated lux and luv, and the multi-Gaussian approximations
+    to all of these.
 
-    Returns a tuple of (figure, axes), where 'figure' is the matplotlib figure that contains the plot,
-    and axes is a 2x4 NumPy array of matplotlib axes objects
+    Parameters
+    ----------
+    doComponents : `bool`, optional
+        True, to plot the individual Gaussians that form the multi-Gaussian approximations.
+
+    Returns
+    -------
+    figure : `matplotlib.figure.Figure`
+        Figure that contains the plot.
+    axes : `numpy.ndarray` of `matplotlib.axes.Axes`
+        A 2x4 NumPy array of matplotlib axes objects.
     """
     from matplotlib import pyplot
     fig = pyplot.figure(figsize=(9, 4.7))

@@ -22,7 +22,6 @@
 
 """lsst.shapelet
 """
-from __future__ import absolute_import, division, print_function
 from .version import *
 
 import lsst.afw.geom
@@ -41,5 +40,4 @@ from .functorKeys import *
 from .generator import *
 
 from . import tractor
-from lsst.afw.geom.ellipses import Quadrupole as EllipseCore
 

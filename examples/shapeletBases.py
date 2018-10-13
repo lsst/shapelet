@@ -21,8 +21,6 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
-from __future__ import absolute_import, division, print_function
-from builtins import range
 import lsst.shapelet
 from lsst.afw import geom
 from lsst.afw.geom import ellipses
