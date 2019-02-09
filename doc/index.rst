@@ -10,6 +10,5 @@ shapelet documentation preview
 .. toctree::
    :maxdepth: 1
 
-   shapelet/index
    lsst.shapelet/index
 

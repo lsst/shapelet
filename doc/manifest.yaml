@@ -1,3 +1,2 @@
-package: "shapelet"
 modules:
   - "lsst.shapelet"
