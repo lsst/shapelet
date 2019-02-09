@@ -6,14 +6,13 @@
 lsst.shapelet
 #############
 
-This Python module provides for Gauss-Hermite and Gauss-Laguerre functions for use with
-the LSST Data Management pipeline. 
+This module provides Gauss-Hermite and Gauss-Laguerre functions for use with the LSST Science Pipelines. 
 
-Using lsst.shapelet
-===================
-
-.. toctree::
-   :maxdepth: 1
+.. Using lsst.shapelet
+.. ===================
+.. 
+.. .. toctree::
+..    :maxdepth: 1
 
 .. _lsst.shapelet-contributing:
 
@@ -33,4 +32,3 @@ Python API reference
 .. automodapi:: lsst.shapelet
    :no-main-docstr:
    :no-inheritance-diagram:
-
