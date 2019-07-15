@@ -24,6 +24,7 @@ import unittest
 
 import numpy as np
 
+import lsst.geom
 import lsst.utils.tests
 import lsst.pex.exceptions
 import lsst.afw.geom.ellipses
@@ -43,8 +44,8 @@ class ProjectionTestCase(lsst.shapelet.tests.ShapeletTestCase):
         nPoints = 100
         unitCircle = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Quadrupole(1.0, 1.0, 0.0))
         # This matrix should represent a pure rotation in shapelet space, which can be done exactly.
-        inputTransform = lsst.afw.geom.LinearTransform.makeRotation(0.0*lsst.afw.geom.radians)
-        outputTransform = lsst.afw.geom.LinearTransform.makeRotation(np.pi/3*lsst.afw.geom.radians)
+        inputTransform = lsst.geom.LinearTransform.makeRotation(0.0*lsst.geom.radians)
+        outputTransform = lsst.geom.LinearTransform.makeRotation(np.pi/3*lsst.geom.radians)
         m = self.ghp.compute(inputTransform, order, outputTransform, order)
         # If we apply a rotation by np.pi/3 six times, we should get back where we started with.
         self.assertFloatsAlmostEqual(np.linalg.matrix_power(m, 6),

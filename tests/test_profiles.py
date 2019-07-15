@@ -26,7 +26,7 @@ import os
 import numpy as np
 
 import lsst.utils.tests
-import lsst.afw.geom
+import lsst.geom
 import lsst.afw.geom.ellipses as el
 import lsst.shapelet.tractor
 import lsst.shapelet.tests
@@ -98,7 +98,7 @@ class ProfileTestCase(lsst.shapelet.tests.ShapeletTestCase):
             matrix = image1.reshape(check1.size, 1)
             builder(matrix, el.Ellipse(ellipse))
             self.assertFloatsAlmostEqual(check1, image1, plotOnFailure=False, rtol=5E-5, relTo=check1.max())
-            msf = basis.makeFunction(el.Ellipse(ellipse, lsst.afw.geom.Point2D(xc, yc)),
+            msf = basis.makeFunction(el.Ellipse(ellipse, lsst.geom.Point2D(xc, yc)),
                                      np.array([1.0], dtype=float))
             msf = msf.convolve(psf)
             image2 = np.zeros(check1.shape, dtype=float)

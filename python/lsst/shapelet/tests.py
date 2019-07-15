@@ -31,7 +31,7 @@ except ImportError:
     scipy = None
 
 import lsst.utils.tests
-import lsst.afw.geom
+import lsst.geom
 import lsst.afw.geom.ellipses
 
 
@@ -54,9 +54,9 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
 
     @staticmethod
     def makeRandomShapeletFunction(order=2, zeroCenter=False, ellipse=None, scale=1.0):
-        center = lsst.afw.geom.Point2D()
+        center = lsst.geom.Point2D()
         if not zeroCenter:
-            center = lsst.afw.geom.Point2D(numpy.random.randn(), numpy.random.randn())
+            center = lsst.geom.Point2D(numpy.random.randn(), numpy.random.randn())
         if ellipse is None:
             ellipse = lsst.afw.geom.ellipses.Ellipse(
                 lsst.afw.geom.ellipses.Axes(
@@ -114,7 +114,7 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
     def checkMoments(self, function, x, y, z):
         gx, gy = numpy.meshgrid(x, y)
         m = z.sum()
-        dipole = lsst.afw.geom.Point2D((gx * z).sum() / m, (gy * z).sum() / m)
+        dipole = lsst.geom.Point2D((gx * z).sum() / m, (gy * z).sum() / m)
         gx -= dipole.getX()
         gy -= dipole.getY()
         quadrupole = lsst.afw.geom.ellipses.Quadrupole(
@@ -138,7 +138,7 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
         self.assertFloatsAlmostEqual(integral, function.evaluate().integrate(), rtol=1E-3)
 
     def checkConvolution(self, f1, f2):
-        bbox = lsst.afw.geom.Box2I(lsst.afw.geom.Point2I(-50, -50), lsst.afw.geom.Point2I(50, 50))
+        bbox = lsst.geom.Box2I(lsst.geom.Point2I(-50, -50), lsst.geom.Point2I(50, 50))
         i1 = lsst.afw.image.ImageD(bbox)
         f1.evaluate().addToImage(i1)
         self.assertFloatsAlmostEqual(i1.getArray().sum(), f1.evaluate().integrate(), rtol=1E-3)

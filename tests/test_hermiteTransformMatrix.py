@@ -30,7 +30,7 @@ except ImportError:
     scipy = None
 
 import lsst.utils.tests
-import lsst.afw.geom
+import lsst.geom
 import lsst.shapelet.tests
 
 
@@ -71,15 +71,15 @@ class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
             print("Skipping transform tests that require SciPy")
             return
 
-        s = lsst.afw.geom.LinearTransform.makeScaling(2.0, 1.5)
-        r = lsst.afw.geom.LinearTransform.makeRotation(0.30*lsst.afw.geom.radians)
+        s = lsst.geom.LinearTransform.makeScaling(2.0, 1.5)
+        r = lsst.geom.LinearTransform.makeRotation(0.30*lsst.geom.radians)
         transforms = [s, r, s*r*s]
         testPoints = np.random.randn(10, 2)
         for transform in transforms:
             m = self.htm.compute(transform)
             for testPoint in testPoints:
                 assert(testPoint.size == 2)
-                origPoint = lsst.afw.geom.Point2D(testPoint[0], testPoint[1])
+                origPoint = lsst.geom.Point2D(testPoint[0], testPoint[1])
                 transPoint = transform(origPoint)
                 for i, inx, iny in lsst.shapelet.HermiteIndexGenerator(self.order):
                     v1 = self.ht(inx)(transPoint.getX()) * self.ht(iny)(transPoint.getY())

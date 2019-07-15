@@ -33,7 +33,7 @@ except ImportError:
 import lsst.utils.tests
 import lsst.shapelet.tests
 import lsst.afw.image
-import lsst.afw.geom as geom
+import lsst.geom as geom
 import lsst.afw.geom.ellipses as ellipses
 
 
