@@ -3,6 +3,7 @@ setupRequired(numpy)
 setupRequired(scons)
 setupRequired(sconsUtils)
 setupRequired(pybind11)
+setupRequired(geom)
 
 # XXX there is presently no eups scipy product...
 setupOptional(scipy)  # only needed for examples/sersicApprox.y, optional tests
