@@ -58,19 +58,17 @@ class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
             for j in range(i+1, self.order+1):
                 self.assertEqual(coeff[i, j], 0.0)
                 self.assertEqual(coeffInv[i, j], 0.0)
-        # test coefficient matrix values against scipy Hermite polynomials
-        if scipy is None:
-            print("Skipping Hermite polynomial tests that require SciPy")
-            return
+
+    @unittest.skipIf(scipy is None, "Test requires SciPy")
+    def testCoefficientsAgainstHermite(self):
+        """Test coefficient matrix values against scipy Hermite polynomials"""
+        coeff = self.htm.getCoefficientMatrix()
         for n in range(0, self.order+1):
             poly = self.ht(n)
             self.assertFloatsAlmostEqual(coeff[n, :n+1], poly.c[::-1], atol=1E-15)
 
+    @unittest.skipIf(scipy is None, "Test requires SciPy")
     def testTransformMatrix(self):
-        if scipy is None:
-            print("Skipping transform tests that require SciPy")
-            return
-
         s = lsst.geom.LinearTransform.makeScaling(2.0, 1.5)
         r = lsst.geom.LinearTransform.makeRotation(0.30*lsst.geom.radians)
         transforms = [s, r, s*r*s]
