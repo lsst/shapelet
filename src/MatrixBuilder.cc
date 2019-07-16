@@ -146,13 +146,13 @@ public:
     virtual int getDataSize() const { return _x.template getSize<0>(); }
 
     void readEllipse(afw::geom::ellipses::Ellipse const & ellipse) {
-        afw::geom::AffineTransform transform = ellipse.getGridTransform();
-        _xt = ndarray::asEigenArray(_x) * transform[afw::geom::AffineTransform::XX]
-            + ndarray::asEigenArray(_y) * transform[afw::geom::AffineTransform::XY]
-            + transform[afw::geom::AffineTransform::X];
-        _yt = ndarray::asEigenArray(_x) * transform[afw::geom::AffineTransform::YX]
-            + ndarray::asEigenArray(_y) * transform[afw::geom::AffineTransform::YY]
-            + transform[afw::geom::AffineTransform::Y];
+        geom::AffineTransform transform = ellipse.getGridTransform();
+        _xt = ndarray::asEigenArray(_x) * transform[geom::AffineTransform::XX]
+            + ndarray::asEigenArray(_y) * transform[geom::AffineTransform::XY]
+            + transform[geom::AffineTransform::X];
+        _yt = ndarray::asEigenArray(_x) * transform[geom::AffineTransform::YX]
+            + ndarray::asEigenArray(_y) * transform[geom::AffineTransform::YY]
+            + transform[geom::AffineTransform::Y];
         _detFactor = transform.getLinear().computeDeterminant();
     }
 

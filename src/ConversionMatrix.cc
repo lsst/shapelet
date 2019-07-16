@@ -1,9 +1,9 @@
 // -*- LSST-C++ -*-
 
-/* 
+/*
  * LSST Data Management System
  * Copyright 2008, 2009, 2010, 2011 LSST Corporation.
- * 
+ *
  * This product includes software developed by the
  * LSST Project (http://www.lsst.org/).
  *
@@ -11,14 +11,14 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the LSST License Statement and 
- * the GNU General Public License along with this program.  If not, 
+ *
+ * You should have received a copy of the LSST License Statement and
+ * the GNU General Public License along with this program.  If not,
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
@@ -89,7 +89,7 @@ public:
             int const q = (n - m) / 2;
             double const p_factorial = boost::math::unchecked_factorial<double>(p);
             double const q_factorial = boost::math::unchecked_factorial<double>(q);
-            std::complex<double> const v1 = std::pow(std::complex<double>(0.0, -1.0), m) 
+            std::complex<double> const v1 = std::pow(std::complex<double>(0.0, -1.0), m)
                 * std::pow(2.0, -0.5 * n)
                 / std::sqrt(p_factorial * q_factorial);
             for (int x = 0, y = n; x <= n; ++x, --y) {
@@ -149,7 +149,7 @@ private:
 
 } // anonymous
 
-Eigen::MatrixXd ConversionMatrix::getBlock(int n) const { 
+Eigen::MatrixXd ConversionMatrix::getBlock(int n) const {
     if (_input == _output) return Eigen::MatrixXd::Identity(n + 1, n + 1);
     if (_input == HERMITE)
         return ConversionSingleton::get().getBlockH2L(n);
@@ -157,7 +157,7 @@ Eigen::MatrixXd ConversionMatrix::getBlock(int n) const {
         return ConversionSingleton::get().getBlockL2H(n);
 }
 
-Eigen::MatrixXd ConversionMatrix::buildDenseMatrix() const { 
+Eigen::MatrixXd ConversionMatrix::buildDenseMatrix() const {
     int const size = computeSize(_order);
     if (_input == _output) return Eigen::MatrixXd::Identity(size, size);
     Eigen::MatrixXd r = Eigen::MatrixXd::Zero(size, size);

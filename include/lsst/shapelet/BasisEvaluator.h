@@ -1,9 +1,9 @@
 // -*- LSST-C++ -*-
 
-/* 
+/*
  * LSST Data Management System
  * Copyright 2008, 2009, 2010, 2011 LSST Corporation.
- * 
+ *
  * This product includes software developed by the
  * LSST Project (http://www.lsst.org/).
  *
@@ -11,22 +11,22 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the LSST License Statement and 
- * the GNU General Public License along with this program.  If not, 
+ *
+ * You should have received a copy of the LSST License Statement and
+ * the GNU General Public License along with this program.  If not,
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
- 
+
 #ifndef LSST_AFW_MATH_SHAPELETS_BASISEVALUATOR_H
 #define LSST_AFW_MATH_SHAPELETS_BASISEVALUATOR_H
 
 #include "ndarray.h"
-#include "lsst/afw/geom.h"
+#include "lsst/geom.h"
 #include "lsst/shapelet/constants.h"
 #include "lsst/shapelet/GaussHermiteEvaluator.h"
 #include "lsst/shapelet/ConversionMatrix.h"
@@ -77,7 +77,7 @@ public:
      *  @param[out]    dy       Optional output array for the derivative w.r.t. the y coordinate.
      */
     void fillEvaluation(
-        Array1d const & array, afw::geom::Point2D const & point,
+        Array1d const & array, geom::Point2D const & point,
         Array1d const & dx = Array1d(),
         Array1d const & dy = Array1d()
     ) const {
@@ -94,7 +94,7 @@ public:
      *  @param[out]    dy       Optional output array for the derivative w.r.t. the y coordinate.
      */
     void fillEvaluation(
-        Array1d const & array, afw::geom::Extent2D const & point,
+        Array1d const & array, geom::Extent2D const & point,
         Array1d const & dx = Array1d(),
         Array1d const & dy = Array1d()
     ) const {
@@ -115,6 +115,6 @@ private:
     GaussHermiteEvaluator _h;
 };
 
-}} // namespace lsst::shapelet classes 
+}} // namespace lsst::shapelet classes
 
 #endif // !defined(LSST_AFW_MATH_SHAPELETS_BASISEVALUATOR_H)

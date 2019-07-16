@@ -1,9 +1,9 @@
 // -*- LSST-C++ -*-
 
-/* 
+/*
  * LSST Data Management System
  * Copyright 2008, 2009, 2010, 2011 LSST Corporation.
- * 
+ *
  * This product includes software developed by the
  * LSST Project (http://www.lsst.org/).
  *
@@ -11,23 +11,23 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the LSST License Statement and 
- * the GNU General Public License along with this program.  If not, 
+ *
+ * You should have received a copy of the LSST License Statement and
+ * the GNU General Public License along with this program.  If not,
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
 #include "lsst/shapelet/GaussHermiteEvaluator.h"
-#include "lsst/afw/geom/Angle.h"
+#include "lsst/geom/Angle.h"
 
 namespace lsst { namespace shapelet {
 
-double const BASIS_NORMALIZATION = std::pow(afw::geom::PI, -0.25);
+double const BASIS_NORMALIZATION = std::pow(geom::PI, -0.25);
 
 namespace {
 
@@ -92,7 +92,7 @@ void fillEvaluation1d(
 void fillIntegration1d(ndarray::Array<double,1,1> const & result, int moment) {
     int const order = result.getSize<0>() - 1;
     result.deep() = 0.0;
-    result[0] = std::pow(4.0 * afw::geom::PI, 0.25);
+    result[0] = std::pow(4.0 * geom::PI, 0.25);
     for (int n = 2; n <= order; n += 2) {
         result[n] = rationalSqrt(n - 1, n) * result[n-2];
     }
@@ -172,12 +172,12 @@ double weaveSum(
     return r;
 }
 
-} // anonymous    
+} // anonymous
 
 void GaussHermiteEvaluator::fillEvaluation(
     ndarray::Array<double,1> const & target, double x, double y,
     ndarray::Array<double,1> const & dx,
-    ndarray::Array<double,1> const & dy 
+    ndarray::Array<double,1> const & dy
 ) const {
     if (dx.isEmpty()) {
         fillEvaluation1d(_xWorkspace, x);

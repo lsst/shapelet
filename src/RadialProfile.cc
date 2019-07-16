@@ -70,7 +70,7 @@ public:
     {
         PTR(MultiShapeletBasis) basis = std::make_shared<MultiShapeletBasis>(1);
         ndarray::Array<double,2,2> matrix = ndarray::allocate(1,1);
-        matrix.deep() = 0.5 / std::sqrt(afw::geom::PI);
+        matrix.deep() = 0.5 / std::sqrt(geom::PI);
         basis->addComponent(_momentsRadiusFactor, 0, matrix);
         registerBasis(basis, 1, 0);
     }

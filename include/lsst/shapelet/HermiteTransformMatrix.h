@@ -1,8 +1,8 @@
 // -*- LSST-C++ -*-
-/* 
+/*
  * LSST Data Management System
  * Copyright 2008, 2009, 2010, 2011 LSST Corporation.
- * 
+ *
  * This product includes software developed by the
  * LSST Project (http://www.lsst.org/).
  *
@@ -10,14 +10,14 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the LSST License Statement and 
- * the GNU General Public License along with this program.  If not, 
+ *
+ * You should have received a copy of the LSST License Statement and
+ * the GNU General Public License along with this program.  If not,
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
 
@@ -26,7 +26,7 @@
 
 #include "Eigen/Core"
 
-#include "lsst/afw/geom.h"
+#include "lsst/geom.h"
 #include "lsst/shapelet/constants.h"
 
 namespace lsst { namespace shapelet {
@@ -60,7 +60,7 @@ public:
     }
 
     /// @brief Compute the matrix for a new linear transform.
-    Eigen::MatrixXd compute(afw::geom::LinearTransform const & transform) const {
+    Eigen::MatrixXd compute(geom::LinearTransform const & transform) const {
         return compute(transform.getMatrix(), _order);
     }
 
@@ -68,7 +68,7 @@ public:
     Eigen::MatrixXd compute(Eigen::Matrix2d const & transform, int order) const;
 
     /// @brief Compute the matrix for a new linear transform at the given order (must be <= getOrder()).
-    Eigen::MatrixXd compute(afw::geom::LinearTransform const & transform, int order) const {
+    Eigen::MatrixXd compute(geom::LinearTransform const & transform, int order) const {
         return compute(transform.getMatrix(), order);
     }
 

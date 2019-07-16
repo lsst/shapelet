@@ -24,6 +24,7 @@ import unittest
 
 import numpy as np
 
+import lsst.geom
 import lsst.utils.tests
 import lsst.afw.geom.ellipses
 import lsst.shapelet.tests
@@ -235,7 +236,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def testCompoundMatrixBuilder(self):
         ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes(4.0, 3.0, 1.0),
-                                                 lsst.afw.geom.Point2D(3.2, 1.0))
+                                                 lsst.geom.Point2D(3.2, 1.0))
         radii = [0.7, 1.2]
         orders = [4, 3]
         size = 8
@@ -282,7 +283,7 @@ class MatrixBuilderTestCase(lsst.shapelet.tests.ShapeletTestCase):
 
     def testConvolvedCompoundMatrixBuilder(self):
         ellipse = lsst.afw.geom.ellipses.Ellipse(lsst.afw.geom.ellipses.Axes(4.0, 3.0, 1.0),
-                                                 lsst.afw.geom.Point2D(3.2, 1.0))
+                                                 lsst.geom.Point2D(3.2, 1.0))
         radii = [0.7, 1.2]
         orders = [4, 3]
         size = 8

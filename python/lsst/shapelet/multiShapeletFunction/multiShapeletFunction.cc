@@ -70,17 +70,17 @@ void declareMultiShapeletFunctionEvaluatorMembers(PyClass &cls) {
     cls.def(py::init<MultiShapeletFunction const &>());
 
     cls.def("__call__", (double (Class::*)(double, double) const) & Class::operator());
-    cls.def("__call__", (double (Class::*)(afw::geom::Point2D const &) const) & Class::operator());
-    cls.def("__call__", (double (Class::*)(afw::geom::Extent2D const &) const) & Class::operator());
+    cls.def("__call__", (double (Class::*)(geom::Point2D const &) const) & Class::operator());
+    cls.def("__call__", (double (Class::*)(geom::Extent2D const &) const) & Class::operator());
     cls.def("__call__",
             (ndarray::Array<double, 1, 1> (Class::*)(ndarray::Array<double const, 1> const &,
                                                      ndarray::Array<double const, 1> const &) const) &
                     Class::operator());
 
     cls.def("addToImage",
-            (void (Class::*)(ndarray::Array<double, 2, 1> const &, afw::geom::Point2I const &) const) &
+            (void (Class::*)(ndarray::Array<double, 2, 1> const &, geom::Point2I const &) const) &
                     Class::addToImage,
-            "array"_a, "xy0"_a = afw::geom::Point2I());
+            "array"_a, "xy0"_a = geom::Point2I());
     cls.def("addToImage", (void (Class::*)(afw::image::Image<double> &) const) & Class::addToImage,
             "image"_a);
 

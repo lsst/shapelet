@@ -1,9 +1,9 @@
 // -*- LSST-C++ -*-
 
-/* 
+/*
  * LSST Data Management System
  * Copyright 2008, 2009, 2010, 2011 LSST Corporation.
- * 
+ *
  * This product includes software developed by the
  * LSST Project (http://www.lsst.org/).
  *
@@ -11,17 +11,17 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the LSST License Statement and 
- * the GNU General Public License along with this program.  If not, 
+ *
+ * You should have received a copy of the LSST License Statement and
+ * the GNU General Public License along with this program.  If not,
  * see <http://www.lsstcorp.org/LegalNotices/>.
  */
- 
+
 #ifndef LSST_AFW_MATH_SHAPELETS_SHAPELETFUNCTION_H
 #define LSST_AFW_MATH_SHAPELETS_SHAPELETFUNCTION_H
 
@@ -29,7 +29,7 @@
 #include "lsst/shapelet/constants.h"
 #include "lsst/shapelet/GaussHermiteEvaluator.h"
 #include "lsst/shapelet/ConversionMatrix.h"
-#include "lsst/afw/geom.h"
+#include "lsst/geom.h"
 #include "lsst/afw/geom/ellipses.h"
 #include "lsst/afw/image/Image.h"
 
@@ -83,7 +83,7 @@ public:
 
     /// @brief Set the ellipse.
     void setEllipse(afw::geom::ellipses::Ellipse const & ellipse) { _ellipse = ellipse; }
-    
+
     /// @brief Return the basis type (HERMITE or LAGUERRE).
     BasisTypeEnum getBasisType() const { return _basisType; }
 
@@ -109,12 +109,12 @@ public:
     Evaluator evaluate() const;
 
     /// @brief Shift the shapelet function by shifting the basis ellipse.
-    void shiftInPlace(afw::geom::Extent2D const & offset) {
+    void shiftInPlace(geom::Extent2D const & offset) {
         _ellipse.getCenter() += offset;
     }
 
     /// @brief Transform the shapelet function by transforming the basis ellipse.
-    void transformInPlace(afw::geom::AffineTransform const & transform) {
+    void transformInPlace(geom::AffineTransform const & transform) {
         _ellipse.transform(transform).inPlace();
     }
 
@@ -129,11 +129,11 @@ public:
 
     /// @brief Construct a function with a circular ellipse and set all coefficients to zero.
     ShapeletFunction(int order, BasisTypeEnum basisType, double radius,
-                     afw::geom::Point2D const & center=afw::geom::Point2D());
+                     geom::Point2D const & center=geom::Point2D());
 
     /// @brief Construct a function with a circular ellipse and a deep-copied coefficient vector.
     ShapeletFunction(
-        int order, BasisTypeEnum basisType, double radius, afw::geom::Point2D const & center,
+        int order, BasisTypeEnum basisType, double radius, geom::Point2D const & center,
         ndarray::Array<double,1,1> const & coefficients
     );
 
@@ -182,16 +182,16 @@ public:
 
     /// @brief Evaluate at the given point.
     double operator()(double x, double y) const {
-        return this->operator()(afw::geom::Point2D(x, y));
+        return this->operator()(geom::Point2D(x, y));
     }
 
     /// @brief Evaluate at the given point.
-    double operator()(afw::geom::Point2D const & point) const {
+    double operator()(geom::Point2D const & point) const {
         return _normalization * _h.sumEvaluation(_coefficients, _transform(point));
     }
 
     /// @brief Evaluate at the given point.
-    double operator()(afw::geom::Extent2D const & point) const {
+    double operator()(geom::Extent2D const & point) const {
         return _normalization * _h.sumEvaluation(_coefficients, _transform(point));
     }
 
@@ -204,7 +204,7 @@ public:
     /// @brief Add the function to the given image-like array.
     void addToImage(
         ndarray::Array<double,2,1> const & array,
-        afw::geom::Point2I const & xy0 = afw::geom::Point2I()
+        geom::Point2I const & xy0 = geom::Point2I()
     ) const;
 
     /// @brief Evaluate the function on the given image.
@@ -227,14 +227,14 @@ public:
     explicit ShapeletFunctionEvaluator(ShapeletFunction const & function);
 
 private:
-    
+
     friend class MultiShapeletFunctionEvaluator;
 
     void _computeRawMoments(double & q0, Eigen::Vector2d & q1, Eigen::Matrix2d & q2) const;
 
     double _normalization;
     ndarray::Array<double const,1,1> _coefficients;
-    afw::geom::AffineTransform _transform;
+    geom::AffineTransform _transform;
     GaussHermiteEvaluator _h;
 };
 

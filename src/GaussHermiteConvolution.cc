@@ -23,7 +23,7 @@
 
 #include "lsst/shapelet/ShapeletFunction.h"
 #include "lsst/shapelet/GaussHermiteConvolution.h"
-#include "lsst/afw/geom/Angle.h"
+#include "lsst/geom/Angle.h"
 #include "ndarray/eigen.h"
 
 namespace lsst { namespace shapelet {
@@ -264,7 +264,7 @@ ndarray::Array<double const,2,2> ImplN::evaluate(
             }
         }
     }
-    kq *= 4.0 * afw::geom::PI;
+    kq *= 4.0 * geom::PI;
 
     // [kqb]_{m,n} = \sum_l i^{m-n-l} [kq]_l [tpi]_{l,m,n}
     Eigen::MatrixXd kqb = Eigen::MatrixXd::Zero(result.rows(), result.cols());
