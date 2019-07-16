@@ -58,23 +58,23 @@ PYBIND11_MODULE(basisEvaluator, mod) {
                Array1d const &dy) { return self.fillEvaluation(array, x, y, dx, dy); },
             "array"_a, "x"_a, "y"_a, "dx"_a, "dy"_a);
     clsBasisEvaluator.def("fillEvaluation",
-                          [](BasisEvaluator &self, Array1d const &array, afw::geom::Point2D const &point) {
+                          [](BasisEvaluator &self, Array1d const &array, geom::Point2D const &point) {
                               return self.fillEvaluation(array, point);
                           },
                           "array"_a, "point"_a);
     clsBasisEvaluator.def(
             "fillEvaluation",
-            [](BasisEvaluator &self, Array1d const &array, afw::geom::Point2D const &point, Array1d const &dx,
+            [](BasisEvaluator &self, Array1d const &array, geom::Point2D const &point, Array1d const &dx,
                Array1d const &dy) { return self.fillEvaluation(array, point, dx, dy); },
             "array"_a, "point"_a, "dx"_a, "dy"_a);
     clsBasisEvaluator.def("fillEvaluation",
-                          [](BasisEvaluator &self, Array1d const &array, afw::geom::Extent2D const &extent) {
+                          [](BasisEvaluator &self, Array1d const &array, geom::Extent2D const &extent) {
                               return self.fillEvaluation(array, extent);
                           },
                           "array"_a, "extent"_a);
     clsBasisEvaluator.def(
             "fillEvaluation",
-            [](BasisEvaluator &self, Array1d const &array, afw::geom::Extent2D const &extent,
+            [](BasisEvaluator &self, Array1d const &array, geom::Extent2D const &extent,
                Array1d const &dx, Array1d const &dy) { return self.fillEvaluation(array, extent, dx, dy); },
             "array"_a, "extent"_a, "dx"_a, "dy"_a);
     clsBasisEvaluator.def("fillIntegration", &BasisEvaluator::fillIntegration, "array"_a, "xMoment"_a = 0,

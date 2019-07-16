@@ -45,8 +45,8 @@ PYBIND11_MODULE(gaussHermiteProjection, mod) {
                                           GaussHermiteProjection::compute);
     clsGaussHermiteProjection.def("compute",
                                   (Eigen::MatrixXd (GaussHermiteProjection::*)(
-                                          afw::geom::LinearTransform const &, int inputOrder,
-                                          afw::geom::LinearTransform const &, int outputOrder) const) &
+                                          geom::LinearTransform const &, int inputOrder,
+                                          geom::LinearTransform const &, int outputOrder) const) &
                                           GaussHermiteProjection::compute);
     clsGaussHermiteProjection.def(
             "compute", (Eigen::MatrixXd (GaussHermiteProjection::*)(Eigen::Matrix2d const &, int,

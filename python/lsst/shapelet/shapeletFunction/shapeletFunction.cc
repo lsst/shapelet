@@ -32,6 +32,7 @@ namespace lsst {
 namespace shapelet {
 
 PYBIND11_MODULE(shapeletFunction, mod) {
+    py::module::import("lsst.geom");
     py::module::import("lsst.afw.geom");
     py::module::import("lsst.afw.image");
 
@@ -43,9 +44,9 @@ PYBIND11_MODULE(shapeletFunction, mod) {
     clsShapeletFunction.def(py::init<int, BasisTypeEnum>(), "order"_a, "basisType"_a);
     clsShapeletFunction.def(py::init<int, BasisTypeEnum, ndarray::Array<double, 1, 1> const &>(), "order"_a,
                             "basisType"_a, "coefficients"_a);
-    clsShapeletFunction.def(py::init<int, BasisTypeEnum, double, afw::geom::Point2D const &>(), "order"_a,
-                            "basisType"_a, "radius"_a, "center"_a = afw::geom::Point2D());
-    clsShapeletFunction.def(py::init<int, BasisTypeEnum, double, afw::geom::Point2D const &,
+    clsShapeletFunction.def(py::init<int, BasisTypeEnum, double, geom::Point2D const &>(), "order"_a,
+                            "basisType"_a, "radius"_a, "center"_a = geom::Point2D());
+    clsShapeletFunction.def(py::init<int, BasisTypeEnum, double, geom::Point2D const &,
                                      ndarray::Array<double, 1, 1> const &>(),
                             "order"_a, "basisType"_a, "radius"_a, "center"_a, "coefficients"_a);
     clsShapeletFunction.def(py::init<int, BasisTypeEnum, afw::geom::ellipses::Ellipse const &>(), "order"_a,
@@ -79,10 +80,10 @@ PYBIND11_MODULE(shapeletFunction, mod) {
                                      (double (ShapeletFunctionEvaluator::*)(double, double) const) &
                                              ShapeletFunctionEvaluator::operator());
     clsShapeletFunctionEvaluator.def(
-            "__call__", (double (ShapeletFunctionEvaluator::*)(afw::geom::Point2D const &) const) &
+            "__call__", (double (ShapeletFunctionEvaluator::*)(geom::Point2D const &) const) &
                                 ShapeletFunctionEvaluator::operator());
     clsShapeletFunctionEvaluator.def(
-            "__call__", (double (ShapeletFunctionEvaluator::*)(afw::geom::Extent2D const &) const) &
+            "__call__", (double (ShapeletFunctionEvaluator::*)(geom::Extent2D const &) const) &
                                 ShapeletFunctionEvaluator::operator());
     clsShapeletFunctionEvaluator.def("__call__", (ndarray::Array<double, 1, 1> (ShapeletFunctionEvaluator::*)(
                                                          ndarray::Array<double const, 1> const &,
@@ -91,9 +92,9 @@ PYBIND11_MODULE(shapeletFunction, mod) {
 
     clsShapeletFunctionEvaluator.def(
             "addToImage", (void (ShapeletFunctionEvaluator::*)(ndarray::Array<double, 2, 1> const &,
-                                                               afw::geom::Point2I const &) const) &
+                                                               geom::Point2I const &) const) &
                                   ShapeletFunctionEvaluator::addToImage,
-            "array"_a, "xy0"_a = afw::geom::Point2D());
+            "array"_a, "xy0"_a = geom::Point2D());
     clsShapeletFunctionEvaluator.def(
             "addToImage", (void (ShapeletFunctionEvaluator::*)(afw::image::Image<double> &) const) &
                                   ShapeletFunctionEvaluator::addToImage,

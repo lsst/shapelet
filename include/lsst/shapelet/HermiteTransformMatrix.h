@@ -26,7 +26,7 @@
 
 #include "Eigen/Core"
 
-#include "lsst/afw/geom.h"
+#include "lsst/geom.h"
 #include "lsst/shapelet/constants.h"
 
 namespace lsst { namespace shapelet {
@@ -60,7 +60,7 @@ public:
     }
 
     /// @brief Compute the matrix for a new linear transform.
-    Eigen::MatrixXd compute(afw::geom::LinearTransform const & transform) const {
+    Eigen::MatrixXd compute(geom::LinearTransform const & transform) const {
         return compute(transform.getMatrix(), _order);
     }
 
@@ -68,7 +68,7 @@ public:
     Eigen::MatrixXd compute(Eigen::Matrix2d const & transform, int order) const;
 
     /// @brief Compute the matrix for a new linear transform at the given order (must be <= getOrder()).
-    Eigen::MatrixXd compute(afw::geom::LinearTransform const & transform, int order) const {
+    Eigen::MatrixXd compute(geom::LinearTransform const & transform, int order) const {
         return compute(transform.getMatrix(), order);
     }
 

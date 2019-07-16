@@ -47,11 +47,11 @@ static inline void validateSize(int expected, int actual) {
 
 } // anonymous
 
-double const ShapeletFunction::FLUX_FACTOR = 2.0 * std::sqrt(afw::geom::PI);
+double const ShapeletFunction::FLUX_FACTOR = 2.0 * std::sqrt(geom::PI);
 
 ShapeletFunction::ShapeletFunction() :
     _order(0), _basisType(HERMITE),
-    _ellipse(EllipseCore(1.0, 1.0, 0.0), afw::geom::Point2D()), 
+    _ellipse(EllipseCore(1.0, 1.0, 0.0), geom::Point2D()), 
     _coefficients(ndarray::allocate(1))
 {
     _coefficients[0] = 0.0;
@@ -73,10 +73,10 @@ ShapeletFunction::ShapeletFunction(
 {
     validateSize(computeSize(order), _coefficients.getSize<0>());
 }
- 
+
 ShapeletFunction::ShapeletFunction(
     int order, BasisTypeEnum basisType, double radius,
-    afw::geom::Point2D const & center
+    geom::Point2D const & center
 ) :
     _order(order), _basisType(basisType), _ellipse(EllipseCore(), center),
     _coefficients(ndarray::allocate(computeSize(_order)))
@@ -86,7 +86,7 @@ ShapeletFunction::ShapeletFunction(
 }
 
 ShapeletFunction::ShapeletFunction(
-    int order, BasisTypeEnum basisType, double radius, afw::geom::Point2D const & center,
+    int order, BasisTypeEnum basisType, double radius, geom::Point2D const & center,
     ndarray::Array<double,1,1> const & coefficients
 ) :
     _order(order), _basisType(basisType), _ellipse(EllipseCore(), center),
@@ -197,7 +197,7 @@ ndarray::Array<double,1,1> ShapeletFunctionEvaluator::operator()(
 
 void ShapeletFunctionEvaluator::addToImage(
     ndarray::Array<double,2,1> const & array,
-    afw::geom::Point2I const & xy0
+    geom::Point2I const & xy0
 ) const {
     ndarray::Array<double,2,1>::Iterator yIter = array.begin();
     for (int y = xy0.getY(); yIter != array.end(); ++y, ++yIter) {
@@ -240,7 +240,7 @@ afw::geom::ellipses::Ellipse ShapeletFunctionEvaluator::computeMoments() const {
     q2 -= q1 * q1.transpose();
     return afw::geom::ellipses::Ellipse(
         afw::geom::ellipses::Quadrupole(afw::geom::ellipses::Quadrupole::Matrix(q2), false),
-        afw::geom::Point2D(q1)
+        geom::Point2D(q1)
     );
 }
 

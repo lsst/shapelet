@@ -26,7 +26,7 @@
 #define LSST_AFW_MATH_SHAPELETS_BASISEVALUATOR_H
 
 #include "ndarray.h"
-#include "lsst/afw/geom.h"
+#include "lsst/geom.h"
 #include "lsst/shapelet/constants.h"
 #include "lsst/shapelet/GaussHermiteEvaluator.h"
 #include "lsst/shapelet/ConversionMatrix.h"
@@ -77,7 +77,7 @@ public:
      *  @param[out]    dy       Optional output array for the derivative w.r.t. the y coordinate.
      */
     void fillEvaluation(
-        Array1d const & array, afw::geom::Point2D const & point,
+        Array1d const & array, geom::Point2D const & point,
         Array1d const & dx = Array1d(),
         Array1d const & dy = Array1d()
     ) const {
@@ -94,7 +94,7 @@ public:
      *  @param[out]    dy       Optional output array for the derivative w.r.t. the y coordinate.
      */
     void fillEvaluation(
-        Array1d const & array, afw::geom::Extent2D const & point,
+        Array1d const & array, geom::Extent2D const & point,
         Array1d const & dx = Array1d(),
         Array1d const & dy = Array1d()
     ) const {

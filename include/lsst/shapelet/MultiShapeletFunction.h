@@ -55,10 +55,10 @@ public:
     void normalize(double value=1.0);
 
     /// @brief Shift the shapelet function by shifting the ellipse of each component.
-    void shiftInPlace(afw::geom::Extent2D const & offset);
+    void shiftInPlace(geom::Extent2D const & offset);
 
     /// @brief Transform the shapelet function by transforming the ellipse of each component.
-    void transformInPlace(afw::geom::AffineTransform const & transform);
+    void transformInPlace(geom::AffineTransform const & transform);
 
     /// @brief Convolve the multi-shapelet function.
     MultiShapeletFunction convolve(ShapeletFunction const & other) const;
@@ -98,14 +98,14 @@ public:
 
     /// @brief Evaluate at the given point.
     double operator()(double x, double y) const {
-        return this->operator()(afw::geom::Point2D(x, y));
+        return this->operator()(geom::Point2D(x, y));
     }
 
     /// @brief Evaluate at the given point.
-    double operator()(afw::geom::Point2D const & point) const;
+    double operator()(geom::Point2D const & point) const;
 
     /// @brief Evaluate at the given point.
-    double operator()(afw::geom::Extent2D const & point) const;
+    double operator()(geom::Extent2D const & point) const;
 
     /// @brief Evaluate at the given points, returning a newly-allocated array.
     ndarray::Array<double,1,1> operator()(
@@ -116,7 +116,7 @@ public:
     /// @brief Add the function to the given image-like array.
     void addToImage(
         ndarray::Array<double,2,1> const & array,
-        afw::geom::Point2I const & xy0 = afw::geom::Point2I()
+        geom::Point2I const & xy0 = geom::Point2I()
     ) const;
 
     /// @brief Evaluate the function on the given image.

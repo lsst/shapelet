@@ -23,11 +23,11 @@
  */
 
 #include "lsst/shapelet/GaussHermiteEvaluator.h"
-#include "lsst/afw/geom/Angle.h"
+#include "lsst/geom/Angle.h"
 
 namespace lsst { namespace shapelet {
 
-double const BASIS_NORMALIZATION = std::pow(afw::geom::PI, -0.25);
+double const BASIS_NORMALIZATION = std::pow(geom::PI, -0.25);
 
 namespace {
 
@@ -92,7 +92,7 @@ void fillEvaluation1d(
 void fillIntegration1d(ndarray::Array<double,1,1> const & result, int moment) {
     int const order = result.getSize<0>() - 1;
     result.deep() = 0.0;
-    result[0] = std::pow(4.0 * afw::geom::PI, 0.25);
+    result[0] = std::pow(4.0 * geom::PI, 0.25);
     for (int n = 2; n <= order; n += 2) {
         result[n] = rationalSqrt(n - 1, n) * result[n-2];
     }

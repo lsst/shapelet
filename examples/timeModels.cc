@@ -46,7 +46,7 @@ double buildModelsImpl(
 ) {
     lsst::afw::geom::ellipses::Ellipse ellipse(
         lsst::afw::geom::ellipses::BaseCore::make(ellipseType),
-        lsst::afw::geom::Point2D()
+        lsst::geom::Point2D()
     );
     ndarray::Array<T,2,2> matrixT = ndarray::allocate(basisSize, nPixels);
     ndarray::Array<T,2,-2> matrix = matrixT.transpose();

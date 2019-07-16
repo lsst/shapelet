@@ -45,7 +45,7 @@ PYBIND11_MODULE(hermiteTransformMatrix, mod) {
             "transform"_a);
     clsHermiteTransformMatrix.def(
             "compute",
-            (Eigen::MatrixXd (HermiteTransformMatrix::*)(afw::geom::LinearTransform const &) const) &
+            (Eigen::MatrixXd (HermiteTransformMatrix::*)(geom::LinearTransform const &) const) &
                     HermiteTransformMatrix::compute,
             "transform"_a);
     clsHermiteTransformMatrix.def(
@@ -53,7 +53,7 @@ PYBIND11_MODULE(hermiteTransformMatrix, mod) {
                                HermiteTransformMatrix::compute,
             "transform"_a, "order"_a);
     clsHermiteTransformMatrix.def("compute", (Eigen::MatrixXd (HermiteTransformMatrix::*)(
-                                                     afw::geom::LinearTransform const &, int) const) &
+                                                     geom::LinearTransform const &, int) const) &
                                                      HermiteTransformMatrix::compute,
                                   "transform"_a, "order"_a);
 

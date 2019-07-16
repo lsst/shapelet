@@ -26,6 +26,7 @@
 
 #include "Eigen/Core"
 #include "lsst/afw/geom/ellipses.h"
+#include "lsst/geom.h"
 #include "lsst/shapelet/HermiteTransformMatrix.h"
 
 namespace lsst { namespace shapelet {
@@ -46,8 +47,8 @@ public:
 
     /// @brief Compute a matrix that projects from one shapelet basis "grid transform" to another.
     Eigen::MatrixXd compute(
-        afw::geom::LinearTransform const & inputTransform, int inputOrder,
-        afw::geom::LinearTransform const & outputTransform, int outputOrder
+        geom::LinearTransform const & inputTransform, int inputOrder,
+        geom::LinearTransform const & outputTransform, int outputOrder
     ) const {
         return compute(
             inputTransform.getMatrix(), inputOrder,

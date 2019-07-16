@@ -26,7 +26,7 @@
 #define LSST_AFW_MATH_SHAPELETS_HERMITEEVALUATOR_H
 
 #include "ndarray.h"
-#include "lsst/afw/geom.h"
+#include "lsst/geom.h"
 #include "lsst/shapelet/constants.h"
 #include "Eigen/Core"
 
@@ -113,7 +113,7 @@ public:
      *         simple unscaled shapelet expansion at the given point.
      */
     void fillEvaluation(
-        Array1d const & target, afw::geom::Point2D const & point,
+        Array1d const & target, geom::Point2D const & point,
         Array1d const & dx = Array1d(),
         Array1d const & dy = Array1d()
     ) const {
@@ -125,7 +125,7 @@ public:
      *         simple unscaled shapelet expansion at the given point.
      */
     void fillEvaluation(
-        Array1d const & target, afw::geom::Extent2D const & point,
+        Array1d const & target, geom::Extent2D const & point,
         Array1d const & dx = Array1d(),
         Array1d const & dy = Array1d()
     ) const {
@@ -150,7 +150,7 @@ public:
      *  @brief Evaluate a simple unscaled shapelet expansion at the given point.
      */
     double sumEvaluation(
-        ndarray::Array<double const,1> const & coeff, afw::geom::Point2D const & point,
+        ndarray::Array<double const,1> const & coeff, geom::Point2D const & point,
         double * dx = 0, double * dy = 0
     ) const {
         return sumEvaluation(coeff, point.getX(), point.getY(), dx, dy);
@@ -160,7 +160,7 @@ public:
      *  @brief Evaluate a simple unscaled shapelet expansion at the given point.
      */
     double sumEvaluation(
-        ndarray::Array<double const,1> const & coeff, afw::geom::Extent2D const & point,
+        ndarray::Array<double const,1> const & coeff, geom::Extent2D const & point,
         double * dx = 0, double * dy = 0
     ) const {
         return sumEvaluation(coeff, point.getX(), point.getY(), dx, dy);
