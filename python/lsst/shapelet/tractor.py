@@ -25,12 +25,6 @@ into a lsst.shapelet.MultiShapeletBasis.
 Please see the README file in the data directory of the lsst.shapelet
 package for more information.
 """
-from future import standard_library
-standard_library.install_aliases() # noqa
-from builtins import zip
-from builtins import str
-from builtins import range
-
 import numpy
 import os
 import re
@@ -192,7 +186,7 @@ def plotSuite(doComponents=False):
             bbox1 = axes[i, j+1].get_position()
             bbox1.x0 = bbox0.x1 - 0.06
             bbox0.x1 = bbox1.x0
-            centers[j/2] = 0.5*(bbox0.x0 + bbox1.x1)
+            centers[j//2] = 0.5*(bbox0.x0 + bbox1.x1)
             axes[i, j].set_position(bbox0)
             axes[i, j+1].set_position(bbox1)
     for j in range(0, 2):
