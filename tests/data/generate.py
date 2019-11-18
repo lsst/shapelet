@@ -29,8 +29,6 @@ because generating it requires the GalSim package
 of the LSST stack.  But it's still better to save the script as
 well, even if it can't usually be run.
 """
-from builtins import zip
-
 import galsim
 import lsst.shapelet.tractor
 

@@ -1,10 +1,9 @@
-from builtins import range, object
 from .constants import HERMITE, LAGUERRE, computeSize
 
 __all__ = ['IndexGenerator', 'HermiteIndexGenerator', 'LaguerreIndexGenerator']
 
 
-class IndexGenerator(object):
+class IndexGenerator:
     """Base class for shapelet index generators.
 
     Parameters
