@@ -46,8 +46,8 @@ class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
     def ht(n):
         """return a scipy poly1d for the nth 'alternate' Hermite polynomial (i.e. Hermite polynomial
         with shapeley normalization)"""
-        return (scipy.poly1d([(2**n * np.pi**0.5 * scipy.special.gamma(n+1))**(-0.5)]) *
-                scipy.special.hermite(n))
+        return (scipy.poly1d([(2**n * np.pi**0.5 * scipy.special.gamma(n+1))**(-0.5)])
+                * scipy.special.hermite(n))
 
     def testCoefficientMatrices(self):
         coeff = self.htm.getCoefficientMatrix()
