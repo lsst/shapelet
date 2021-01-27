@@ -206,8 +206,8 @@ def plotSuite(doComponents=False):
             y0 = z[0, j][k]
             handles.append(method0(r[j%2], y0[0, :], color=colors[k])[0])
             if doComponents:
-                for l in range(1, y0.shape[0]):
-                    method0(r[j%2], y0[l, :], color=colors[k], alpha=0.25)
+                for ll in range(1, y0.shape[0]):
+                    method0(r[j%2], y0[ll, :], color=colors[k], alpha=0.25)
             method1(r[j%2], z[1, j][k], color=colors[k])
         axes[0, j].set_xticklabels([])
         axes[0, j].set_ylim(1E-6, 1E3)
