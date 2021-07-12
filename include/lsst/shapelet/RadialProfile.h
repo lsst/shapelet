@@ -104,12 +104,12 @@ public:
      *  Throws NotFoundError if the a basis with the given combination of nComponents and
      *  maxRadius has not been added to the RadialProfile.
      */
-    PTR(MultiShapeletBasis) getBasis(int nComponents, int maxRadius=0) const;
+    std::shared_ptr<MultiShapeletBasis> getBasis(int nComponents, int maxRadius=0) const;
 
     /**
      *  @brief Register a basis with the profile, making it available to callers of getBasis().
      */
-    void registerBasis(PTR(MultiShapeletBasis) basis, int nComponents, int maxRadius);
+    void registerBasis(std::shared_ptr<MultiShapeletBasis> basis, int nComponents, int maxRadius);
 
 protected:
 
@@ -119,7 +119,7 @@ protected:
 
 private:
 
-    typedef std::map<std::pair<int,int>,PTR(MultiShapeletBasis)> BasisRegistry;
+    typedef std::map<std::pair<int,int>, std::shared_ptr<MultiShapeletBasis>> BasisRegistry;
 
     std::string const _name;
     int _defaultMaxRadius;

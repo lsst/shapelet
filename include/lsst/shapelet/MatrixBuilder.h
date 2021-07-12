@@ -156,9 +156,9 @@ private:
 
     template <typename U> friend class MatrixBuilderFactory;
 
-    explicit MatrixBuilder(PTR(Impl) impl);
+    explicit MatrixBuilder(std::shared_ptr<Impl> impl);
 
-    PTR(Impl) _impl;
+    std::shared_ptr<Impl> _impl;
 };
 
 /**
@@ -344,7 +344,7 @@ public:
     MatrixBuilder<T> operator()(Workspace & workspace) const;
 
 private:
-    PTR(Impl) _impl;
+    std::shared_ptr<Impl> _impl;
 };
 
 }} // namespace lsst::shapelet

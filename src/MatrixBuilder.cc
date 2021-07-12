@@ -83,12 +83,12 @@ public:
 
     virtual int computeWorkspace() const = 0;
 
-    PTR(BuilderImpl) makeBuilderImpl() const {
+    std::shared_ptr<BuilderImpl> makeBuilderImpl() const {
         Workspace workspace(computeWorkspace());
         return makeBuilderImpl(workspace);
     }
 
-    virtual PTR(BuilderImpl) makeBuilderImpl(Workspace & workspace) const = 0;
+    virtual std::shared_ptr<BuilderImpl> makeBuilderImpl(Workspace & workspace) const = 0;
 
     virtual ~Impl() {}
 
@@ -217,7 +217,7 @@ public:
 
         int getLhsOrder() const { return _lhsOrder; }
 
-        virtual PTR(typename MatrixBuilder<T>::Impl) makeBuilderImpl(Workspace & workspace) const {
+        virtual std::shared_ptr<typename MatrixBuilder<T>::Impl> makeBuilderImpl(Workspace & workspace) const {
             return std::make_shared<ShapeletImpl>(*this, &workspace);
         }
 
@@ -353,7 +353,7 @@ public:
 
         ShapeletFunction const & getPsf() const { return _psf; }
 
-        virtual PTR(typename MatrixBuilder<T>::Impl) makeBuilderImpl(Workspace & workspace) const {
+        virtual std::shared_ptr<typename MatrixBuilder<T>::Impl> makeBuilderImpl(Workspace & workspace) const {
             return std::make_shared<ConvolvedShapeletImpl>(*this, &workspace);
         }
 
@@ -449,7 +449,7 @@ public:
 
         ndarray::Array<double const,2,2> getRemapMatrix() const { return _remapMatrix; }
 
-        virtual PTR(typename MatrixBuilder<T>::Impl) makeBuilderImpl(Workspace & workspace) const {
+        virtual std::shared_ptr<typename MatrixBuilder<T>::Impl> makeBuilderImpl(Workspace & workspace) const {
             return std::make_shared<RemappedShapeletImpl>(*this, &workspace);
         }
 
@@ -548,7 +548,7 @@ public:
 
         ndarray::Array<double const,2,2> getRemapMatrix() const { return _remapMatrix; }
 
-        virtual PTR(typename MatrixBuilder<T>::Impl) makeBuilderImpl(Workspace & workspace) const {
+        virtual std::shared_ptr<typename MatrixBuilder<T>::Impl> makeBuilderImpl(Workspace & workspace) const {
             return std::make_shared<RemappedConvolvedShapeletImpl>(*this, &workspace);
         }
 
@@ -616,11 +616,11 @@ public:
     typedef MatrixBuilderWorkspace<T> Workspace;
 
     typedef typename MatrixBuilder<T>::Impl Component;
-    typedef std::vector<PTR(Component)> Vector;
+    typedef std::vector<std::shared_ptr<Component>> Vector;
     typedef typename Vector::const_iterator Iterator;
 
     typedef typename MatrixBuilderFactory<T>::Impl FactoryComponent;
-    typedef std::vector<PTR(FactoryComponent)> FactoryVector;
+    typedef std::vector<std::shared_ptr<FactoryComponent>> FactoryVector;
     typedef typename FactoryVector::const_iterator FactoryIterator;
 
     class Factory : public MatrixBuilderFactory<T>::Impl {
@@ -675,7 +675,7 @@ public:
             return ws;
         }
 
-        virtual PTR(typename MatrixBuilder<T>::Impl) makeBuilderImpl(Workspace & workspace) const {
+        virtual std::shared_ptr<typename MatrixBuilder<T>::Impl> makeBuilderImpl(Workspace & workspace) const {
             Vector builders;
             builders.reserve(_components.size());
             for (FactoryIterator i = _components.begin(); i != _components.end(); ++i) {
@@ -785,7 +785,7 @@ void MatrixBuilder<T>::operator()(
 }
 
 template <typename T>
-MatrixBuilder<T>::MatrixBuilder(PTR(Impl) impl) :
+MatrixBuilder<T>::MatrixBuilder(std::shared_ptr<Impl> impl) :
     _impl(impl)
 {}
 

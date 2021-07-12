@@ -106,7 +106,7 @@ MultiShapeletFunctionKey::MultiShapeletFunctionKey(
     std::size_t i = 0;
     while (true) {
         try {
-            PTR(ShapeletFunctionKey) component = std::make_shared<ShapeletFunctionKey>(
+            std::shared_ptr<ShapeletFunctionKey> component = std::make_shared<ShapeletFunctionKey>(
                 s[std::to_string(i)],
                 basisType
             );
