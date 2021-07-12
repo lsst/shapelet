@@ -68,7 +68,7 @@ public:
     explicit GaussianRadialProfile() :
         SersicRadialProfile("gaussian", 0.5, 0)
     {
-        PTR(MultiShapeletBasis) basis = std::make_shared<MultiShapeletBasis>(1);
+        std::shared_ptr<MultiShapeletBasis> basis = std::make_shared<MultiShapeletBasis>(1);
         ndarray::Array<double,2,2> matrix = ndarray::allocate(1,1);
         matrix.deep() = 0.5 / std::sqrt(geom::PI);
         basis->addComponent(_momentsRadiusFactor, 0, matrix);
@@ -160,7 +160,7 @@ ndarray::Array<double,1,1> RadialProfile::evaluate(ndarray::Array<double const,1
     return p;
 }
 
-PTR(MultiShapeletBasis) RadialProfile::getBasis(int nComponents, int maxRadius) const {
+std::shared_ptr<MultiShapeletBasis> RadialProfile::getBasis(int nComponents, int maxRadius) const {
     if (maxRadius == 0) maxRadius = _defaultMaxRadius;
     BasisRegistry::const_iterator i = _basisRegistry.find(std::make_pair(nComponents, maxRadius));
     if (i == _basisRegistry.end()) {
@@ -175,7 +175,7 @@ PTR(MultiShapeletBasis) RadialProfile::getBasis(int nComponents, int maxRadius) 
     return std::make_shared<MultiShapeletBasis>(*i->second);
 }
 
-void RadialProfile::registerBasis(PTR(MultiShapeletBasis) basis, int nComponents, int maxRadius) {
+void RadialProfile::registerBasis(std::shared_ptr<MultiShapeletBasis> basis, int nComponents, int maxRadius) {
     _basisRegistry[std::make_pair(nComponents, maxRadius)] = basis;
 }
 

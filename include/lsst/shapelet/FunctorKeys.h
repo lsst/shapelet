@@ -190,7 +190,7 @@ public:
     MultiShapeletFunctionKey() {}
 
     /// Construct from individual Keys/FunctorKeys
-    explicit MultiShapeletFunctionKey(std::vector<PTR(ShapeletFunctionKey)> const & components) :
+    explicit MultiShapeletFunctionKey(std::vector<std::shared_ptr<ShapeletFunctionKey>> const & components) :
         _components(components)
     {}
 
@@ -221,13 +221,13 @@ public:
     bool isValid() const;
 
     /// Return a FunctorKey to the nth component.
-    PTR(ShapeletFunctionKey) operator[](int n) { return _components[n]; }
+    std::shared_ptr<ShapeletFunctionKey> operator[](int n) { return _components[n]; }
 
     /// Return a FunctorKey to the nth component.
-    PTR(ShapeletFunctionKey const) operator[](int n) const { return _components[n]; }
+    std::shared_ptr<ShapeletFunctionKey const> operator[](int n) const { return _components[n]; }
 
 private:
-    std::vector<PTR(ShapeletFunctionKey)> _components;
+    std::vector<std::shared_ptr<ShapeletFunctionKey>> _components;
 };
 
 }} // namespace lsst::shapelet
