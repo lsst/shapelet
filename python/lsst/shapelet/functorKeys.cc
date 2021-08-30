@@ -65,7 +65,7 @@ PYBIND11_MODULE(functorKeys, mod) {
     clsMultiShapeletFunctionKey.def(py::init<>());
     clsMultiShapeletFunctionKey.def(py::init<afw::table::SubSchema const &, BasisTypeEnum>(), "s"_a,
                                     "basisType"_a = HERMITE);
-    clsMultiShapeletFunctionKey.def(py::init<std::vector<PTR(ShapeletFunctionKey)> const &>(),
+    clsMultiShapeletFunctionKey.def(py::init<std::vector<std::shared_ptr<ShapeletFunctionKey>> const &>(),
                                     "components"_a);
 
     clsMultiShapeletFunctionKey.def_static("addFields", MultiShapeletFunctionKey::addFields, "schema"_a,
