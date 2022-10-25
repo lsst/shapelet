@@ -96,7 +96,7 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
                 params = tuple(s.getEllipse().getParameterVector()) + tuple(s.getCoefficients())
                 keep.append((params, s))
         msf = lsst.shapelet.MultiShapeletFunction()
-        keep.sort(key=lambda t: t[0])
+        keep.sort(key=lambda t: numpy.sum(t[0]))
         for params, s in keep:
             msf.addComponent(s)
         return msf
