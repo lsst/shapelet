@@ -20,6 +20,7 @@
  * see <https://www.lsstcorp.org/LegalNotices/>.
  */
 #include "pybind11/pybind11.h"
+#include "lsst/cpputils/python.h"
 
 #include "ndarray/pybind11.h"
 
@@ -32,16 +33,16 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_MODULE(gaussHermiteConvolution, mod) {
-    py::class_<GaussHermiteConvolution, std::shared_ptr<GaussHermiteConvolution>> clsGaussHermiteConvolution(
-        mod, "GaussHermiteConvolution");
+void wrapGaussHermiteConvolution(lsst::cpputils::python::WrapperCollection &wrappers) {
+    using PyGaussHermiteConvolution = py::class_<GaussHermiteConvolution, std::shared_ptr<GaussHermiteConvolution>>;
+    wrappers.wrapType(PyGaussHermiteConvolution(wrappers.module, "GaussHermiteConvolution"), [](auto &mod, auto &cls) {
+        cls.def(py::init<int, ShapeletFunction const &>(), "colOrder"_a, "psf"_a);
 
-    clsGaussHermiteConvolution.def(py::init<int, ShapeletFunction const &>(), "colOrder"_a, "psf"_a);
-
-    clsGaussHermiteConvolution.def("computeRowOrder", &GaussHermiteConvolution::computeRowOrder);
-    clsGaussHermiteConvolution.def("evaluate", &GaussHermiteConvolution::evaluate);
-    clsGaussHermiteConvolution.def("getColOrder", &GaussHermiteConvolution::getColOrder);
-    clsGaussHermiteConvolution.def("getRowOrder", &GaussHermiteConvolution::getRowOrder);
+        cls.def("computeRowOrder", &GaussHermiteConvolution::computeRowOrder);
+        cls.def("evaluate", &GaussHermiteConvolution::evaluate);
+        cls.def("getColOrder", &GaussHermiteConvolution::getColOrder);
+        cls.def("getRowOrder", &GaussHermiteConvolution::getRowOrder);
+    });
 }
 
 }  // shapelet

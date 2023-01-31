@@ -1,4 +1,4 @@
-from .constants import BasisTypeEnum
+from .._shapeletLib import BasisTypeEnum
 
 from lsst.utils import continueClass
 

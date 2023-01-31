@@ -1,6 +1,6 @@
 import numpy as np
 
-from .radialProfile import RadialProfile
+from .._shapeletLib import RadialProfile
 
 from lsst.utils import continueClass
 

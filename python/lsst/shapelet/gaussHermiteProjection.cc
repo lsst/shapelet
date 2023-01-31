@@ -20,8 +20,8 @@
  * see <https://www.lsstcorp.org/LegalNotices/>.
  */
 #include "pybind11/pybind11.h"
+#include "lsst/cpputils/python.h"
 #include "pybind11/eigen.h"
-#include "ndarray/pybind11.h"
 
 #include "lsst/shapelet/GaussHermiteProjection.h"
 
@@ -31,29 +31,29 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_MODULE(gaussHermiteProjection, mod) {
-    py::module::import("lsst.afw.geom");
-        py::class_<GaussHermiteProjection, std::shared_ptr<GaussHermiteProjection>> clsGaussHermiteProjection(
-            mod, "GaussHermiteProjection");
+void wrapGaussHermiteProjection(lsst::cpputils::python::WrapperCollection &wrappers) {
+    using PyGaussHermiteProjection = py::class_<GaussHermiteProjection, std::shared_ptr<GaussHermiteProjection>>;
 
-    clsGaussHermiteProjection.def(py::init<int>(), "maxOrder"_a);
+    wrappers.wrapType(PyGaussHermiteProjection(wrappers.module, "GaussHermiteProjection"), [](auto &mod, auto &cls) {
+        cls.def(py::init<int>(), "maxOrder"_a);
 
-    clsGaussHermiteProjection.def("compute",
-                                  (Eigen::MatrixXd (GaussHermiteProjection::*)(
-                                          afw::geom::ellipses::Quadrupole const &, int inputOrder,
-                                          afw::geom::ellipses::Quadrupole const &, int outputOrder) const) &
-                                          GaussHermiteProjection::compute);
-    clsGaussHermiteProjection.def("compute",
-                                  (Eigen::MatrixXd (GaussHermiteProjection::*)(
-                                          geom::LinearTransform const &, int inputOrder,
-                                          geom::LinearTransform const &, int outputOrder) const) &
-                                          GaussHermiteProjection::compute);
-    clsGaussHermiteProjection.def(
-            "compute", (Eigen::MatrixXd (GaussHermiteProjection::*)(Eigen::Matrix2d const &, int,
-                                                                    Eigen::Matrix2d const &, int) const) &
-                               GaussHermiteProjection::compute);
+        cls.def("compute",
+                                      (Eigen::MatrixXd (GaussHermiteProjection::*)(
+                                              afw::geom::ellipses::Quadrupole const &, int inputOrder,
+                                              afw::geom::ellipses::Quadrupole const &, int outputOrder) const) &
+                                              GaussHermiteProjection::compute);
+        cls.def("compute",
+                                      (Eigen::MatrixXd (GaussHermiteProjection::*)(
+                                              geom::LinearTransform const &, int inputOrder,
+                                              geom::LinearTransform const &, int outputOrder) const) &
+                                              GaussHermiteProjection::compute);
+        cls.def(
+                "compute", (Eigen::MatrixXd (GaussHermiteProjection::*)(Eigen::Matrix2d const &, int,
+                                                                        Eigen::Matrix2d const &, int) const) &
+                        GaussHermiteProjection::compute);
 
-    clsGaussHermiteProjection.def("getMaxOrder", &GaussHermiteProjection::getMaxOrder);
+        cls.def("getMaxOrder", &GaussHermiteProjection::getMaxOrder);
+    });
 }
 
 }  // shapelet

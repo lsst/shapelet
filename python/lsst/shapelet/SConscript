@@ -1,13 +1,15 @@
 # -*- python -*-
 from lsst.sconsUtils import scripts
-scripts.BasicSConscript.pybind11(["constants/constants",
-                                  "shapeletFunction/shapeletFunction",
-                                  "gaussHermiteProjection",
-                                  "gaussHermiteConvolution",
-                                  "multiShapeletFunction/multiShapeletFunction",
-                                  "multiShapeletBasis",
-                                  "matrixBuilder",
-                                  "hermiteTransformMatrix",
-                                  "radialProfile/radialProfile",
-                                  "functorKeys",
-                                  "basisEvaluator"], addUnderscore=False)
+scripts.BasicSConscript.python(['_shapeletLib'], [
+    '_shapeletLib.cc',
+    'constants/constants.cc',
+    'shapeletFunction/shapeletFunction.cc',
+    'gaussHermiteProjection.cc',
+    'gaussHermiteConvolution.cc',
+    'multiShapeletFunction/multiShapeletFunction.cc',
+    'multiShapeletBasis.cc',
+    'matrixBuilder.cc',
+    'hermiteTransformMatrix.cc',
+    'radialProfile/radialProfile.cc',
+    'functorKeys.cc',
+    'basisEvaluator.cc'])

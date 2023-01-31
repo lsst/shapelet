@@ -20,6 +20,7 @@
  * see <https://www.lsstcorp.org/LegalNotices/>.
  */
 #include "pybind11/pybind11.h"
+#include "lsst/cpputils/python.h"
 #include "pybind11/stl.h"
 
 #include "lsst/afw/table/BaseRecord.h"
@@ -31,55 +32,55 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_MODULE(functorKeys, mod) {
-    py::module::import("lsst.afw.table");
+void wrapFunctorKeys(lsst::cpputils::python::WrapperCollection &wrappers) {
+    using PyShapeletFunctionKey = py::class_<ShapeletFunctionKey, std::shared_ptr<ShapeletFunctionKey>>;
 
-    py::class_<ShapeletFunctionKey, std::shared_ptr<ShapeletFunctionKey>> clsShapeletFunctionKey(
-        mod, "ShapeletFunctionKey");
+    wrappers.wrapType(PyShapeletFunctionKey(wrappers.module, "ShapeletFunctionKey"), [](auto &mod, auto &cls) {
+        cls.def(py::init<>());
+        cls.def(
+                py::init<afw::table::EllipseKey const &, afw::table::ArrayKey<double> const &, BasisTypeEnum>(),
+                "ellipse"_a, "coefficients"_a, "basisType"_a = HERMITE);
+        cls.def(py::init<afw::table::SubSchema const &, BasisTypeEnum>(), "s"_a,
+                "basisType"_a = HERMITE);
 
-    clsShapeletFunctionKey.def(py::init<>());
-    clsShapeletFunctionKey.def(
-            py::init<afw::table::EllipseKey const &, afw::table::ArrayKey<double> const &, BasisTypeEnum>(),
-            "ellipse"_a, "coefficients"_a, "basisType"_a = HERMITE);
-    clsShapeletFunctionKey.def(py::init<afw::table::SubSchema const &, BasisTypeEnum>(), "s"_a,
-                               "basisType"_a = HERMITE);
+        cls.def("__eq__", &ShapeletFunctionKey::operator==, py::is_operator());
+        cls.def("__ne__", &ShapeletFunctionKey::operator!=, py::is_operator());
 
-    clsShapeletFunctionKey.def("__eq__", &ShapeletFunctionKey::operator==, py::is_operator());
-    clsShapeletFunctionKey.def("__ne__", &ShapeletFunctionKey::operator!=, py::is_operator());
+        cls.def_static("addFields", &ShapeletFunctionKey::addFields, "schema"_a, "name"_a,
+                       "doc"_a, "ellipseUnit"_a, "coeffUnit"_a, "order"_a,
+                       "basisType"_a = HERMITE);
 
-    clsShapeletFunctionKey.def_static("addFields", &ShapeletFunctionKey::addFields, "schema"_a, "name"_a,
-                                      "doc"_a, "ellipseUnit"_a, "coeffUnit"_a, "order"_a,
-                                      "basisType"_a = HERMITE);
+        cls.def("get", &ShapeletFunctionKey::get);
+        cls.def("set", &ShapeletFunctionKey::set);
+        cls.def("isValid", &ShapeletFunctionKey::isValid);
+        cls.def("getEllipse", &ShapeletFunctionKey::getEllipse);
+        cls.def("getCoefficients", &ShapeletFunctionKey::getCoefficients);
+        cls.def("getOrder", &ShapeletFunctionKey::getOrder);
+        cls.def("getBasisType", &ShapeletFunctionKey::getBasisType);
+    });
 
-    clsShapeletFunctionKey.def("get", &ShapeletFunctionKey::get);
-    clsShapeletFunctionKey.def("set", &ShapeletFunctionKey::set);
-    clsShapeletFunctionKey.def("isValid", &ShapeletFunctionKey::isValid);
-    clsShapeletFunctionKey.def("getEllipse", &ShapeletFunctionKey::getEllipse);
-    clsShapeletFunctionKey.def("getCoefficients", &ShapeletFunctionKey::getCoefficients);
-    clsShapeletFunctionKey.def("getOrder", &ShapeletFunctionKey::getOrder);
-    clsShapeletFunctionKey.def("getBasisType", &ShapeletFunctionKey::getBasisType);
+    using PyMultiShapeletFunctionKey = py::class_<MultiShapeletFunctionKey, std::shared_ptr<MultiShapeletFunctionKey>>;
 
-    py::class_<MultiShapeletFunctionKey, std::shared_ptr<MultiShapeletFunctionKey>>
-            clsMultiShapeletFunctionKey(mod, "MultiShapeletFunctionKey");
+    wrappers.wrapType(PyMultiShapeletFunctionKey(wrappers.module, "MultiShapeletFunctionKey"), [](auto &mod, auto &cls) {
+        cls.def(py::init<>());
+        cls.def(py::init<afw::table::SubSchema const &, BasisTypeEnum>(), "s"_a,
+                                        "basisType"_a = HERMITE);
+        cls.def(py::init<std::vector<std::shared_ptr<ShapeletFunctionKey>> const &>(),
+                                        "components"_a);
 
-    clsMultiShapeletFunctionKey.def(py::init<>());
-    clsMultiShapeletFunctionKey.def(py::init<afw::table::SubSchema const &, BasisTypeEnum>(), "s"_a,
-                                    "basisType"_a = HERMITE);
-    clsMultiShapeletFunctionKey.def(py::init<std::vector<std::shared_ptr<ShapeletFunctionKey>> const &>(),
-                                    "components"_a);
+        cls.def_static("addFields", MultiShapeletFunctionKey::addFields, "schema"_a,
+                                               "name"_a, "doc"_a, "ellipseUnit"_a, "coeffUnit"_a, "orders"_a,
+                                               "basisType"_a = HERMITE);
 
-    clsMultiShapeletFunctionKey.def_static("addFields", MultiShapeletFunctionKey::addFields, "schema"_a,
-                                           "name"_a, "doc"_a, "ellipseUnit"_a, "coeffUnit"_a, "orders"_a,
-                                           "basisType"_a = HERMITE);
+        cls.def("__eq__", &MultiShapeletFunctionKey::operator==, py::is_operator());
+        cls.def("__ne__", &MultiShapeletFunctionKey::operator!=, py::is_operator());
+        cls.def("__getitem__",
+                                        [](MultiShapeletFunctionKey &self, int i) { return self[i]; });
 
-    clsMultiShapeletFunctionKey.def("__eq__", &MultiShapeletFunctionKey::operator==, py::is_operator());
-    clsMultiShapeletFunctionKey.def("__ne__", &MultiShapeletFunctionKey::operator!=, py::is_operator());
-    clsMultiShapeletFunctionKey.def("__getitem__",
-                                    [](MultiShapeletFunctionKey &self, int i) { return self[i]; });
-
-    clsMultiShapeletFunctionKey.def("get", &MultiShapeletFunctionKey::get);
-    clsMultiShapeletFunctionKey.def("set", &MultiShapeletFunctionKey::set);
-    clsMultiShapeletFunctionKey.def("isValid", &MultiShapeletFunctionKey::isValid);
+        cls.def("get", &MultiShapeletFunctionKey::get);
+        cls.def("set", &MultiShapeletFunctionKey::set);
+        cls.def("isValid", &MultiShapeletFunctionKey::isValid);
+    });
 }
 
 }  // shapelet

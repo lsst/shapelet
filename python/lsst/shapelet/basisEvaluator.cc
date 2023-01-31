@@ -20,6 +20,7 @@
  * see <https://www.lsstcorp.org/LegalNotices/>.
  */
 #include "pybind11/pybind11.h"
+#include "lsst/cpputils/python.h"
 
 #include "ndarray/pybind11.h"
 
@@ -31,54 +32,54 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_MODULE(basisEvaluator, mod) {
-    py::module::import("lsst.afw.geom");
+void wrapBasisEvaluator(lsst::cpputils::python::WrapperCollection &wrappers) {
+    using PyBasisEvaluator = py::class_<BasisEvaluator, std::shared_ptr<BasisEvaluator>>;
 
-    py::class_<BasisEvaluator, std::shared_ptr<BasisEvaluator>> clsBasisEvaluator(mod, "BasisEvaluator");
+    wrappers.wrapType(PyBasisEvaluator(wrappers.module, "BasisEvaluator"), [](auto &mod, auto &cls) {
+        /* Constructors */
+        cls.def(py::init<int, BasisTypeEnum>(), "order"_a, "basisType"_a);
 
-    /* Constructors */
-    clsBasisEvaluator.def(py::init<int, BasisTypeEnum>(), "order"_a, "basisType"_a);
+        /* Members */
+        cls.def("getOrder", &BasisEvaluator::getOrder);
+        cls.def("getBasisType", &BasisEvaluator::getBasisType);
 
-    /* Members */
-    clsBasisEvaluator.def("getOrder", &BasisEvaluator::getOrder);
-    clsBasisEvaluator.def("getBasisType", &BasisEvaluator::getBasisType);
-
-    /* fillEvaluation has default constructed Array1d objects as keyword
-     * arguments.
-     * Unfortunately, for some reason array.isEmpty() == false even with 0
-     * elements,
-     * which leads to a segfault.
-     * Thus we must delegate through lambdas instead. */
-    clsBasisEvaluator.def("fillEvaluation", [](BasisEvaluator &self, Array1d const &array, double x,
-                                               double y) { return self.fillEvaluation(array, x, y); },
-                          "array"_a, "x"_a, "y"_a);
-    clsBasisEvaluator.def(
-            "fillEvaluation",
-            [](BasisEvaluator &self, Array1d const &array, double x, double y, Array1d const &dx,
-               Array1d const &dy) { return self.fillEvaluation(array, x, y, dx, dy); },
-            "array"_a, "x"_a, "y"_a, "dx"_a, "dy"_a);
-    clsBasisEvaluator.def("fillEvaluation",
-                          [](BasisEvaluator &self, Array1d const &array, geom::Point2D const &point) {
-                              return self.fillEvaluation(array, point);
-                          },
-                          "array"_a, "point"_a);
-    clsBasisEvaluator.def(
-            "fillEvaluation",
-            [](BasisEvaluator &self, Array1d const &array, geom::Point2D const &point, Array1d const &dx,
-               Array1d const &dy) { return self.fillEvaluation(array, point, dx, dy); },
-            "array"_a, "point"_a, "dx"_a, "dy"_a);
-    clsBasisEvaluator.def("fillEvaluation",
-                          [](BasisEvaluator &self, Array1d const &array, geom::Extent2D const &extent) {
-                              return self.fillEvaluation(array, extent);
-                          },
-                          "array"_a, "extent"_a);
-    clsBasisEvaluator.def(
-            "fillEvaluation",
-            [](BasisEvaluator &self, Array1d const &array, geom::Extent2D const &extent,
-               Array1d const &dx, Array1d const &dy) { return self.fillEvaluation(array, extent, dx, dy); },
-            "array"_a, "extent"_a, "dx"_a, "dy"_a);
-    clsBasisEvaluator.def("fillIntegration", &BasisEvaluator::fillIntegration, "array"_a, "xMoment"_a = 0,
-                          "yMoment"_a = 0);
+        /* fillEvaluation has default constructed Array1d objects as keyword
+         * arguments.
+         * Unfortunately, for some reason array.isEmpty() == false even with 0
+         * elements,
+         * which leads to a segfault.
+         * Thus we must delegate through lambdas instead. */
+        cls.def("fillEvaluation", [](BasisEvaluator &self, Array1d const &array, double x,
+                                                   double y) { return self.fillEvaluation(array, x, y); },
+                              "array"_a, "x"_a, "y"_a);
+        cls.def(
+                "fillEvaluation",
+                [](BasisEvaluator &self, Array1d const &array, double x, double y, Array1d const &dx,
+                   Array1d const &dy) { return self.fillEvaluation(array, x, y, dx, dy); },
+                "array"_a, "x"_a, "y"_a, "dx"_a, "dy"_a);
+        cls.def("fillEvaluation",
+                              [](BasisEvaluator &self, Array1d const &array, geom::Point2D const &point) {
+                                  return self.fillEvaluation(array, point);
+                              },
+                              "array"_a, "point"_a);
+        cls.def(
+                "fillEvaluation",
+                [](BasisEvaluator &self, Array1d const &array, geom::Point2D const &point, Array1d const &dx,
+                   Array1d const &dy) { return self.fillEvaluation(array, point, dx, dy); },
+                "array"_a, "point"_a, "dx"_a, "dy"_a);
+        cls.def("fillEvaluation",
+                              [](BasisEvaluator &self, Array1d const &array, geom::Extent2D const &extent) {
+                                  return self.fillEvaluation(array, extent);
+                              },
+                              "array"_a, "extent"_a);
+        cls.def(
+                "fillEvaluation",
+                [](BasisEvaluator &self, Array1d const &array, geom::Extent2D const &extent,
+                   Array1d const &dx, Array1d const &dy) { return self.fillEvaluation(array, extent, dx, dy); },
+                "array"_a, "extent"_a, "dx"_a, "dy"_a);
+        cls.def("fillIntegration", &BasisEvaluator::fillIntegration, "array"_a, "xMoment"_a = 0,
+                              "yMoment"_a = 0);
+    });
 }
 
 }  // shapelet

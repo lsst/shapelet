@@ -20,6 +20,7 @@
  * see <https://www.lsstcorp.org/LegalNotices/>.
  */
 #include "pybind11/pybind11.h"
+#include "lsst/cpputils/python.h"
 
 #include "ndarray/pybind11.h"
 
@@ -31,18 +32,19 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_MODULE(radialProfile, mod) {
-    py::class_<RadialProfile, std::shared_ptr<RadialProfile>> clsRadialProfile(mod, "RadialProfile");
-
-    clsRadialProfile.def_static("get", &RadialProfile::get, py::return_value_policy::reference);
-    clsRadialProfile.def("getName", &RadialProfile::getName);
-    clsRadialProfile.def("_evaluate", (double (RadialProfile::*)(double) const) & RadialProfile::evaluate);
-    clsRadialProfile.def("_evaluate", (ndarray::Array<double, 1, 1> (RadialProfile::*)(
-                                              ndarray::Array<double const, 1, 1> const &) const) &
-                                              RadialProfile::evaluate);
-    clsRadialProfile.def("getMomentsRadiusFactor", &RadialProfile::getMomentsRadiusFactor);
-    clsRadialProfile.def("getBasis", &RadialProfile::getBasis, "nComponents"_a, "maxRadius"_a = 0);
-    clsRadialProfile.def("registerBasis", &RadialProfile::registerBasis);
+void wrapRadialProfile(lsst::cpputils::python::WrapperCollection &wrappers) {
+    using PyRadialProfil = py::class_<RadialProfile, std::shared_ptr<RadialProfile>> ;
+    wrappers.wrapType(PyRadialProfil(wrappers.module, "RadialProfile"), [](auto &mod, auto &cls) {
+        cls.def_static("get", &RadialProfile::get, py::return_value_policy::reference);
+        cls.def("getName", &RadialProfile::getName);
+        cls.def("_evaluate", (double (RadialProfile::*)(double) const) &RadialProfile::evaluate);
+        cls.def("_evaluate", (ndarray::Array<double, 1, 1> (RadialProfile::*)(
+                ndarray::Array<double const, 1, 1> const &) const) &
+                RadialProfile::evaluate);
+        cls.def("getMomentsRadiusFactor", &RadialProfile::getMomentsRadiusFactor);
+        cls.def("getBasis", &RadialProfile::getBasis, "nComponents"_a, "maxRadius"_a = 0);
+        cls.def("registerBasis", &RadialProfile::registerBasis);
+    });
 }
 
 }  // shapelet

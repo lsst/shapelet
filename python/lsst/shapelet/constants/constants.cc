@@ -20,6 +20,7 @@
  * see <https://www.lsstcorp.org/LegalNotices/>.
  */
 #include "pybind11/pybind11.h"
+#include "lsst/cpputils/python.h"
 
 #include "lsst/shapelet/constants.h"
 
@@ -29,17 +30,19 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_MODULE(constants, mod) {
-    py::enum_<BasisTypeEnum>(mod, "BasisTypeEnum")
-        .value("HERMITE", BasisTypeEnum::HERMITE)
-        .value("LAGUERRE", BasisTypeEnum::LAGUERRE)
-        .export_values();
+void wrapConstants(lsst::cpputils::python::WrapperCollection &wrappers) {
 
-    mod.def("computeOffset", computeOffset);
-    mod.def("computeSize", computeSize);
-    mod.def("computeOrder", computeOrder);
-    mod.def("intSqrt", intSqrt);
-    mod.def("rationalSqrt", rationalSqrt);
+    wrappers.wrapType(py::enum_<BasisTypeEnum>(wrappers.module, "BasisTypeEnum"), [](auto &mod, auto &enm) {
+        enm.value("HERMITE", BasisTypeEnum::HERMITE);
+        enm.value("LAGUERRE", BasisTypeEnum::LAGUERRE);
+        enm.export_values();
+
+        mod.def("computeOffset", computeOffset);
+        mod.def("computeSize", computeSize);
+        mod.def("computeOrder", computeOrder);
+        mod.def("intSqrt", intSqrt);
+        mod.def("rationalSqrt", rationalSqrt);
+    });
 }
 
 }  // shapelet

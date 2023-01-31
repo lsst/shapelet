@@ -20,6 +20,5 @@
 # see <https://www.lsstcorp.org/LegalNotices/>.
 #/
 
-from .constants import *
 from .constantsContinued import *
 

@@ -20,8 +20,8 @@
  * see <https://www.lsstcorp.org/LegalNotices/>.
  */
 #include "pybind11/pybind11.h"
+#include "lsst/cpputils/python.h"
 #include "pybind11/eigen.h"
-#include "ndarray/pybind11.h"
 
 #include "lsst/shapelet/HermiteTransformMatrix.h"
 
@@ -31,36 +31,35 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_MODULE(hermiteTransformMatrix, mod) {
-    py::module::import("lsst.afw.geom");
+void wrapHermiteTransformMatrix(lsst::cpputils::python::WrapperCollection &wrappers) {
+    using PyHermiteTransformMatrix = py::class_<HermiteTransformMatrix, std::shared_ptr<HermiteTransformMatrix>>;
 
-    py::class_<HermiteTransformMatrix, std::shared_ptr<HermiteTransformMatrix>> clsHermiteTransformMatrix(
-        mod, "HermiteTransformMatrix");
+    wrappers.wrapType(PyHermiteTransformMatrix(wrappers.module, "HermiteTransformMatrix"), [](auto &mod, auto &cls) {
+        cls.def(py::init<int>(), "order"_a);
 
-    clsHermiteTransformMatrix.def(py::init<int>(), "order"_a);
+        cls.def(
+                "compute", (Eigen::MatrixXd (HermiteTransformMatrix::*)(Eigen::Matrix2d const &) const) &
+                        HermiteTransformMatrix::compute,
+                "transform"_a);
+        cls.def(
+                "compute",
+                (Eigen::MatrixXd (HermiteTransformMatrix::*)(geom::LinearTransform const &) const) &
+                        HermiteTransformMatrix::compute,
+                "transform"_a);
+        cls.def(
+                "compute", (Eigen::MatrixXd (HermiteTransformMatrix::*)(Eigen::Matrix2d const &, int) const) &
+                        HermiteTransformMatrix::compute,
+                "transform"_a, "order"_a);
+        cls.def("compute", (Eigen::MatrixXd (HermiteTransformMatrix::*)(
+                                              geom::LinearTransform const &, int) const) &
+                                              HermiteTransformMatrix::compute,
+                                      "transform"_a, "order"_a);
 
-    clsHermiteTransformMatrix.def(
-            "compute", (Eigen::MatrixXd (HermiteTransformMatrix::*)(Eigen::Matrix2d const &) const) &
-                               HermiteTransformMatrix::compute,
-            "transform"_a);
-    clsHermiteTransformMatrix.def(
-            "compute",
-            (Eigen::MatrixXd (HermiteTransformMatrix::*)(geom::LinearTransform const &) const) &
-                    HermiteTransformMatrix::compute,
-            "transform"_a);
-    clsHermiteTransformMatrix.def(
-            "compute", (Eigen::MatrixXd (HermiteTransformMatrix::*)(Eigen::Matrix2d const &, int) const) &
-                               HermiteTransformMatrix::compute,
-            "transform"_a, "order"_a);
-    clsHermiteTransformMatrix.def("compute", (Eigen::MatrixXd (HermiteTransformMatrix::*)(
-                                                     geom::LinearTransform const &, int) const) &
-                                                     HermiteTransformMatrix::compute,
-                                  "transform"_a, "order"_a);
-
-    clsHermiteTransformMatrix.def("getCoefficientMatrix", &HermiteTransformMatrix::getCoefficientMatrix);
-    clsHermiteTransformMatrix.def("getInverseCoefficientMatrix",
-                                  &HermiteTransformMatrix::getInverseCoefficientMatrix);
-    clsHermiteTransformMatrix.def("getOrder", &HermiteTransformMatrix::getOrder);
+        cls.def("getCoefficientMatrix", &HermiteTransformMatrix::getCoefficientMatrix);
+        cls.def("getInverseCoefficientMatrix",
+                                      &HermiteTransformMatrix::getInverseCoefficientMatrix);
+        cls.def("getOrder", &HermiteTransformMatrix::getOrder);
+    });
 }
 
 }  // shapelet

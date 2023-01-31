@@ -20,6 +20,7 @@
  * see <https://www.lsstcorp.org/LegalNotices/>.
  */
 #include "pybind11/pybind11.h"
+#include "lsst/cpputils/python.h"
 
 #include "ndarray/pybind11.h"
 
@@ -31,32 +32,35 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_MODULE(multiShapeletBasis, mod) {
-    py::class_<MultiShapeletBasisComponent, std::shared_ptr<MultiShapeletBasisComponent>>
-        clsMultiShapeletBasisComponent(mod, "MultiShapeletBasisComponent");
+void wrapMultiShapeletBasis(lsst::cpputils::python::WrapperCollection &wrappers) {
+    using PyClass = py::class_<MultiShapeletBasisComponent, std::shared_ptr<MultiShapeletBasisComponent>>;
 
-    clsMultiShapeletBasisComponent.def(py::init<double, int, ndarray::Array<double const, 2, 2> const &>(),
-                                       "radius"_a, "order"_a, "matrix"_a);
+    static auto component =
+            wrappers.wrapType(PyClass(wrappers.module, "MultiShapeletBasisComponent"), [](auto &mod, auto &cls) {
+                cls.def(py::init<double, int, ndarray::Array<double const, 2, 2> const &>(),
+                        "radius"_a, "order"_a, "matrix"_a);
 
-    clsMultiShapeletBasisComponent.def("getRadius", &MultiShapeletBasisComponent::getRadius);
-    clsMultiShapeletBasisComponent.def("getOrder", &MultiShapeletBasisComponent::getOrder);
-    clsMultiShapeletBasisComponent.def("getMatrix", &MultiShapeletBasisComponent::getMatrix);
+                cls.def("getRadius", &MultiShapeletBasisComponent::getRadius);
+                cls.def("getOrder", &MultiShapeletBasisComponent::getOrder);
+                cls.def("getMatrix", &MultiShapeletBasisComponent::getMatrix);
+            });
 
-    py::class_<MultiShapeletBasis, std::shared_ptr<MultiShapeletBasis>> clsMultiShapeletBasis(
-            mod, "MultiShapeletBasis");
+    using PyMultiShapeletBasis = py::class_<MultiShapeletBasis, std::shared_ptr<MultiShapeletBasis>>;
 
-    clsMultiShapeletBasis.attr("Component") = clsMultiShapeletBasisComponent;
+    wrappers.wrapType(PyMultiShapeletBasis(wrappers.module, "MultiShapeletBasis"), [](auto &mod, auto &cls) {
+        cls.attr("Component") = component;
 
-    clsMultiShapeletBasis.def(py::init<int>());
-    clsMultiShapeletBasis.def(py::init<MultiShapeletBasis const &>());
+        cls.def(py::init<int>());
+        cls.def(py::init<MultiShapeletBasis const &>());
 
-    clsMultiShapeletBasis.def("getSize", &MultiShapeletBasis::getSize);
-    clsMultiShapeletBasis.def("getComponentCount", &MultiShapeletBasis::getComponentCount);
-    clsMultiShapeletBasis.def("addComponent", &MultiShapeletBasis::addComponent);
-    clsMultiShapeletBasis.def("scale", &MultiShapeletBasis::scale);
-    clsMultiShapeletBasis.def("normalize", &MultiShapeletBasis::normalize);
-    clsMultiShapeletBasis.def("merge", &MultiShapeletBasis::merge);
-    clsMultiShapeletBasis.def("makeFunction", &MultiShapeletBasis::makeFunction);
+        cls.def("getSize", &MultiShapeletBasis::getSize);
+        cls.def("getComponentCount", &MultiShapeletBasis::getComponentCount);
+        cls.def("addComponent", &MultiShapeletBasis::addComponent);
+        cls.def("scale", &MultiShapeletBasis::scale);
+        cls.def("normalize", &MultiShapeletBasis::normalize);
+        cls.def("merge", &MultiShapeletBasis::merge);
+        cls.def("makeFunction", &MultiShapeletBasis::makeFunction);
+    });
 }
 
 }  // shapelet
