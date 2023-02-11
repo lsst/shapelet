@@ -20,6 +20,5 @@
 # see <https://www.lsstcorp.org/LegalNotices/>.
 #/
 
-from .shapeletFunction import *
 from .shapeletFunctionContinued import *
 

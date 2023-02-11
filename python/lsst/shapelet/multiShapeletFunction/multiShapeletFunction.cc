@@ -20,6 +20,7 @@
  * see <https://www.lsstcorp.org/LegalNotices/>.
  */
 #include "pybind11/pybind11.h"
+#include "lsst/cpputils/python.h"
 #include "pybind11/stl.h"
 
 #include "ndarray/pybind11.h"
@@ -91,17 +92,20 @@ void declareMultiShapeletFunctionEvaluatorMembers(PyClass &cls) {
 
 }  // <anonymous>
 
-PYBIND11_MODULE(multiShapeletFunction, mod) {
-    py::module::import("lsst.afw.geom");
-    py::module::import("lsst.afw.image");
+void wrapMultiShapeletFunction(lsst::cpputils::python::WrapperCollection &wrappers) {
+    using PyMultiShapeletFunction = py::class_<MultiShapeletFunction, std::shared_ptr<MultiShapeletFunction>>;
 
-        py::class_<MultiShapeletFunction, std::shared_ptr<MultiShapeletFunction>> clsMultiShapeletFunction(
-            mod, "MultiShapeletFunction");
-    py::class_<MultiShapeletFunctionEvaluator, std::shared_ptr<MultiShapeletFunctionEvaluator>>
-            clsMultiShapeletFunctionEvaluator(mod, "MultiShapeletFunctionEvaluator");
+    wrappers.wrapType(PyMultiShapeletFunction(wrappers.module, "MultiShapeletFunction"), [](auto &mod, auto &cls) {
+        declareMultiShapeletFunctionMembers(cls);
 
-    declareMultiShapeletFunctionMembers(clsMultiShapeletFunction);
-    declareMultiShapeletFunctionEvaluatorMembers(clsMultiShapeletFunctionEvaluator);
+    });
+
+    using PyMultiShapeletFunctionEvaluator =
+            py::class_<MultiShapeletFunctionEvaluator, std::shared_ptr<MultiShapeletFunctionEvaluator>>;
+
+    wrappers.wrapType(PyMultiShapeletFunctionEvaluator(wrappers.module, "MultiShapeletFunctionEvaluator"), [](auto &mod, auto &cls) {
+        declareMultiShapeletFunctionEvaluatorMembers(cls);
+    });
 }
 
 }  // shapelet

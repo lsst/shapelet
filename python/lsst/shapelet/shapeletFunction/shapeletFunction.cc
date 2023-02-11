@@ -20,6 +20,7 @@
  * see <https://www.lsstcorp.org/LegalNotices/>.
  */
 #include "pybind11/pybind11.h"
+#include "lsst/cpputils/python.h"
 
 #include "ndarray/pybind11.h"
 
@@ -31,77 +32,77 @@ using namespace pybind11::literals;
 namespace lsst {
 namespace shapelet {
 
-PYBIND11_MODULE(shapeletFunction, mod) {
-    py::module::import("lsst.geom");
-    py::module::import("lsst.afw.geom");
-    py::module::import("lsst.afw.image");
+void wrapShapeletFunction(lsst::cpputils::python::WrapperCollection &wrappers) {
+    using PyShapeletFunction = py::class_<ShapeletFunction, std::shared_ptr<ShapeletFunction>>;
 
-    py::class_<ShapeletFunction, std::shared_ptr<ShapeletFunction>> clsShapeletFunction(mod,
-                                                                                        "ShapeletFunction");
+    wrappers.wrapType(PyShapeletFunction(wrappers.module, "ShapeletFunction"), [](auto &mod, auto &cls) {
+        cls.def_readonly_static("FLUX_FACTOR", &ShapeletFunction::FLUX_FACTOR);
 
-    clsShapeletFunction.def_readonly_static("FLUX_FACTOR", &ShapeletFunction::FLUX_FACTOR);
+        cls.def(py::init<int, BasisTypeEnum>(), "order"_a, "basisType"_a);
+        cls.def(py::init<int, BasisTypeEnum, ndarray::Array<double, 1, 1> const &>(), "order"_a,
+                                "basisType"_a, "coefficients"_a);
+        cls.def(py::init<int, BasisTypeEnum, double, geom::Point2D const &>(), "order"_a,
+                                "basisType"_a, "radius"_a, "center"_a = geom::Point2D());
+        cls.def(py::init<int, BasisTypeEnum, double, geom::Point2D const &,
+                                        ndarray::Array<double, 1, 1> const &>(),
+                                "order"_a, "basisType"_a, "radius"_a, "center"_a, "coefficients"_a);
+        cls.def(py::init<int, BasisTypeEnum, afw::geom::ellipses::Ellipse const &>(), "order"_a,
+                                "basisType"_a, "ellipse"_a);
+        cls.def(py::init<int, BasisTypeEnum, afw::geom::ellipses::Ellipse const &,
+                                        ndarray::Array<double const, 1, 1> const &>(),
+                                "order"_a, "basisType"_a, "ellipse"_a, "coefficients"_a);
+        cls.def(py::init<ShapeletFunction>());
 
-    clsShapeletFunction.def(py::init<int, BasisTypeEnum>(), "order"_a, "basisType"_a);
-    clsShapeletFunction.def(py::init<int, BasisTypeEnum, ndarray::Array<double, 1, 1> const &>(), "order"_a,
-                            "basisType"_a, "coefficients"_a);
-    clsShapeletFunction.def(py::init<int, BasisTypeEnum, double, geom::Point2D const &>(), "order"_a,
-                            "basisType"_a, "radius"_a, "center"_a = geom::Point2D());
-    clsShapeletFunction.def(py::init<int, BasisTypeEnum, double, geom::Point2D const &,
-                                     ndarray::Array<double, 1, 1> const &>(),
-                            "order"_a, "basisType"_a, "radius"_a, "center"_a, "coefficients"_a);
-    clsShapeletFunction.def(py::init<int, BasisTypeEnum, afw::geom::ellipses::Ellipse const &>(), "order"_a,
-                            "basisType"_a, "ellipse"_a);
-    clsShapeletFunction.def(py::init<int, BasisTypeEnum, afw::geom::ellipses::Ellipse const &,
-                                     ndarray::Array<double const, 1, 1> const &>(),
-                            "order"_a, "basisType"_a, "ellipse"_a, "coefficients"_a);
-    clsShapeletFunction.def(py::init<ShapeletFunction>());
+        cls.def("getOrder", &ShapeletFunction::getOrder);
+        cls.def("getEllipse", (afw::geom::ellipses::Ellipse &(ShapeletFunction::*)()) &
+                                        ShapeletFunction::getEllipse,
+                                py::return_value_policy::reference_internal);
+        cls.def("setEllipse", &ShapeletFunction::setEllipse);
+        cls.def("getBasisType", &ShapeletFunction::getBasisType);
+        cls.def("changeBasisType", &ShapeletFunction::changeBasisType);
+        cls.def("normalize", &ShapeletFunction::normalize, "value"_a = 1.0);
+        cls.def("getCoefficients", (ndarray::Array<double, 1, 1> const (ShapeletFunction::*)()) &
+                ShapeletFunction::getCoefficients);
+        cls.def("convolve", &ShapeletFunction::convolve);
+        cls.def("evaluate", &ShapeletFunction::evaluate);
+        cls.def("shiftInPlace", &ShapeletFunction::shiftInPlace);
+        cls.def("transformInPlace", &ShapeletFunction::transformInPlace);
+    });
 
-    clsShapeletFunction.def("getOrder", &ShapeletFunction::getOrder);
-    clsShapeletFunction.def("getEllipse", (afw::geom::ellipses::Ellipse & (ShapeletFunction::*)()) &
-                                                  ShapeletFunction::getEllipse,
-                            py::return_value_policy::reference_internal);
-    clsShapeletFunction.def("setEllipse", &ShapeletFunction::setEllipse);
-    clsShapeletFunction.def("getBasisType", &ShapeletFunction::getBasisType);
-    clsShapeletFunction.def("changeBasisType", &ShapeletFunction::changeBasisType);
-    clsShapeletFunction.def("normalize", &ShapeletFunction::normalize, "value"_a = 1.0);
-    clsShapeletFunction.def("getCoefficients", (ndarray::Array<double, 1, 1> const (ShapeletFunction::*)()) &
-                                                       ShapeletFunction::getCoefficients);
-    clsShapeletFunction.def("convolve", &ShapeletFunction::convolve);
-    clsShapeletFunction.def("evaluate", &ShapeletFunction::evaluate);
-    clsShapeletFunction.def("shiftInPlace", &ShapeletFunction::shiftInPlace);
-    clsShapeletFunction.def("transformInPlace", &ShapeletFunction::transformInPlace);
+    using PyShapeletFunctionEvaluator =
+            py::class_<ShapeletFunctionEvaluator, std::shared_ptr<ShapeletFunctionEvaluator>>;
 
-    py::class_<ShapeletFunctionEvaluator, std::shared_ptr<ShapeletFunctionEvaluator>>
-            clsShapeletFunctionEvaluator(mod, "ShapeletFunctionEvaluator");
+    wrappers.wrapType(
+            PyShapeletFunctionEvaluator(wrappers.module, "ShapeletFunctionEvaluator"), [](auto &mod, auto &cls) {
+                cls.def(py::init<ShapeletFunction const &>(), "function"_a);
 
-    clsShapeletFunctionEvaluator.def(py::init<ShapeletFunction const &>(), "function"_a);
-
-    clsShapeletFunctionEvaluator.def("__call__",
-                                     (double (ShapeletFunctionEvaluator::*)(double, double) const) &
-                                             ShapeletFunctionEvaluator::operator());
-    clsShapeletFunctionEvaluator.def(
-            "__call__", (double (ShapeletFunctionEvaluator::*)(geom::Point2D const &) const) &
+                cls.def("__call__",
+                        (double (ShapeletFunctionEvaluator::*)(double, double) const) &
                                 ShapeletFunctionEvaluator::operator());
-    clsShapeletFunctionEvaluator.def(
-            "__call__", (double (ShapeletFunctionEvaluator::*)(geom::Extent2D const &) const) &
+                cls.def(
+                        "__call__", (double (ShapeletFunctionEvaluator::*)(geom::Point2D const &) const) &
                                 ShapeletFunctionEvaluator::operator());
-    clsShapeletFunctionEvaluator.def("__call__", (ndarray::Array<double, 1, 1> (ShapeletFunctionEvaluator::*)(
-                                                         ndarray::Array<double const, 1> const &,
-                                                         ndarray::Array<double const, 1> const &) const) &
-                                                         ShapeletFunctionEvaluator::operator());
+                cls.def(
+                        "__call__", (double (ShapeletFunctionEvaluator::*)(geom::Extent2D const &) const) &
+                                ShapeletFunctionEvaluator::operator());
+                cls.def("__call__", (ndarray::Array<double, 1, 1> (ShapeletFunctionEvaluator::*)(
+                        ndarray::Array<double const, 1> const &,
+                        ndarray::Array<double const, 1> const &) const) &
+                        ShapeletFunctionEvaluator::operator());
 
-    clsShapeletFunctionEvaluator.def(
-            "addToImage", (void (ShapeletFunctionEvaluator::*)(ndarray::Array<double, 2, 1> const &,
-                                                               geom::Point2I const &) const) &
-                                  ShapeletFunctionEvaluator::addToImage,
-            "array"_a, "xy0"_a = geom::Point2D());
-    clsShapeletFunctionEvaluator.def(
-            "addToImage", (void (ShapeletFunctionEvaluator::*)(afw::image::Image<double> &) const) &
-                                  ShapeletFunctionEvaluator::addToImage,
-            "image"_a);
-    clsShapeletFunctionEvaluator.def("integrate", &ShapeletFunctionEvaluator::integrate);
-    clsShapeletFunctionEvaluator.def("computeMoments", &ShapeletFunctionEvaluator::computeMoments);
-    clsShapeletFunctionEvaluator.def("update", &ShapeletFunctionEvaluator::update);
+                cls.def(
+                        "addToImage", (void (ShapeletFunctionEvaluator::*)(ndarray::Array<double, 2, 1> const &,
+                                                                           geom::Point2I const &) const) &
+                                ShapeletFunctionEvaluator::addToImage,
+                        "array"_a, "xy0"_a = geom::Point2D());
+                cls.def(
+                        "addToImage", (void (ShapeletFunctionEvaluator::*)(afw::image::Image<double> &) const) &
+                                ShapeletFunctionEvaluator::addToImage,
+                        "image"_a);
+                cls.def("integrate", &ShapeletFunctionEvaluator::integrate);
+                cls.def("computeMoments", &ShapeletFunctionEvaluator::computeMoments);
+                cls.def("update", &ShapeletFunctionEvaluator::update);
+            });
 }
 
 }  // shapelet

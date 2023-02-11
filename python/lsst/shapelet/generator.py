@@ -1,4 +1,4 @@
-from .constants import HERMITE, LAGUERRE, computeSize
+from ._shapeletLib import HERMITE, LAGUERRE, computeSize
 
 __all__ = ['IndexGenerator', 'HermiteIndexGenerator', 'LaguerreIndexGenerator']
 

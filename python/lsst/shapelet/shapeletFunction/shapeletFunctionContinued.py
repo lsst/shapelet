@@ -1,4 +1,4 @@
-from .shapeletFunction import ShapeletFunction
+from .._shapeletLib import ShapeletFunction
 
 from lsst.utils import continueClass
 

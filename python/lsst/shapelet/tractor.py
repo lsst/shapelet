@@ -33,9 +33,7 @@ import warnings
 import pickle
 
 import lsst.pex.exceptions
-from .radialProfile import RadialProfile
-from .multiShapeletBasis import MultiShapeletBasis
-from .shapeletFunction import ShapeletFunction
+from ._shapeletLib import RadialProfile, MultiShapeletBasis, ShapeletFunction
 
 
 def registerRadialProfiles():
