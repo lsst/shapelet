@@ -76,7 +76,7 @@ class HermiteTransformMatrixTestCase(lsst.shapelet.tests.ShapeletTestCase):
         for transform in transforms:
             m = self.htm.compute(transform)
             for testPoint in testPoints:
-                assert(testPoint.size == 2)
+                assert testPoint.size == 2
                 origPoint = lsst.geom.Point2D(testPoint[0], testPoint[1])
                 transPoint = transform(origPoint)
                 for i, inx, iny in lsst.shapelet.HermiteIndexGenerator(self.order):
