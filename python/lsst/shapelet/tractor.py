@@ -31,6 +31,8 @@ import re
 import pickle
 import logging
 
+import lsst.afw.geom
+
 from ._shapeletLib import RadialProfile, MultiShapeletBasis, ShapeletFunction
 
 _LOG = logging.getLogger(__name__)
