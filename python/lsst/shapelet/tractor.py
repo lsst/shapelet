@@ -32,7 +32,6 @@ import sys
 import pickle
 import logging
 
-import lsst.pex.exceptions
 from ._shapeletLib import RadialProfile, MultiShapeletBasis, ShapeletFunction
 
 _LOG = logging.getLogger(__name__)
@@ -56,7 +55,7 @@ def registerRadialProfiles():
         maxRadius = int(match.group(3))
         try:
             profile = RadialProfile.get(name)
-        except lsst.pex.exceptions.Exception:
+        except Exception:
             _LOG.warning("No C++ profile for multi-Gaussian pickle file '%s'", filename)
             continue
         with open(os.path.join(dataDir, filename), 'rb') as stream:
