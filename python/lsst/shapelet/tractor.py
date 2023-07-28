@@ -28,7 +28,6 @@ package for more information.
 import numpy
 import os
 import re
-import sys
 import pickle
 import logging
 
@@ -59,10 +58,7 @@ def registerRadialProfiles():
             _LOG.warning("No C++ profile for multi-Gaussian pickle file '%s'", filename)
             continue
         with open(os.path.join(dataDir, filename), 'rb') as stream:
-            if sys.version_info[0] >= 3:
-                array = pickle.load(stream, encoding='latin1')
-            else:
-                array = pickle.load(stream)
+            array = pickle.load(stream, encoding='latin1')
         amplitudes = array[:nComponents]
         amplitudes /= amplitudes.sum()
         variances = array[nComponents:]
