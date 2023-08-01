@@ -93,7 +93,7 @@ void declareMultiShapeletFunctionEvaluatorMembers(PyClass &cls) {
 }  // <anonymous>
 
 void wrapMultiShapeletFunction(lsst::cpputils::python::WrapperCollection &wrappers) {
-    using PyMultiShapeletFunction = py::class_<MultiShapeletFunction, std::shared_ptr<MultiShapeletFunction>>;
+    using PyMultiShapeletFunction = py::class_<MultiShapeletFunction>;
 
     wrappers.wrapType(PyMultiShapeletFunction(wrappers.module, "MultiShapeletFunction"), [](auto &mod, auto &cls) {
         declareMultiShapeletFunctionMembers(cls);
@@ -101,7 +101,7 @@ void wrapMultiShapeletFunction(lsst::cpputils::python::WrapperCollection &wrappe
     });
 
     using PyMultiShapeletFunctionEvaluator =
-            py::class_<MultiShapeletFunctionEvaluator, std::shared_ptr<MultiShapeletFunctionEvaluator>>;
+            py::class_<MultiShapeletFunctionEvaluator>;
 
     wrappers.wrapType(PyMultiShapeletFunctionEvaluator(wrappers.module, "MultiShapeletFunctionEvaluator"), [](auto &mod, auto &cls) {
         declareMultiShapeletFunctionEvaluatorMembers(cls);

@@ -33,7 +33,7 @@ namespace lsst {
 namespace shapelet {
 
 void wrapBasisEvaluator(lsst::cpputils::python::WrapperCollection &wrappers) {
-    using PyBasisEvaluator = py::class_<BasisEvaluator, std::shared_ptr<BasisEvaluator>>;
+    using PyBasisEvaluator = py::class_<BasisEvaluator>;
 
     wrappers.wrapType(PyBasisEvaluator(wrappers.module, "BasisEvaluator"), [](auto &mod, auto &cls) {
         /* Constructors */
