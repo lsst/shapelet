@@ -39,7 +39,7 @@ template <typename T>
 py::class_<MatrixBuilder<T>, std::shared_ptr<MatrixBuilder<T>>> declareMatrixBuilder(
         lsst::cpputils::python::WrapperCollection &wrappers, std::string const &suffix) {
     using Class = MatrixBuilder<T>;
-    using PyCLass = py::class_<Class, std::shared_ptr<Class>>;
+    using PyCLass = py::class_<Class>;
     std::string name = "MatrixBuilder" + suffix;
 
     return wrappers.wrapType(PyCLass(wrappers.module, name.c_str()), [](auto &mod, auto &cls) {
@@ -71,7 +71,7 @@ template <typename T>
 py::class_<MatrixBuilderWorkspace<T>, std::shared_ptr<MatrixBuilderWorkspace<T>>>
 declareMatrixBuilderWorkspace(lsst::cpputils::python::WrapperCollection &wrappers, std::string const &suffix) {
     using Class = MatrixBuilderWorkspace<T>;
-    using PyClass = py::class_<Class, std::shared_ptr<Class>>;
+    using PyClass = py::class_<Class>;
     std::string name = "MatrixBuilderWorkspace" + suffix;
 
     return wrappers.wrapType(PyClass(wrappers.module, name.c_str()), [](auto &mod, auto &cls) {
@@ -87,7 +87,7 @@ template <typename T>
 py::class_<MatrixBuilderFactory<T>, std::shared_ptr<MatrixBuilderFactory<T>>> declareMatrixBuilderFactory(
         lsst::cpputils::python::WrapperCollection &wrappers, std::string const &suffix) {
     using Class = MatrixBuilderFactory<T>;
-    using PyClass = py::class_<Class, std::shared_ptr<Class>>;
+    using PyClass = py::class_<Class>;
     std::string name = "MatrixBuilderFactory" + suffix;
 
     return wrappers.wrapType(PyClass(wrappers.module, name.c_str()), [](auto &mod, auto &cls) {
