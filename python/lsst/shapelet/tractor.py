@@ -28,12 +28,14 @@ package for more information.
 import numpy
 import os
 import re
-import sys
-import warnings
 import pickle
+import logging
 
-import lsst.pex.exceptions
+import lsst.afw.geom
+
 from ._shapeletLib import RadialProfile, MultiShapeletBasis, ShapeletFunction
+
+_LOG = logging.getLogger(__name__)
 
 
 def registerRadialProfiles():
@@ -54,19 +56,16 @@ def registerRadialProfiles():
         maxRadius = int(match.group(3))
         try:
             profile = RadialProfile.get(name)
-        except lsst.pex.exceptions.Exception:
-            warnings.warn("No C++ profile for multi-Gaussian pickle file '%s'" % filename)
+        except Exception:
+            _LOG.warning("No C++ profile for multi-Gaussian pickle file '%s'", filename)
             continue
         with open(os.path.join(dataDir, filename), 'rb') as stream:
-            if sys.version_info[0] >= 3:
-                array = pickle.load(stream, encoding='latin1')
-            else:
-                array = pickle.load(stream)
+            array = pickle.load(stream, encoding='latin1')
         amplitudes = array[:nComponents]
         amplitudes /= amplitudes.sum()
         variances = array[nComponents:]
         if amplitudes.shape != (nComponents,) or variances.shape != (nComponents,):
-            warnings.warn("Unknown format for multi-Gaussian pickle file '%s'" % filename)
+            _LOG.warning("Unknown format for multi-Gaussian pickle file '%s'", filename)
             continue
         basis = MultiShapeletBasis(1)
         for amplitude, variance in zip(amplitudes, variances):
