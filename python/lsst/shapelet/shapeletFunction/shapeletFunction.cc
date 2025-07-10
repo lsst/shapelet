@@ -33,7 +33,7 @@ namespace lsst {
 namespace shapelet {
 
 void wrapShapeletFunction(lsst::cpputils::python::WrapperCollection &wrappers) {
-    using PyShapeletFunction = py::class_<ShapeletFunction>;
+    using PyShapeletFunction = py::classh<ShapeletFunction>;
 
     wrappers.wrapType(PyShapeletFunction(wrappers.module, "ShapeletFunction"), [](auto &mod, auto &cls) {
         cls.def_readonly_static("FLUX_FACTOR", &ShapeletFunction::FLUX_FACTOR);
@@ -69,7 +69,7 @@ void wrapShapeletFunction(lsst::cpputils::python::WrapperCollection &wrappers) {
         cls.def("transformInPlace", &ShapeletFunction::transformInPlace);
     });
 
-    using PyShapeletFunctionEvaluator = py::class_<ShapeletFunctionEvaluator>;
+    using PyShapeletFunctionEvaluator = py::classh<ShapeletFunctionEvaluator>;
 
     wrappers.wrapType(
             PyShapeletFunctionEvaluator(wrappers.module, "ShapeletFunctionEvaluator"), [](auto &mod, auto &cls) {

@@ -33,7 +33,7 @@ namespace lsst {
 namespace shapelet {
 
 void wrapRadialProfile(lsst::cpputils::python::WrapperCollection &wrappers) {
-    using PyRadialProfil = py::class_<RadialProfile> ;
+    using PyRadialProfil = py::classh<RadialProfile> ;
     wrappers.wrapType(PyRadialProfil(wrappers.module, "RadialProfile"), [](auto &mod, auto &cls) {
         cls.def_static("get", &RadialProfile::get, py::return_value_policy::reference);
         cls.def("getName", &RadialProfile::getName);

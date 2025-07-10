@@ -33,7 +33,7 @@ namespace lsst {
 namespace shapelet {
 
 void wrapFunctorKeys(lsst::cpputils::python::WrapperCollection &wrappers) {
-    using PyShapeletFunctionKey = py::class_<ShapeletFunctionKey>;
+    using PyShapeletFunctionKey = py::classh<ShapeletFunctionKey>;
 
     wrappers.wrapType(PyShapeletFunctionKey(wrappers.module, "ShapeletFunctionKey"), [](auto &mod, auto &cls) {
         cls.def(py::init<>());
@@ -59,7 +59,7 @@ void wrapFunctorKeys(lsst::cpputils::python::WrapperCollection &wrappers) {
         cls.def("getBasisType", &ShapeletFunctionKey::getBasisType);
     });
 
-    using PyMultiShapeletFunctionKey = py::class_<MultiShapeletFunctionKey>;
+    using PyMultiShapeletFunctionKey = py::classh<MultiShapeletFunctionKey>;
 
     wrappers.wrapType(PyMultiShapeletFunctionKey(wrappers.module, "MultiShapeletFunctionKey"), [](auto &mod, auto &cls) {
         cls.def(py::init<>());
