@@ -33,7 +33,7 @@ namespace lsst {
 namespace shapelet {
 
 void wrapMultiShapeletBasis(lsst::cpputils::python::WrapperCollection &wrappers) {
-    using PyClass = py::class_<MultiShapeletBasisComponent, std::shared_ptr<MultiShapeletBasisComponent>>;
+    using PyClass = py::classh<MultiShapeletBasisComponent>;
 
     static auto component =
             wrappers.wrapType(PyClass(wrappers.module, "MultiShapeletBasisComponent"), [](auto &mod, auto &cls) {
@@ -45,7 +45,7 @@ void wrapMultiShapeletBasis(lsst::cpputils::python::WrapperCollection &wrappers)
                 cls.def("getMatrix", &MultiShapeletBasisComponent::getMatrix);
             });
 
-    using PyMultiShapeletBasis = py::class_<MultiShapeletBasis, std::shared_ptr<MultiShapeletBasis>>;
+    using PyMultiShapeletBasis = py::classh<MultiShapeletBasis>;
 
     wrappers.wrapType(PyMultiShapeletBasis(wrappers.module, "MultiShapeletBasis"), [](auto &mod, auto &cls) {
         cls.attr("Component") = component;

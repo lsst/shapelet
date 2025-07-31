@@ -34,7 +34,7 @@ namespace lsst {
 namespace shapelet {
 
 void wrapGaussHermiteConvolution(lsst::cpputils::python::WrapperCollection &wrappers) {
-    using PyGaussHermiteConvolution = py::class_<GaussHermiteConvolution, std::shared_ptr<GaussHermiteConvolution>>;
+    using PyGaussHermiteConvolution = py::classh<GaussHermiteConvolution>;
     wrappers.wrapType(PyGaussHermiteConvolution(wrappers.module, "GaussHermiteConvolution"), [](auto &mod, auto &cls) {
         cls.def(py::init<int, ShapeletFunction const &>(), "colOrder"_a, "psf"_a);
 

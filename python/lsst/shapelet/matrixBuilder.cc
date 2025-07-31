@@ -36,10 +36,10 @@ namespace shapelet {
 namespace {
 
 template <typename T>
-py::class_<MatrixBuilder<T>, std::shared_ptr<MatrixBuilder<T>>> declareMatrixBuilder(
+py::classh<MatrixBuilder<T>> declareMatrixBuilder(
         lsst::cpputils::python::WrapperCollection &wrappers, std::string const &suffix) {
     using Class = MatrixBuilder<T>;
-    using PyCLass = py::class_<Class, std::shared_ptr<Class>>;
+    using PyCLass = py::classh<Class>;
     std::string name = "MatrixBuilder" + suffix;
 
     return wrappers.wrapType(PyCLass(wrappers.module, name.c_str()), [](auto &mod, auto &cls) {
@@ -68,10 +68,10 @@ py::class_<MatrixBuilder<T>, std::shared_ptr<MatrixBuilder<T>>> declareMatrixBui
 }
 
 template <typename T>
-py::class_<MatrixBuilderWorkspace<T>, std::shared_ptr<MatrixBuilderWorkspace<T>>>
+py::classh<MatrixBuilderWorkspace<T>>
 declareMatrixBuilderWorkspace(lsst::cpputils::python::WrapperCollection &wrappers, std::string const &suffix) {
     using Class = MatrixBuilderWorkspace<T>;
-    using PyClass = py::class_<Class, std::shared_ptr<Class>>;
+    using PyClass = py::classh<Class>;
     std::string name = "MatrixBuilderWorkspace" + suffix;
 
     return wrappers.wrapType(PyClass(wrappers.module, name.c_str()), [](auto &mod, auto &cls) {
@@ -84,10 +84,10 @@ declareMatrixBuilderWorkspace(lsst::cpputils::python::WrapperCollection &wrapper
 }
 
 template <typename T>
-py::class_<MatrixBuilderFactory<T>, std::shared_ptr<MatrixBuilderFactory<T>>> declareMatrixBuilderFactory(
+py::classh<MatrixBuilderFactory<T>> declareMatrixBuilderFactory(
         lsst::cpputils::python::WrapperCollection &wrappers, std::string const &suffix) {
     using Class = MatrixBuilderFactory<T>;
-    using PyClass = py::class_<Class, std::shared_ptr<Class>>;
+    using PyClass = py::classh<Class>;
     std::string name = "MatrixBuilderFactory" + suffix;
 
     return wrappers.wrapType(PyClass(wrappers.module, name.c_str()), [](auto &mod, auto &cls) {

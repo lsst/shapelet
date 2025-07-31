@@ -32,7 +32,7 @@ namespace lsst {
 namespace shapelet {
 
 void wrapGaussHermiteProjection(lsst::cpputils::python::WrapperCollection &wrappers) {
-    using PyGaussHermiteProjection = py::class_<GaussHermiteProjection, std::shared_ptr<GaussHermiteProjection>>;
+    using PyGaussHermiteProjection = py::classh<GaussHermiteProjection>;
 
     wrappers.wrapType(PyGaussHermiteProjection(wrappers.module, "GaussHermiteProjection"), [](auto &mod, auto &cls) {
         cls.def(py::init<int>(), "maxOrder"_a);
