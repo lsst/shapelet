@@ -32,7 +32,7 @@ namespace lsst {
 namespace shapelet {
 
 void wrapHermiteTransformMatrix(lsst::cpputils::python::WrapperCollection &wrappers) {
-    using PyHermiteTransformMatrix = py::class_<HermiteTransformMatrix, std::shared_ptr<HermiteTransformMatrix>>;
+    using PyHermiteTransformMatrix = py::classh<HermiteTransformMatrix>;
 
     wrappers.wrapType(PyHermiteTransformMatrix(wrappers.module, "HermiteTransformMatrix"), [](auto &mod, auto &cls) {
         cls.def(py::init<int>(), "order"_a);
