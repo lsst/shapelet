@@ -139,7 +139,7 @@ def integrateNormalizedFluxes(maxRadius=20.0, nSteps=5000):
         evaluated[name] = profile.evaluate(radii)
         basis = profile.getBasis(8)
         evaluated["g" + name] = evaluateRadial(basis, radii, sbNormalize=True, doComponents=False)[0, :]
-    fluxes = {name: numpy.trapz(z*radii, radii) for name, z in evaluated.items()}
+    fluxes = {name: numpy.trapezoid(z*radii, radii) for name, z in evaluated.items()}
     return fluxes
 
 

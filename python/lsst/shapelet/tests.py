@@ -134,7 +134,7 @@ class ShapeletTestCase(lsst.utils.tests.TestCase):
                                      shapeletMoments.getCore().getIyy(), rtol=1E-3)
         self.assertFloatsAlmostEqual(imageMoments.getCore().getIxy(),
                                      shapeletMoments.getCore().getIxy(), rtol=1E-3)
-        integral = numpy.trapz(numpy.trapz(z, gx, axis=1), y, axis=0)
+        integral = numpy.trapezoid(numpy.trapezoid(z, gx, axis=1), y, axis=0)
         self.assertFloatsAlmostEqual(integral, function.evaluate().integrate(), rtol=1E-3)
 
     def checkConvolution(self, f1, f2):
