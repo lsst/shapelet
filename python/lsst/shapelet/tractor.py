@@ -30,6 +30,7 @@ import os
 import re
 import pickle
 import logging
+import importlib.resources
 
 import lsst.afw.geom
 
@@ -45,34 +46,39 @@ def registerRadialProfiles():
     This should only be called at import time by this module; it's only a function to
     avoid polluting the module namespace with all the local variables used here.
     """
-    dataDir = os.path.join(os.environ["SHAPELET_DIR"], "data")
     regex = re.compile(r"([a-z]+\d?)_K(\d+)_MR(\d+)\.pickle")
-    for filename in os.listdir(dataDir):
-        match = regex.match(filename)
-        if not match:
-            continue
-        name = match.group(1)
-        nComponents = int(match.group(2))
-        maxRadius = int(match.group(3))
-        try:
-            profile = RadialProfile.get(name)
-        except Exception:
-            _LOG.warning("No C++ profile for multi-Gaussian pickle file '%s'", filename)
-            continue
-        with open(os.path.join(dataDir, filename), 'rb') as stream:
-            array = pickle.load(stream, encoding='latin1')
-        amplitudes = array[:nComponents]
-        amplitudes /= amplitudes.sum()
-        variances = array[nComponents:]
-        if amplitudes.shape != (nComponents,) or variances.shape != (nComponents,):
-            _LOG.warning("Unknown format for multi-Gaussian pickle file '%s'", filename)
-            continue
-        basis = MultiShapeletBasis(1)
-        for amplitude, variance in zip(amplitudes, variances):
-            radius = variance**0.5
-            matrix = numpy.array([[amplitude / ShapeletFunction.FLUX_FACTOR]], dtype=float)
-            basis.addComponent(radius, 0, matrix)
-        profile.registerBasis(basis, nComponents, maxRadius)
+    # Locate the pickled profiles that ship inside the package.  Using
+    # importlib.resources rather than the EUPS-provided $SHAPELET_DIR means
+    # this works in an eups-less (pip/conda) installation as well.
+    with importlib.resources.as_file(
+        importlib.resources.files("lsst.shapelet").joinpath("data")
+    ) as dataDir:
+        for filename in os.listdir(dataDir):
+            match = regex.match(filename)
+            if not match:
+                continue
+            name = match.group(1)
+            nComponents = int(match.group(2))
+            maxRadius = int(match.group(3))
+            try:
+                profile = RadialProfile.get(name)
+            except Exception:
+                _LOG.warning("No C++ profile for multi-Gaussian pickle file '%s'", filename)
+                continue
+            with open(os.path.join(dataDir, filename), 'rb') as stream:
+                array = pickle.load(stream, encoding='latin1')
+            amplitudes = array[:nComponents]
+            amplitudes /= amplitudes.sum()
+            variances = array[nComponents:]
+            if amplitudes.shape != (nComponents,) or variances.shape != (nComponents,):
+                _LOG.warning("Unknown format for multi-Gaussian pickle file '%s'", filename)
+                continue
+            basis = MultiShapeletBasis(1)
+            for amplitude, variance in zip(amplitudes, variances):
+                radius = variance**0.5
+                matrix = numpy.array([[amplitude / ShapeletFunction.FLUX_FACTOR]], dtype=float)
+                basis.addComponent(radius, 0, matrix)
+            profile.registerBasis(basis, nComponents, maxRadius)
 
 
 # We register all the profiles at module import time, to allow C++ code to access all available profiles
